@@ -1,6 +1,6 @@
-﻿* qui do H:\RP\projects\sep2\Stata\do\00_run_first.do
+﻿* qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
-texdoc do H:\RP\projects\sep2\Stata\do\02_data_prep_05.do
+texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\02_data_prep_05.do
 
 * COMPILE TEX 
 ! pdflatex -shell-escape -output-directory=$td $td/report_sep2_01_05 
