@@ -9,7 +9,7 @@
 
 #load up the ggmap library
 library(ggmap)
-register_google(key = 'AIzaSyAQOl6IkhHk3K5u5OmofTFLrYpTbWcfl1k') 
+register_google(key = '') 
 library(haven)
 
 # get the input data
