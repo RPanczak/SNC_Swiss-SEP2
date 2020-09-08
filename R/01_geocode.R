@@ -1,4 +1,5 @@
 # Geocoding script for large list of addresses.
+# based on
 # Shane Lynn 10/10/2013
 # http://www.shanelynn.ie/massive-geocoding-with-r-and-google-maps/
 
