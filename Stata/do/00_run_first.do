@@ -11,7 +11,7 @@ global np = "SNC_Swiss-SEP2"
 if "`c(os)'" == "Windows" {
 
 	* PATH TO NEW PROJECT HERE WITHOUT DRIVE LETTER
-	global pp="C:\projects\SNC_Swiss-SEP2\Stata\do"
+	global pp="C:\projects\SNC_Swiss-SEP2"
 
 
 	* PATH SETTINGS
@@ -42,6 +42,5 @@ else if "`c(os)'" == "Unix"{
 
 	cd $pp/Stata
 }
-
 
 noisily di in red "Settings ready for: $np project"
