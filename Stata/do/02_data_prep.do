@@ -34,7 +34,7 @@ clear
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LATEX settings
-\documentclass[a4paper, notitlepage, fleqn]{article} % u titlepage IF YOU WANT TOC TO APPEAR ON NEXT PAGE
+\documentclass[a4paper, notitlepage, fleqn]{article} % USE titlepage IF YOU WANT TOC TO APPEAR ON NEXT PAGE
 \usepackage[a4paper]{geometry}
 \usepackage{stata} 
 
@@ -362,7 +362,7 @@ ta year, m
 texdoc s c 
 
 /***
-Note the distinction between IDs (ie. duplicate coordinates):
+Note the distinction between IDs (ie. small amount of buildings with different ID but same coordinates):
 ***/
 
 texdoc s , cmdstrip
@@ -382,7 +382,7 @@ drop v9* v0*
 
 keep if r10_pe_flag == 1
 
-* BUILDINGS WITH MISSING r??\_buildid BUT HAVING COORDINATES FROM GIVEN YEAR?
+* BUILDINGS WITH MISSING r??\_buildid BUT HAVING (HECTAR?) COORDINATES FROM GIVEN YEAR?
 distinct sncid	if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 br 				if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 ta link 		if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
@@ -393,6 +393,9 @@ br *buildid *geox *geoy if inlist(sncid, "SNC12640943", "SNC14636688")
 * BUILDINGS HAVING DIFFERENT COORDINATES IN ONE OF THE YEARS?
 distinct sncid 			if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
 br *buildid *geox *geoy if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
+* gen temp = r10_geox - r11_geox
+* su temp if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
+* hist temp if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
 
 * CHECKING COVERAGE
 * mmerge r10_buildid using $dd\ORIGINS, t(n:1) umatch(buildid)
