@@ -15,13 +15,16 @@ Version 04:~Dropping data from SE 10 & 11 >> no chance for flatarea.
 Version 05:~Final report:
 				Using ISCO in range 6,000-9,999 as low professions
 				Somehow weird results of SE sample >> to be resolved?
+Version 06:~ReRun of analyses:
+				Fixing directories & renaming files a bit
+				
 */
 
 * ***************************************************
 
 qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
-texdoc init $td\report_sep2_01_05.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
+texdoc init $td\report_sep2.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
 
@@ -31,7 +34,7 @@ clear
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LATEX settings
-\documentclass[a4paper, notitlepage, fleqn]{article} % USE titlepage IF YOU WANT TOC TO APPEAR ON NEXT PAGE
+\documentclass[a4paper, notitlepage, fleqn]{article} % u titlepage IF YOU WANT TOC TO APPEAR ON NEXT PAGE
 \usepackage[a4paper]{geometry}
 \usepackage{stata} 
 
@@ -104,9 +107,9 @@ texdoc s , nolog nodo
 
 * *****
 * BU_CLASS >> DATA FROM KS
-use "$od\buclassfloor\gwrgws_buclassfloor_prep" , clear 
+u "$od\buclassfloor\gwrgws_buclassfloor_prep" , clear 
 
-tab org_bu_class, m
+ta org_bu_class, m
 keep if !inrange(org_bu_class, 1110, 1122) & !mi(org_bu_class)
 
 sort egid, stable 
@@ -121,19 +124,19 @@ drop t?
 by egid: keep if _n ==1 
 drop ewid floor org_floor
 
-tab org_bu_class, m sort
+ta org_bu_class, m sort
 
 compress
 sa "$dd\buclass" , replace 
 
 * CHECKING AGAINST FULL SNC WITH 2014 AS TEST
-use "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
+u "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 keep if r14_pe_flag == 1
 
 mmerge r14_buildid using "$dd\buclass" , t(n:1) umatch(egid)
 
-tab org_bu_class, m sort
+ta org_bu_class, m sort
 
 keep if _merge == 3
 
@@ -143,36 +146,35 @@ by r14_buildid: keep if _n == 1
 
 keep r14_buildid r14_geo? org_bu_class pop 
 
-tab org_bu_class, m sort
-
+ta org_bu_class, m sort
 
 list if org_bu_class == 1273
-r14_buildid 899170556 >> Château de Rolle https://goo.gl/maps/pUK1QCa33KL2
+* r14_buildid 899170556 >> Château de Rolle https://goo.gl/maps/pUK1QCa33KL2
 
 list if org_bu_class == 1262
-r14_buildid 899909336 >> Old windmill Brüngger Wyla https://goo.gl/maps/SRxGAKyF5982
+* r14_buildid 899909336 >> Old windmill Brüngger Wyla https://goo.gl/maps/SRxGAKyF5982
 
 list if org_bu_class == 1272
-r14_buildid 898986979 >> Eglise Saint Boniface https://goo.gl/maps/k23r9ZEspXr 
+* r14_buildid 898986979 >> Eglise Saint Boniface https://goo.gl/maps/k23r9ZEspXr 
 
 list if org_bu_class == 1212
-r14_buildid 709548512 >> Eglise Saint Boniface https://goo.gl/maps/k23r9ZEspXr 
+* r14_buildid 709548512 >> Camping Arolla https://goo.gl/maps/7obNv6U2ZHm6aAhy5 
 
 list if org_bu_class == 1274
-r14_buildid 899544547 >> Gefängnis Bässlergut https://goo.gl/maps/nu3ydKtJENK2
+* r14_buildid 899544547 >> Gefängnis Bässlergut https://goo.gl/maps/nu3ydKtJENK2
 
 list if org_bu_class == 1220
-r14_buildid 890985601 >> César Ritz hotel school https://goo.gl/maps/G4squepw5pQ2
+* r14_buildid 890985601 >> César Ritz hotel school https://goo.gl/maps/G4squepw5pQ2
 
 
 * *****
 * COLLECT ALL YEARS <> 15 STILL NOT AVIALABLE
 forv year = 10/14 {
 
-	use r`year'_buildid r`year'_geox r`year'_geoy  ///
+	u r`year'_buildid r`year'_geox r`year'_geoy  ///
 		using "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
-	rename (r`year'_buildid r`year'_geox r`year'_geoy) (buildid geox geoy)
+	ren (r`year'_buildid r`year'_geox r`year'_geoy) (buildid geox geoy)
 	
 	drop if mi(geox)  
 	drop if mi(geoy)  
@@ -203,7 +205,7 @@ replace geoy = round(geoy)
 * *****
 * KEEP NEWEST RECORD IF ALL IS MATCHING
 duplicates t buildid geox geoy, gen(dupli)
-tab dupli, m
+ta dupli, m
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
@@ -217,7 +219,7 @@ drop dupli n N
 * *****
 * KEEP LATEST YEAR IF SAME ID BUT DIFFERENT COORDINATES
 duplicates t buildid, gen(dupli)
-tab dupli
+ta dupli
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
@@ -236,7 +238,7 @@ isid buildid
 mmerge buildid using "$dd\buclass" , t(n:1) umatch(egid) ukeep(org_bu_class)
 drop if _merge == 2
 
-* tab org_bu_class _merge, m // row
+* ta org_bu_class _merge, m row
 
 drop if _merge == 3 // 1.31% funky buildings
 drop _merge org_bu_class
@@ -245,7 +247,7 @@ drop _merge org_bu_class
 * REMOVE DUPLICATED COORDS
 * 1.47% of buildings
 duplicates t geox geoy, gen(dupli)
-tab dupli
+ta dupli, m
 
 * 153 is a camping! 
 * 2602700 1123700 <> 46.264721251 7.473664256 <> https://goo.gl/maps/eC8fDZtEboP2
@@ -253,10 +255,10 @@ tab dupli
 * 70 probably imprecise
 * 2568900 1113700 <> 46.174048609 7.035939244 <> https://goo.gl/maps/JD5AnuyeACS2 
 
-* 56 again caravans
+* 56 caravans
 * 2581575 1176360 <> 46.738176735 7.197558855 <> https://goo.gl/maps/tqR5NcbmLMR2 
 
-* 33 again caravans
+* 33 caravans
 * 2581575 1176360 <> 47.052499592 7.072425038 <> https://goo.gl/maps/EKWKJuS7SCk 
 
 egen gisid = group(geox geoy)
@@ -271,7 +273,7 @@ count if round_x & round_y
 * br if round_x & round_y
 gen hec = (round_x & round_y)
 drop round_?
-
+tab hec, m
 
 * LOOKS LIKE AN ERROR
 * 2713700 1237100 <> 47.275003744 8.941361570 <> https://goo.gl/maps/i6kgcX8k7xH2
@@ -300,7 +302,7 @@ bysort gisid: keep if _n == 1
 drop buildid hec dupli
 
 xtile part = gisid, nq(6) // around 250k chunks of data
-* tab part, m
+* ta part, m
 
 export delim using "$gis\data\ORIGINS.csv", delim(",")  replace
 
@@ -354,8 +356,8 @@ Distribution of years from which coordinates of a building are taken:
 
 texdoc s , cmdstrip
 
-use $dd\ORIGINS, clear
-tab year, m
+u $dd\ORIGINS, clear
+ta year, m
 
 texdoc s c 
 
@@ -375,7 +377,7 @@ texdoc s c
 
 texdoc s , nolog  nodo
 
-use "$od\snc2_std_pers_90_00_14_all_207_full", clear 
+u "$od\snc2_std_pers_90_00_14_all_207_full", clear 
 drop v9* v0*
 
 keep if r10_pe_flag == 1
@@ -383,7 +385,7 @@ keep if r10_pe_flag == 1
 * BUILDINGS WITH MISSING r??\_buildid BUT HAVING COORDINATES FROM GIVEN YEAR?
 distinct sncid	if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 br 				if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
-tab link 		if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
+ta link 		if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 br *buildid *geox *geoy // if inlist(v0_buildid, 2, 3, 4, 7)
 br *buildid *geox *geoy if inlist(sncid, "SNC12640943", "SNC14636688")
 
@@ -484,7 +486,7 @@ texdoc s , nolog // nodo
 
 forv YR = 12/15 { 
 
-	use sncid age hhyid educ_agg educ_curr occup* workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
+	u sncid age hhyid educ_agg educ_curr occup* workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
 
 	isid sncid
 	isid hhyid
@@ -505,7 +507,7 @@ forv YR = 12/15 {
 
 	* BELOW 19
 	* su age, d
-	* tab age, m
+	* ta age, m
 	count if age < 19
 	texdoc local age_`YR' = `r(N)'
 	drop if age < 19
@@ -527,7 +529,7 @@ forv YR = 12/15 {
 	12 "Internat. official without diplomatic immunity" 
 	13 "Not classified elsewhere", replace	*/
 	
-	* tab resi, m sort 
+	* ta resi, m sort 
 
 	count if resiperm > 5
 	texdoc local res_`YR' = `r(N)'
@@ -575,10 +577,10 @@ forv YR = 12/15 {
 	iskoisei08 num_ocu4, isko( occup_isco) 
 
 	/*
-	tab den_ocu, m
-	tab num_ocu1, m 
-	tab num_ocu2, m 
-	tab num_ocu3, m 
+	ta den_ocu, m
+	ta num_ocu1, m 
+	ta num_ocu2, m 
+	ta num_ocu3, m 
 	
 	su num_ocu4
 	*/
@@ -600,15 +602,15 @@ forv YR = 12/15 {
 
 	*/
 
-	* tab educ_agg educ_curr, m 
-	* tab educ_agg educ_curr if den, m 
+	* ta educ_agg educ_curr, m 
+	* ta educ_agg educ_curr if den, m 
 
 	replace num_edu = 1 if educ_agg == 1
 	replace num_edu = 0 if inlist(educ_curr, 2, 3)
 
-	* tab num_edu, m 
-	* tab num_edu educ_agg , m 
-	* tab num_edu educ_curr , m 
+	* ta num_edu, m 
+	* ta num_edu educ_agg , m 
+	* ta num_edu educ_curr , m 
 	
 	compress 
 	sa $dd\SE`YR'_pers_full, replace
@@ -620,7 +622,7 @@ forv YR = 12/15 {
 	* AREA AND RENT
 	* flatarea NOT AVAILABLE IN 10 & 11 !!! :/
 	
-	use sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "$od\SE\SE`YR'_hh_full.dta", clear
+	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "$od\SE\SE`YR'_hh_full.dta", clear
 
 	sort hhyid
 	order hhyid, a(sncid)
@@ -645,7 +647,7 @@ forv YR = 12/15 {
 	* univar rentnet if rent35, dec(0) by(flatrooms)
 	
 	* CROWDING 
-	* tab flatrooms hhpers, m col
+	* ta flatrooms hhpers, m col
 	
 	gen ppr = hhpers / flatrooms 
 	la var ppr 		"Persons per room"
@@ -657,7 +659,7 @@ forv YR = 12/15 {
 
 	* ***************************************************
 	* START FROM PERSONAL
-	use $dd\SE`YR'_pers_full, clear
+	u $dd\SE`YR'_pers_full, clear
 	
 	count 
 	texdoc local start_`YR' = `r(N)'	
@@ -781,7 +783,7 @@ Note: Additionally records of persons that participated in more than one SE were
 
 texdoc s , cmdstrip  nodo
 
-qui use $dd\SE_dupli, replace
+qui u $dd\SE_dupli, replace
 duplicates report sncid
 rm $dd\SE_dupli.dta
 
@@ -796,8 +798,8 @@ Distribution of SE individuals over years:
 
 texdoc s , cmdstrip
 
-use $dd\SE, clear
-tab SE, m
+u $dd\SE, clear
+ta SE, m
 
 texdoc s c
 
@@ -816,7 +818,7 @@ texdoc s c
 
 texdoc s , nolog  nodo 
 
-use $dd\SE, clear
+u $dd\SE, clear
 bysort gisid: keep if _n == 1
 keep gisid geox geoy rent35
 
@@ -839,7 +841,7 @@ texdoc s c
 	\item 2014 SE dataset is \textbf{missing infomration on \textit{'Sozioprofessionelle Kategorie'}} (variable \texttt{sopc}).  
 		It has been also signalled by BfS that this variable was of poor quality in 2010-2013 years. 
 		Therefore, it is not possible to identify individuals in manual and uskilled occupations in the same way as during 
-		construction of index 1.0. That was mitigated by use of the 
+		construction of index 1.0. That was mitigated by u of the 
 		\href{http://www.ilo.org/public/english/bureau/stat/isco/isco08/index.htm}{\textbf{ISCO-08 codes}} of occupations 
 		to define manual and uskilled workers and farmers.
 		Individuals whose occupations belong to one of the major groups 7, 8 \& 9 (for manual and unskilled) and 6 (farmers) were selected.\footnote{Additionally, 
@@ -973,7 +975,7 @@ Vast majority of the SNC buildings (\texttt{ORIGINS}) have network connections t
 texdoc s , nolog // nodo 
 
 * EXPLORING SMALL NUMBERS
-use $dd\NEIGHB, clear
+u $dd\NEIGHB, clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
@@ -981,7 +983,7 @@ texdoc s c
 
 texdoc s , nocmdlog // nodo 
 
-tab b_maxdest, m 
+ta b_maxdest, m 
 
 texdoc s c 
 
@@ -1025,7 +1027,7 @@ household n'hoods can get smaller than building n'hoods.
 
 texdoc s , nolog  nodo
 
-use $dd\NEIGHB, clear
+u $dd\NEIGHB, clear
 ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
@@ -1124,11 +1126,11 @@ Number of households (within 20km):
 
 texdoc s , cmdstrip // nodo
 
-use $dd\NEIGHB_PREP_AGG, clear
+u $dd\NEIGHB_PREP_AGG, clear
 
 univar tot_hh, dec(0)
 * su tot_hh, d
-* tab tot_hh, m
+* ta tot_hh, m
 
 texdoc s c 
 
@@ -1140,7 +1142,7 @@ texdoc s , cmdstrip // nodo
 
 univar tot_bb, dec(0)
 * su tot_bb, d
-* tab tot_bb, m
+* ta tot_bb, m
 
 texdoc s c 
 
@@ -1158,11 +1160,11 @@ texdoc s c
 
 texdoc s , nolog  nodo 
 
-use $dd\NEIGHB_RENT, clear
+u $dd\NEIGHB_RENT, clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
-tab b_maxdest, m 
+ta b_maxdest, m 
 
 texdoc s c 
 
@@ -1176,7 +1178,7 @@ As expected, results are slightly worse when we limit network analyses to 3-5 be
 
 texdoc s , nolog  nodo
 
-use $dd\NEIGHB_RENT, clear
+u $dd\NEIGHB_RENT, clear
 ren destinationrank dest_rank_bb_rnt
 drop b_totdist b_maxdest part 
 
@@ -1263,11 +1265,11 @@ Number of rented households (within 20km):
 
 texdoc s , cmdstrip 
 
-use $dd\NEIGHB_RENT_PREP_AGG, clear
+u $dd\NEIGHB_RENT_PREP_AGG, clear
 
 univar tot_hh_rnt, dec(0)
 * su tot_hh_rnt, d
-* tab tot_hh_rnt, m
+* ta tot_hh_rnt, m
 
 texdoc s c 
 
@@ -1280,7 +1282,7 @@ texdoc s , cmdstrip
 
 univar tot_bb_rnt, dec(0)
 * su tot_bb_rnt, d
-* tab tot_bb_rnt, m
+* ta tot_bb_rnt, m
 
 texdoc s c
 
@@ -1327,11 +1329,11 @@ Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were use
 texdoc s , nolog  nodo
 
 * 2013 ONLY 
-use idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 h13i23 h13i76 h13i50 h13i50 h13i51 using ///
+u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 h13i23 h13i76 h13i50 h13i50 h13i51 using ///
 	"$od\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
 
-tab filter13, m 
-tab stathh13, m 
+ta filter13, m 
+ta stathh13, m 
 count if !stathh13
 drop  if !stathh13
 drop stathh13 // filter13
@@ -1347,15 +1349,15 @@ univar i13eqon, d(0)
 tabl h13i20ac
 recode h13i20ac (-2=-1)
 la de H13I20AC -1 "no answer / doesn't know", modify
-tab h13i20ac, m
+ta h13i20ac, m
 
 * REASON WHY NO SAVINGS MIN. 500 SFRS MONTHLY
 tabl h13i20ac
-tab  h13i20ac h13i20ac, m
+ta  h13i20ac h13i20ac, m
 recode h13i20ac (-2=-1)
 la de H13I21AC -1 "no answer / doesn't know", modify
-tab h13i20ac if h13i20ac == 2, m
-tab h13i20ac, m
+ta h13i20ac if h13i20ac == 2, m
+ta h13i20ac, m
 
 
 * ********
@@ -1363,15 +1365,15 @@ tab h13i20ac, m
 tabl h13i22
 recode h13i22 (-2=-1)
 la de H13I22N -1 "no answer / doesn't know", modify
-tab h13i22, m
+ta h13i22, m
 
 * REASON WHY NO SAVINGS INTO 3RD PILLAR
 tabl h13i23
-tab  h13i23 h13i22, m
+ta  h13i23 h13i22, m
 recode h13i23 (-2=-1)
 la de H13I23 -1 "no answer / doesn't know", modify
-tab h13i23 if h13i22 == 2, m
-tab h13i23, m
+ta h13i23 if h13i22 == 2, m
+ta h13i23, m
 
 
 * ********
@@ -1380,7 +1382,7 @@ tabl h13i76a
 recode h13i76a (-3=-1)
 recode h13i76a (-2=-1)
 la de H13I76A -1 "inaplicable / no answer / doesn't know", modify
-tab h13i76a, m
+ta h13i76a, m
 
 
 * ********
@@ -1389,14 +1391,14 @@ tabl h13i50
 recode h13i50 (-3=-1)
 recode h13i50 (-2=-1)
 la de H13I50 -1 "inaplicable / no answer / doesn't know", modify
-tab h13i50, m
+ta h13i50, m
 
 
 * ********
 * FINANCIAL SITUATION MANAGEABLE
 tabl h13i51
 mvdecode h13i51, mv(-8/-1)
-tab h13i50, m
+ta h13i50, m
 univar h13i51
 
 
@@ -1422,7 +1424,7 @@ restore
 
 mmerge idhous13 using $dd\SHP_near_ORIGINS, t(1:1) 
 assert _merge != 2
-tab _merge geocoded, m 
+ta _merge geocoded, m 
 drop _merge
 
 * ********
@@ -1448,7 +1450,7 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-use $dd\SHP, clear
+u $dd\SHP, clear
 drop latitude longitude geocoded gisid
 d
 
@@ -1461,8 +1463,8 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-use $dd\SHP, clear
-tab filter13 geocoded, m row col nokey 
+u $dd\SHP, clear
+ta filter13 geocoded, m row col nokey 
 
 texdoc s c 
 
@@ -1496,7 +1498,7 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 
 texdoc s , nolog  nodo   
 
-use "$od\snc2_std_pers_90_00_14_all_207_full", clear 
+u "$od\snc2_std_pers_90_00_14_all_207_full", clear 
 
 * VARS NOT NEEDED
 drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *_nat *_dseparation *_dcivil *_ddiv_dod_p *_dmar *_civil_old *_canton dswiss zarflag zar natbirth *_comm2006 *_comm *_dmove *_canton2006 *_lang2006 *_urban2006 dis_conc1_icd8* dis_conc2_icd8* dis_init_icd8* dis_init_icd10* dis_cons_icd10* dis_conc1_icd10* dis_conc2_icd10*  *_mo_flag
@@ -1510,7 +1512,7 @@ drop if inlist(link, 9)
 
 * KEEPING ONLY THOSE AVAILABLE IN CENSUSES 2012+
 keep if r11_pe_flag | r12_pe_flag | r13_pe_flag | r14_pe_flag
-* tab last_census_seen, m 
+* ta last_census_seen, m 
 drop r??_pe_flag
 
 * DOD DISCREPANCIES ???
@@ -1610,13 +1612,13 @@ texdoc s c
 
 texdoc s , nolog
 
-use $dd\SNC_ALL, clear
+u $dd\SNC_ALL, clear
 
 texdoc s c 
 
 texdoc s , cmdstrip
 
-tab last_census_seen, m
+ta last_census_seen, m
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
 distinct mortid gisid
 
@@ -1633,21 +1635,21 @@ taking into account additionally education and occupation (note the details prov
 
 texdoc s , nolog  nodo   
 
-use $dd\SNC_ALL, clear
+u $dd\SNC_ALL, clear
 drop recid yod m_civil geox geoy year dupli hec
 
 * LIMIT TO SE DATA
 mmerge sncid using $dd\SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu SE)
 /*
-tab _merge se11_flag, m 
-tab _merge se12_flag, m 
-tab _merge se13_flag, m 
-tab _merge SE, m 
+ta _merge se11_flag, m 
+ta _merge se12_flag, m 
+ta _merge se13_flag, m 
+ta _merge SE, m 
 */
 keep if _merge == 3
 drop _merge 
 
-* EDUCATION >> USE CURRENT IF HIGHER
+* EDUCATION >> u CURRENT IF HIGHER
 gen educ = educ_agg
 replace educ = educ_curr if educ_curr > educ_agg
 la val educ educ_agg_enl
@@ -1681,9 +1683,9 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-use $dd\SNC_SE, clear
+u $dd\SNC_SE, clear
 
-tab SE, m 
+ta SE, m 
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
 
 texdoc s c 
@@ -1699,7 +1701,7 @@ texdoc s c
 
 texdoc s , nolog // nodo   
 
-use $dd\NEIGHB_PREP_AGG, clear
+u $dd\NEIGHB_PREP_AGG, clear
 
 mmerge gisid_orig using $dd\NEIGHB_RENT_PREP_AGG, t(1:1)
 assert _merge == 3
@@ -1766,7 +1768,7 @@ drop _merge
 order gisid buildid geox geoy , first 
 
 * ALSO NOTE THAT QUINTILES ARE A BIT 'BROKEN' NOW
-* tab ssep_10, m
+* ta ssep_10, m
 
 * FOR DATA VIZ WE CAN KILL THE SPATIAL DUPLICATES
 preserve 
@@ -1781,8 +1783,8 @@ drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt 
 note drop _all
 la da "SSEP 2.0 - index and coordinates"
 
-note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates and use for geographical analyses and geovisualization!
-note buildid: 	Unique ID. Use to link to SNC!
+note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates and u for geographical analyses and geovisualization!
+note buildid: 	Unique ID. u to link to SNC!
 note: 			Last changes: $S_DATE $S_TIME
 
 sa $dd\FINAL\SSEP_USER_v01, replace
@@ -1806,7 +1808,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-use $dd\FINAL\SSEP_USER_v01, clear
+u $dd\FINAL\SSEP_USER_v01, clear
 tabstat ssep, statistics( N min mean max ) by(ssep_10) format(%9.0fc)
 
 texdoc s c 
@@ -1817,8 +1819,8 @@ Note the small discrepancies in deciles distribution when switching back to \tex
 and assigns them \texttt{gisid} which is unique in the dataset. 
 For more details - see the section above on data preparation and spatial duplicates. \\
 \\
-Use \texttt{buildid} for linkage to the SNC. \\
-Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyses and geovisualization. 
+u \texttt{buildid} for linkage to the SNC. \\
+Remove duplicates of \texttt{buildid} and u \texttt{gisid} for spatial analyses and geovisualization. 
 ***/
 
 
@@ -1844,7 +1846,7 @@ Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyse
 
 texdoc s , nolog // nodo   
 
-use $dd\SHP, clear
+u $dd\SHP, clear
 
 mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
@@ -1889,12 +1891,12 @@ texdoc s , cmdstrip
 tabstat i13eqon if inlist(ssep_10, 1, 5, 10), statistics( mean sd ) by(ssep_10) format(%4.1f) not 
 tabstat h13i51 if inlist(ssep_10, 1, 5, 10), statistics( mean sd ) by(ssep_10) format(%4.1f) not 
 
-tab h13i20ac ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
-tab h13i21ac ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
-tab h13i22   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
-tab h13i23   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
-tab h13i76a  ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
-tab h13i50   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i20ac ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i21ac ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i22   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i23   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i76a  ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
+ta h13i50   ssep_10 if inlist(ssep_10, 1, 5, 10), m col nokey 
 
 texdoc s c 
 
@@ -1902,7 +1904,7 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{Validation - SNC mortality}
-\subsubsection{All cause mortality - 1.0}
+\subsubsection{All cau mortality - 1.0}
 \begin{center}
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
@@ -1910,7 +1912,7 @@ texdoc s c
 
 texdoc s , nolog // nodo   
 
-use $dd\SNC_ALL, clear
+u $dd\SNC_ALL, clear
 
 mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
@@ -1938,7 +1940,7 @@ global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xs
 global groups 	"groups(*.ssep_10 = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cau mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_al.pdf, replace
 
@@ -1946,7 +1948,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cause mortality - 2.0 results}
+\subsubsection{All cau mortality - 2.0 results}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al.pdf} 
@@ -1956,7 +1958,7 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 1.0}
+\subsubsection{Cau specific mortality - 1.0}
 \begin{center}
 \includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
 \end{center}
@@ -2012,7 +2014,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 2.0 results}
+\subsubsection{Cau specific mortality - 2.0 results}
 ***/
 
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
@@ -2046,7 +2048,7 @@ Breast and prostate cancer: for men and women respectively.
 
 texdoc s , nolog // nodo   
 
-use $dd\SNC_SE, clear
+u $dd\SNC_SE, clear
 
 mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
@@ -2077,7 +2079,7 @@ global misc 	"xline( 0.9(0.1)1.5, lcolor(gs14) lwidth(thin)) base ysize(3) xsize
 global groups 	"groups(*.ssep_10 = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang *.educ *.ocu)"
 
-coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cau mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_al_adj2.pdf, replace
 
@@ -2085,7 +2087,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cause mortality - 2.0}
+\subsubsection{All cau mortality - 2.0}
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al_adj2.pdf} 
 \end{center}
@@ -2146,7 +2148,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 2.0}
+\subsubsection{Cau specific mortality - 2.0}
 ***/
 
 
@@ -2182,8 +2184,8 @@ Note: results of traffic accidents were not possible to estimate due to small nu
 
 texdoc s , cmdstrip
 
-use "$dd\buclass", clear
-tab org_bu_class, m sort
+u "$dd\buclass", clear
+ta org_bu_class, m sort
 
 texdoc s c 
 
@@ -2199,7 +2201,7 @@ texdoc s c
 
 texdoc s , nolog  nodo   
 
-use $dd\SSEP, clear
+u $dd\SSEP, clear
 keep gisid ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent
 
 foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
@@ -2234,7 +2236,7 @@ texdoc s c
 
 texdoc s , nolog  nodo   
 
-use $dd\FINAL\SSEP_USER_v01, clear
+u $dd\FINAL\SSEP_USER_v01, clear
 drop ssep_3 ssep_5 buildid
 bysort gisid: keep if _n == 1
 sa $dd\temp, replace
