@@ -19,7 +19,7 @@ Version 05:~Final report:
 
 * ***************************************************
 
-qui do H:\RP\projects\sep2\Stata\do\00_run_first.do
+qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
 texdoc init $td\report_sep2_01_05.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
@@ -106,7 +106,7 @@ texdoc s , nolog nodo
 * BU_CLASS >> DATA FROM KS
 use "$od\buclassfloor\gwrgws_buclassfloor_prep" , clear 
 
-tabl org_bu_class
+tab org_bu_class, m
 keep if !inrange(org_bu_class, 1110, 1122) & !mi(org_bu_class)
 
 sort egid, stable 
@@ -124,7 +124,7 @@ drop ewid floor org_floor
 tab org_bu_class, m sort
 
 compress
-save "$dd\buclass" , replace 
+sa "$dd\buclass" , replace 
 
 * CHECKING AGAINST FULL SNC WITH 2014 AS TEST
 use "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
@@ -186,11 +186,11 @@ forv year = 10/14 {
 	gen year = `year'
 	
 	if `year' == 10 {	
-		save $dd\ORIGINS, replace
+		sa $dd\ORIGINS, replace
 	}
 	else {
 		append using $dd\ORIGINS
-		save $dd\ORIGINS, replace
+		sa $dd\ORIGINS, replace
 	}
 }
 
@@ -294,7 +294,7 @@ note gisid: "Separate ID for all buildings sharing the same coordinates; removes
 note hec: "Hectar coordinates defined analytically, ie. both end with 00 - it might be still legit pair of coordinates!"
 note: Last changes: $S_DATE $S_TIME
 compress
-save $dd\ORIGINS, replace
+sa $dd\ORIGINS, replace
 
 bysort gisid: keep if _n == 1
 drop buildid hec dupli
@@ -611,7 +611,7 @@ forv YR = 12/15 {
 	* tab num_edu educ_curr , m 
 	
 	compress 
-	save $dd\SE`YR'_pers_full, replace
+	sa $dd\SE`YR'_pers_full, replace
 
 
 	* ***************************************************
@@ -652,7 +652,7 @@ forv YR = 12/15 {
 	* univar ppr
 
 	compress
-	save $dd\SE`YR'_hh_full, replace
+	sa $dd\SE`YR'_hh_full, replace
 
 
 	* ***************************************************
@@ -725,15 +725,15 @@ forv YR = 12/15 {
 	texdoc local end_`YR' = `r(N)'	
 
 	if `YR' == 12 {
-		save $dd\SE, replace
+		sa $dd\SE, replace
 	}
 	else {
 		append using $dd\SE
-		save $dd\SE, replace
+		sa $dd\SE, replace
 	}
 }
 
-save $dd\SE_dupli, replace
+sa $dd\SE_dupli, replace
 
 sort sncid SE, stable 
 by sncid: keep if _n == _N 
@@ -743,7 +743,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-save $dd\SE, replace
+sa $dd\SE, replace
 
 texdoc s c
 
@@ -913,11 +913,11 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		save $dd\NEIGHB, replace
+		sa $dd\NEIGHB, replace
 	}
 	else {
 		append using $dd\NEIGHB
-		save $dd\NEIGHB, replace
+		sa $dd\NEIGHB, replace
 	}
 
 }
@@ -949,11 +949,11 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		save $dd\NEIGHB_RENT, replace
+		sa $dd\NEIGHB_RENT, replace
 	}
 	else {
 		append using $dd\NEIGHB_RENT
-		save $dd\NEIGHB_RENT, replace
+		sa $dd\NEIGHB_RENT, replace
 	}
 
 }
@@ -1072,7 +1072,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-save $dd\NEIGHB_PREP, replace
+sa $dd\NEIGHB_PREP, replace
 
 * AGGREGATING
 by gisid_orig: egen tot_ocu = total(den_ocu)
@@ -1114,7 +1114,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-save $dd\NEIGHB_PREP_AGG, replace
+sa $dd\NEIGHB_PREP_AGG, replace
 
 texdoc s c 
 
@@ -1231,7 +1231,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-save $dd\NEIGHB_RENT_PREP, replace
+sa $dd\NEIGHB_RENT_PREP, replace
 
 * AGGREGATING
 by gisid_orig: egen rent = mean(rentnet) 
@@ -1253,7 +1253,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-save $dd\NEIGHB_RENT_PREP_AGG, replace
+sa $dd\NEIGHB_RENT_PREP_AGG, replace
 
 texdoc s c 
 
@@ -1417,7 +1417,7 @@ preserve
 	import delim using "$od\SHP\SHP_near_ORIGINS_linked.csv", varn(1) clear
 	keep idhous13 gisid
 	compress
-	save "$dd\SHP_near_ORIGINS", replace
+	sa "$dd\SHP_near_ORIGINS", replace
 restore
 
 mmerge idhous13 using $dd\SHP_near_ORIGINS, t(1:1) 
@@ -1430,7 +1430,7 @@ note drop _all
 la da "SSEP 2.0 - SHP '13 data for validation"
 note: Last changes: $S_DATE $S_TIME
 compress
-save $dd\SHP, replace
+sa $dd\SHP, replace
 
 /*
 keep if geocoded
@@ -1604,7 +1604,7 @@ note civil: 	Missing data excluded
 note lang: 		Rhaeto-romansch to German langreg 
 note: 			Last changes: $S_DATE $S_TIME
 compress
-save $dd\SNC_ALL, replace
+sa $dd\SNC_ALL, replace
 
 texdoc s c 
 
@@ -1674,7 +1674,7 @@ la da "SSEP 2.0 - SNC 2012-2014 data for mortality analyses - SE overlap"
 note: 			Including people from SE used to calculate index
 note: 			Last changes: $S_DATE $S_TIME
 compress
-save $dd\SNC_SE, replace
+sa $dd\SNC_SE, replace
 
 texdoc s c 
 
@@ -1755,7 +1755,7 @@ la var ssep_5 "Swiss-SEP 2.0 - quintiles"
 la var ssep_10 "Swiss-SEP 2.0 - deciles"
 
 compress
-save $dd\SSEP, replace
+sa $dd\SSEP, replace
 
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS 
 * gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
@@ -1785,7 +1785,7 @@ note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove 
 note buildid: 	Unique ID. Use to link to SNC!
 note: 			Last changes: $S_DATE $S_TIME
 
-save $dd\FINAL\SSEP_USER_v01, replace
+sa $dd\FINAL\SSEP_USER_v01, replace
 export delim using "$dd\FINAL\SSEP_USER_v01.csv", delim(",")  replace
 
 codebookout "$dd\FINAL\SSEP_USER_v01_codebook.xls", replace
@@ -2237,7 +2237,7 @@ texdoc s , nolog  nodo
 use $dd\FINAL\SSEP_USER_v01, clear
 drop ssep_3 ssep_5 buildid
 bysort gisid: keep if _n == 1
-save $dd\temp, replace
+sa $dd\temp, replace
 
 import delim H:\RP\projects\networkSEP3\Stata\textres\SwissSEP-share\ssep_user_geo.csv, delimiter(comma) clear 
 
