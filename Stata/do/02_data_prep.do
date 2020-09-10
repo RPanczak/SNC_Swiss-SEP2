@@ -103,7 +103,7 @@ Report 1.06 - data prep}}
 
 * ***************************************************
 * DATA PREP  // TAKES A BIT OF TIME !!!
-texdoc s , nolog  nodo 
+texdoc s , nolog // nodo 
 
 * *****
 * BU_CLASS >> DATA FROM KS
@@ -803,7 +803,7 @@ texdoc s , cmdstrip // nodo
 
 qui u $dd\SE_dupli, replace
 duplicates report sncid
-qui rm $dd\SE_dupli.dta
+* qui rm $dd\SE_dupli.dta
 
 texdoc s c
 
@@ -1165,7 +1165,6 @@ texdoc s c
 /***
 Number of buildings (within 20km):
 ***/
-
 texdoc s , cmdstrip 
 
 u $dd\NEIGHB_PREP_AGG, clear
