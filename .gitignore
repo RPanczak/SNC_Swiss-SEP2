@@ -2,9 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+/geoadmin
 /gis
 /misc
 /Stata/data
 /Stata/do/old
+/Stata/do/98_geocode.do
+/Stata/gis
 /Stata/orig
 /Stata/textres
