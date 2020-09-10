@@ -11,17 +11,17 @@ global np = "SNC_Swiss-SEP2"
 if "`c(os)'" == "Windows" {
 
 	* PATH TO NEW PROJECT HERE WITHOUT DRIVE LETTER
-	global pp="C:\projects\SNC_Swiss-SEP2"
+	global pp="C:/projects/SNC_Swiss-SEP2"
 
 
 	* PATH SETTINGS
-	global dd  = "$pp\stata\data"
-	global dod = "$pp\stata\do"
-	global gd  = "$pp\stata\graphres"
-	global ld  = "$pp\stata\log"
-	global od  = "$pp\stata\orig"
-	global td  = "$pp\stata\textres"
-	global sp  = "$pp\stata\gis"
+	global dd  = "$pp/stata/data"
+	global dod = "$pp/stata/do"
+	global gd  = "$pp/stata/graphres"
+	global ld  = "$pp/stata/log"
+	global od  = "$pp/stata/orig"
+	global td  = "$pp/stata/textres"
+	global sp  = "$pp/stata/gis"
 
 	cd "$pp\Stata"
 }
