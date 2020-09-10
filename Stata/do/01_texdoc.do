@@ -1,19 +1,38 @@
 ﻿* qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
-texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\02_data_prep_05.do
+
+* PREPARATION
+texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\02_data_prep.do
 
 * COMPILE TEX 
-! pdflatex -shell-escape -output-directory=$td $td/report_sep2_01_05 
-! pdflatex -shell-escape -output-directory=$td $td/report_sep2_01_05
+! pdflatex -shell-escape -output-directory=$td $td/report_sep2_prep
+! pdflatex -shell-escape -output-directory=$td $td/report_sep2_prep
 	
 * RENAME COMPILED FILE WITH TODAY'S DATE
 local date = subinstr("$S_DATE", " ", "", .)
 * di "`date'"
-! COPY $td\report_sep2_01_05.pdf $dd\FINAL\report_sep2_final_`date'.pdf
+! COPY $td\report_sep2_prep.pdf $dd\FINAL\report_sep2_prep_`date'.pdf
+
+local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
+! start `acroread' $dd\FINAL\report_sep2_prep_`date'.pdf
+
+
+* ANALYSIS
+
+texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\03_data_analysis.do
+
+* COMPILE TEX 
+! pdflatex -shell-escape -output-directory=$td $td/report_sep2_analysis 
+! pdflatex -shell-escape -output-directory=$td $td/report_sep2_analysis
+	
+* RENAME COMPILED FILE WITH TODAY'S DATE
+local date = subinstr("$S_DATE", " ", "", .)
+* di "`date'"
+! COPY $td\report_sep2_analysis.pdf $dd\FINAL\report_sep2_analysis_`date'.pdf
 
 *
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
-! start `acroread' $dd\FINAL\report_sep2_final_`date'.pdf
+! start `acroread' $dd\FINAL\report_sep2_analysis_`date'.pdf
 
 
 
