@@ -304,7 +304,7 @@ drop buildid hec dupli
 xtile part = gisid, nq(6) // around 250k chunks of data
 * ta part, m
 
-export delim using "$gis\data\ORIGINS.csv", delim(",")  replace
+* export delim using "$sp\ORIGINS.csv", delim(",")  replace
 
 texdoc s c 
 
@@ -840,11 +840,11 @@ u $dd\SE, clear
 bysort gisid: keep if _n == 1
 keep gisid geox geoy rent35
 
-export delim using "$gis\data\DESTINATIONS.csv", delim(",")  replace
+export delim using "$sp\DESTINATIONS.csv", delim(",")  replace
 
 keep if rent35
 
-export delim using "$gis\data\DESTINATIONS_RENT.csv", delim(",")  replace
+export delim using "$sp\DESTINATIONS_RENT.csv", delim(",")  replace
 
 texdoc s c
 
@@ -1482,7 +1482,7 @@ sa $dd\SHP, replace
 /*
 keep if geocoded
 keep idhous13 latitude longitude
-export delim using "$gis\data\SHP_EXTRACT.csv", delim(",")  replace
+export delim using "$sp\SHP_EXTRACT.csv", delim(",")  replace
 */
 
 texdoc s c 
