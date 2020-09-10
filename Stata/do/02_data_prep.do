@@ -24,7 +24,7 @@ Version 06:~ReRun of analyses:
 
 qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
-texdoc init $td\report_sep2.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
+texdoc init $td\report_sep2_prep.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
 
@@ -103,7 +103,7 @@ Report 1.06 - data prep}}
 
 * ***************************************************
 * DATA PREP  // TAKES A BIT OF TIME !!!
-texdoc s , nolog // nodo 
+texdoc s , nolog  nodo 
 
 * *****
 * BU_CLASS >> DATA FROM KS
@@ -799,7 +799,7 @@ Note: Additionally older records of persons that participated in more than one S
 
 ***/
 
-texdoc s , cmdstrip nodo
+texdoc s , cmdstrip // nodo
 
 qui u $dd\SE_dupli, replace
 duplicates report sncid
@@ -1165,6 +1165,7 @@ texdoc s c
 /***
 Number of buildings (within 20km):
 ***/
+
 texdoc s , cmdstrip 
 
 u $dd\NEIGHB_PREP_AGG, clear
