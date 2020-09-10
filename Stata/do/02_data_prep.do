@@ -489,20 +489,20 @@ texdoc s , nolog // nodo
 
 forv YR = 12/15 { 
 
-	u sncid age hhyid educ_agg educ_curr occup* workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
+	u sncid age hhyid educ_agg educ_curr occup_isco workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
 
+	order hhyid, a(sncid)
 	isid sncid
 	isid hhyid
-	sort hhyid
-	order hhyid, a(sncid)
+	sort hhyid, stable
 
 	gen num_ocu1 = 0
 	gen num_ocu2 = 0
 	gen num_ocu3 = 0
 	* gen num_ocu4 = 0 // ISEI
 	* gen num_ocu5 = 0 // SIOPS
-	
 	gen den_ocu = 1 // !!! change below !!!
+	
 	gen num_edu = 0
 	
 	* *****
@@ -532,7 +532,7 @@ forv YR = 12/15 {
 	12 "Internat. official without diplomatic immunity" 
 	13 "Not classified elsewhere", replace	*/
 	
-	* ta resi, m sort 
+	* fre resi 
 
 	count if resiperm > 5
 	texdoc local res_`YR' = `r(N)'
@@ -541,7 +541,8 @@ forv YR = 12/15 {
 	* *****
 	* OCCUPATIONS
 	/* 
-	tabl workstatus
+	fre occup_isco
+	fre workstatus
 
 						   Self-employed       1
 			 Collaborating family member       2
@@ -561,59 +562,71 @@ forv YR = 12/15 {
 	* FIX DENOMINATOR >> NOT IN PAID EMPLOYMENT
 	replace den_ocu = 0 if workstatus >= 6
 
+	* MISSING INDICATOR
+	gen mis_ocu_isco = mi(occup_isco)
+	replace mis_ocu_isco = 0 if workstatus >= 6
+	replace den_ocu = . if mis_ocu_isco // also removed from denominator
+	
 	* FARMERS >> inrange(occup_isco, 9200, 9299) IS IN UNSKILLED OCCUP!
 	* UNSKILLED & MANUAL WORKERS >> BROADEST DEFINITION
+
 	replace num_ocu1 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu
 	replace num_ocu1 = 1 if inrange(occup_isco, 7000, 9999) & den_ocu
+	replace num_ocu1 = . if mis_ocu_isco
 
 	* UNSKILLED & MANUAL WORKERS >> NARROWER DEFINITION
 	replace num_ocu2 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu
 	replace num_ocu2 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu
+	replace num_ocu2 = . if mis_ocu_isco
 	
 	* UNSKILLED & MANUAL WORKERS >> NARROW DEFINITION >> NO FARMERS!
 	replace num_ocu3 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu
+	replace num_ocu3 = . if mis_ocu_isco
 
 	* ISEI 
 	if `YR' == 12 { 
 		qui do $dod\isco08\iskoisei08.do // only once needed to define
 	}
-	iskoisei08 num_ocu4, isko( occup_isco) 
+	iskoisei08 num_ocu4, isko(occup_isco) 
 
 	/*
 	ta den_ocu, m
+	ta mis_ocu_isco, m
 	ta num_ocu1, m 
 	ta num_ocu2, m 
 	ta num_ocu3, m 
 	
-	su num_ocu4
+	univar num_ocu4
+	* hist num_ocu4, w(5) start(0)
 	*/
 
 	* *****
 	/* EDUCATION 
-	tabl educ_curr 
+	fre educ_curr
 
 				No formal education       0
 			   Compulsory education       1
 	Upper secondary level education       2
 		   Tertiary level education       3
 
-	tabl educ_agg 
+	fre educ_agg 
 
 		Compulsory education or less       1
 	 Upper secondary level education       2
 			Tertiary level education       3
 
+	ta educ_agg educ_curr, m 
+	ta educ_agg educ_curr if den, m 
 	*/
-
-	* ta educ_agg educ_curr, m 
-	* ta educ_agg educ_curr if den, m 
 
 	replace num_edu = 1 if educ_agg == 1
 	replace num_edu = 0 if inlist(educ_curr, 2, 3)
 
-	* ta num_edu, m 
-	* ta num_edu educ_agg , m 
-	* ta num_edu educ_curr , m 
+	/*
+	ta num_edu, m 
+	ta num_edu educ_agg , m 
+	ta num_edu educ_curr , m 
+	*/
 	
 	compress 
 	sa $dd\SE`YR'_pers_full, replace
@@ -629,7 +642,6 @@ forv YR = 12/15 {
 
 	sort hhyid
 	order hhyid, a(sncid)
-
 	
 	* ACHTUNG THIS WAS ONLY SPOTTED AND ADDED AFTER ALL CALCULATIONS WERE ALMOST DONE
 	* SMALL MISTAKE AFFECTING 0.15% OF RENTED 3-5 HOUSEHOLDS WHICH ARE PART OR RENT N'HOODS BUT SHOULDN'T HAVE BEEN
@@ -736,6 +748,9 @@ forv YR = 12/15 {
 		append using $dd\SE
 		sa $dd\SE, replace
 	}
+	
+	rm $dd\SE`YR'_hh_full.dta
+	rm $dd\SE`YR'_pers_full.dta
 }
 
 sa $dd\SE_dupli, replace
@@ -780,7 +795,7 @@ texdoc s c
 \end{tabular}
 \end{table}
 
-Note: Additionally records of persons that participated in more than one SE were excluded.
+Note: Additionally older records of persons that participated in more than one SE were excluded.
 
 ***/
 
@@ -788,7 +803,7 @@ texdoc s , cmdstrip  nodo
 
 qui u $dd\SE_dupli, replace
 duplicates report sncid
-rm $dd\SE_dupli.dta
+qui rm $dd\SE_dupli.dta
 
 texdoc s c
 
@@ -807,12 +822,12 @@ ta SE, m
 texdoc s c
 
 /***
-Note the distinction between individuals, households, buildings and \texttt{gisid}, ie. individual and spatial resolutions:
+Note the distinction between individuals, households, buildings and \texttt{gisid}, ie. individual and two spatial resolutions:
 ***/
 
 texdoc s , cmdstrip
 
-distinct hhyid buildid gisid
+distinct sncid hhyid buildid gisid
 
 texdoc s c
 
@@ -844,7 +859,7 @@ texdoc s c
 	\item 2014 SE dataset is \textbf{missing infomration on \textit{'Sozioprofessionelle Kategorie'}} (variable \texttt{sopc}).  
 		It has been also signalled by BfS that this variable was of poor quality in 2010-2013 years. 
 		Therefore, it is not possible to identify individuals in manual and uskilled occupations in the same way as during 
-		construction of index 1.0. That was mitigated by u of the 
+		construction of original index. That was mitigated by using the 
 		\href{http://www.ilo.org/public/english/bureau/stat/isco/isco08/index.htm}{\textbf{ISCO-08 codes}} of occupations 
 		to define manual and uskilled workers and farmers.
 		Individuals whose occupations belong to one of the major groups 7, 8 \& 9 (for manual and unskilled) and 6 (farmers) were selected.\footnote{Additionally, 
@@ -853,6 +868,8 @@ texdoc s c
 		to obtain continuous measure of 'International Socio-Economic Index of occupational status'and calculating summary of these vlaues in n'hood} 				
 		Note that occupation codes are available only for people in \textbf{paid employment} so the denomintor 
 		for calculating 'employment' domain was adapted and all individuals that were not in paid employment were excluded.	
+		Also - small proportion of people eligible for calculations based on ISCO codes had them missing. Again, they were included in the study
+		but had their profession information replaced to missing and again the denominator was adjusted to reflect that.
 		
 	\item There is significant amount of individuals in SE data with \textbf{no link to household SE file} and all these records were excluded. 
 	
@@ -890,8 +907,11 @@ texdoc s c
 
 texdoc s , nolog nodo 
 
-* !!! ATTENTION !!! MOVE & UNZIP '$od\neighb.zip' TO ORIG DATA FOLDER BEFORE ATTEMPTING THAT !!! 
+* !!! ATTENTION !!! 
+* !!! UNZIP '$od\neighb.zip' TO ORIG DATA FOLDER BEFORE ATTEMPTING THAT !!! 
+* unzipfile $od\neighb.zip, replace
 * (same) backup data stored on SNC drive Y:\SNC\SSEP\2_0_connectivity.zip
+
 forv PART = 1/6 {
 	* import delim using "$od\neighb\SE_101_neighb_20km_`PART'.txt", varn(1) clear 
 	drop objectid originid destinationid shape_length
@@ -965,8 +985,6 @@ forv PART = 1/6 {
 
 texdoc s c 
 
-
-
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Results - buildings}
@@ -1014,7 +1032,7 @@ The two cases of buildings with no neighbours are legitimate and really have no 
 Few areas where less than 50 buildings were found in the n'hood (respecting 20km road network distance) were located in sparesly populated areas such as:
 	\href{https://goo.gl/maps/BXbgyCYtuGU2}{Gondo} (close to Simplon Pass) or \href{https://goo.gl/maps/mg15ptJPVTJ2}{Avers} (Grisons) villages. \\
 
-Building with the biggest (89!) number of SE households is located in \href{https://goo.gl/maps/oFeag8mQFdS2}{Lausanne} and in fact is pretty big.
+Building with the biggest (89!) number of SE households is located in \href{https://goo.gl/maps/oFeag8mQFdS2}{Lausanne} and is in fact pretty big.
 ***/
 
 /***
@@ -1035,14 +1053,14 @@ ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using $dd\SE, ukeep(sncid ppr num_ocu? den_ocu num_edu) umatch(gisid) 
+mmerge gisid_dest using $dd\SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu num_edu) umatch(gisid) 
 assert _merge == 3
 drop _merge
 
 * TWO EXCLUSIONS >> SEE ABOVE
 drop if inlist(gisid_orig, 644959, 1182865)
 
-* 50 HOUSEHOLDS + ALL HOUSEHOLDS FROM LAST BUILDING
+* 50 HOUSEHOLDS + !ALL HOUSEHOLDS FROM LAST BUILDING!
 sort gisid_orig dest_rank_bb gisid_dest, stable
 by   gisid_orig (dest_rank_bb gisid_dest): gen dest_rank_hh = _n
 
@@ -1059,16 +1077,17 @@ drop h_50 temp
 by gisid_orig: egen tot_hh = max(dest_rank_hh)
 
 * TOTAL BUILDINGS 
-sort gisid_orig gisid_dest // , stable
+sort gisid_orig gisid_dest, stable
 
 by gisid_orig gisid_dest: gen tot_bb = _n == 1 
 by gisid_orig: replace tot_bb = sum(tot_bb)
 by gisid_orig: replace tot_bb = tot_bb[_N] 
 
-
 * FURTHEST BUILDING DISTANCE
 by gisid_orig: egen max_dist = max(total_length)
 ren total_length ind_dist
+
+* br if inlist(gisid_orig, 94802)
 
 sort gisid_orig dest_rank_bb gisid_dest, stable
 
@@ -1079,12 +1098,16 @@ note: Last changes: $S_DATE $S_TIME
 compress
 sa $dd\NEIGHB_PREP, replace
 
+* u $dd\NEIGHB_PREP, clear
+
 * AGGREGATING
 by gisid_orig: egen tot_ocu = total(den_ocu)
+by gisid_orig: egen mis_ocu = total(mis_ocu_isco)
 by gisid_orig: egen ocu1 = total(num_ocu1)
 by gisid_orig: egen ocu2 = total(num_ocu2)
 by gisid_orig: egen ocu3 = total(num_ocu3)
 by gisid_orig: egen ocu4p = mean(num_ocu4) // ! achtung >> not counts !!
+
 * edu0 = tot_hh
 by gisid_orig: egen edu1 = total(num_edu)
 by gisid_orig: egen ppr1 = mean(ppr) // ! achtung >> not counts !!
@@ -1096,23 +1119,38 @@ drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu num_edu ppr dest_rank_hh
 gen ocu1p = ocu1/tot_ocu
 gen ocu2p = ocu2/tot_ocu
 gen ocu3p = ocu3/tot_ocu
-drop ocu1 ocu2 ocu3 tot_ocu
+gen mis_ocu_pr = mis_ocu / (tot_ocu + mis_ocu)
+drop ocu1 ocu2 ocu3 
+
+univar tot_hh
+univar tot_ocu			// should not have small numbers o_O
+* br if tot_ocu <= 10
+univar ocu1p-ocu3p 		// should be nicely <= 1 :>
+univar mis_ocu_pr 		// few places with half n'hood missing; but median is 7% :>
+* br if mis_ocu_pr > 0.5
 
 gen edu1p = edu1/tot_hh
+univar edu1p
 drop edu1
 
-order gisid_orig tot_hh tot_bb max_dist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 
+* drop mis_ocu_isco mis_ocu tot_ocu 
 
-la var tot_hh	"Total no of households in n'hood"
-la var ocu1p 	"Percent low occupation 1"
-la var ocu2p 	"Percent low occupation 2"
-la var ocu3p 	"Percent low occupation 3"
-la var ocu4p 	"Low occupation - mean ISEI"
-la var edu1p 	"Percent low education"
-la var ppr1		"Mean no of people per room"
+order gisid_orig tot_hh tot_bb max_dist ocu1p ocu2p ocu3p ocu4p tot_ocu mis_ocu mis_ocu_pr edu1p ppr1 
 
-la var tot_bb	"Total no of buildings in n'hood"
-la var max_dist	"Distance to furthest building"
+la var tot_hh		"Total no of households in n'hood"
+la var ocu1p 		"Percent low occupation 1"
+la var ocu2p 		"Percent low occupation 2"
+la var ocu3p 		"Percent low occupation 3"
+la var ocu4p 		"Low occupation - mean ISEI"
+la var edu1p 		"Percent low education"
+la var ppr1			"Mean no of people per room"
+
+la var mis_ocu		"Individuals with missing ISCO"
+la var mis_ocu_pr	"Share with missing ISCO"
+la var tot_ocu		"Denominator for ISCO"
+
+la var tot_bb		"Total no of buildings in n'hood"
+la var max_dist		"Distance to furthest building"
 
 la da "SSEP 2.0 - household n'hood aggregated stats"
 note drop _all
@@ -1122,6 +1160,19 @@ compress
 sa $dd\NEIGHB_PREP_AGG, replace
 
 texdoc s c 
+
+
+/***
+Number of buildings (within 20km):
+***/
+texdoc s , cmdstrip // nodo
+
+univar tot_bb, dec(0)
+* su tot_bb, d
+* ta tot_bb, m
+
+texdoc s c 
+
 
 /***
 Number of households (within 20km):
@@ -1137,17 +1188,6 @@ univar tot_hh, dec(0)
 
 texdoc s c 
 
-
-/***
-Number of buildings (within 20km):
-***/
-texdoc s , cmdstrip // nodo
-
-univar tot_bb, dec(0)
-* su tot_bb, d
-* ta tot_bb, m
-
-texdoc s c 
 
 /***
 Average distance [in meters] to the building where furthest SE household is located (within 20km):
@@ -1262,6 +1302,20 @@ sa $dd\NEIGHB_RENT_PREP_AGG, replace
 
 texdoc s c 
 
+
+/***
+Number of rented buildings (within 20km):
+***/
+
+texdoc s , cmdstrip 
+
+univar tot_bb_rnt, dec(0)
+* su tot_bb_rnt, d
+* ta tot_bb_rnt, m
+
+texdoc s c
+
+
 /***
 Number of rented households (within 20km):
 ***/
@@ -1276,18 +1330,6 @@ univar tot_hh_rnt, dec(0)
 
 texdoc s c 
 
-
-/***
-Number of rented buildings (within 20km):
-***/
-
-texdoc s , cmdstrip 
-
-univar tot_bb_rnt, dec(0)
-* su tot_bb_rnt, d
-* ta tot_bb_rnt, m
-
-texdoc s c
 
 /***
 Average distance [in meters] to the building where furthest rented SE household is located (within 20km):
@@ -1652,7 +1694,7 @@ ta _merge SE, m
 keep if _merge == 3
 drop _merge 
 
-* EDUCATION >> u CURRENT IF HIGHER
+* EDUCATION >> USE CURRENT IF HIGHER
 gen educ = educ_agg
 replace educ = educ_curr if educ_curr > educ_agg
 la val educ educ_agg_enl
