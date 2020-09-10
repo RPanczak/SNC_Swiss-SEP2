@@ -22,8 +22,6 @@ if "`c(os)'" == "Windows" {
 	global od  = "$pp\stata\orig"
 	global td  = "$pp\stata\textres"
 	global sp  = "$pp\stata\gis"
-	global gis = "H:\RP\projects\sep2\gis"
-	global T =   "T:\SNC"
 
 	cd "$pp\Stata"
 }
@@ -39,8 +37,12 @@ else if "`c(os)'" == "Unix"{
 	global ld="$pp/Stata/log"
 	global od="$pp/Stata/orig"
 	global td="$pp/Stata/textres"
+	global sp  = "$pp\stata\gis"
 
 	cd $pp/Stata
 }
+
+* set scheme plottig 
+set scheme plotplain
 
 noisily di in red "Settings ready for: $np project"
