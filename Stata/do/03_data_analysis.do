@@ -294,7 +294,9 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{Validation - SNC mortality}
-\subsubsection{All cause mortality - 1.0}
+
+\subsubsection{All cause mortality - 1.0
+
 \begin{center}
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
@@ -304,15 +306,17 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_ALL, clear
 
-* mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
-mmerge gisid using N:\HSR\RP\sep2\Stata\data\SSEP, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
+* mmerge gisid using N:\HSR\RP\sep2\Stata\data\SSEP, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
 * STSETTING
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
-* streg i.sex b10.ssep_10, $SET d(weibull) // SHOULD BE (THEORETICALLY) FASTER THX TO MULTICORE SUPPORT >> BUT HARD TO ESTIMATE ???
+* SHOULD BE (THEORETICALLY) FASTER THX TO MULTICORE SUPPORT 
+* BUT HARD TO ESTIMATE FOR UNIDENTIFIED REASONS???
+* streg i.sex b10.ssep_10, $SET d(weibull)
 
 * AGE & SEX
 global SET = "nopv base cformat(%5.2f)"
@@ -339,7 +343,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cau mortality - 2.0 results}
+\subsubsection{All cause mortality - 2.0 results}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al.pdf} 
@@ -349,7 +353,8 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cau specific mortality - 1.0}
+\subsubsection{Cause specific mortality - 1.0}
+
 \begin{center}
 \includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
 \end{center}
@@ -394,6 +399,7 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 		est sto `EVENT'_a		
 	}	
 }
+
 /*
 global lab 		"ylab(none) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.78 3.1)) xlab(0.8(0.2)2.4) xline(0.8(0.2)2.6, lcolor(gs14) lwidth(thin))"
 global misc 	"ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
