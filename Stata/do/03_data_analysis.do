@@ -11,7 +11,7 @@
 
 qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
-texdoc init $td\report_sep2.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
+texdoc init $td\report_sep2_analysis.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
 
@@ -66,6 +66,9 @@ clear
 % \doublespacing
 
 \usepackage{multirow}
+
+% https://tex.stackexchange.com/questions/52317/pdftex-warning-version-allowed
+\pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
 Report 1.06 - data analysis}}
@@ -295,7 +298,7 @@ texdoc s c
 \newpage
 \subsection{Validation - SNC mortality}
 
-\subsubsection{All cause mortality - 1.0
+\subsubsection{All cause mortality - 1.0}
 
 \begin{center}
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
