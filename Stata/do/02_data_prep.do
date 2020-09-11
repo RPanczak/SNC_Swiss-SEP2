@@ -1114,7 +1114,7 @@ by gisid_orig: egen ppr1 = mean(ppr) // ! achtung >> not counts !!
 
 keep if dest_rank_hh == 1 
 
-drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu num_edu ppr dest_rank_hh
+drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu num_edu ppr dest_rank_hh mis_ocu_isco
 
 gen ocu1p = ocu1/tot_ocu
 gen ocu2p = ocu2/tot_ocu
