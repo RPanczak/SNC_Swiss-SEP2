@@ -12,7 +12,7 @@ Version 04:~Dropping data from SE 10 & 11 >> no chance for flatarea.
 				Using ISCO instead of SOPC >> BfS warns about poor quality; and sopc is missing.
 				Integrating SE 15
 				Playing with different ideas for ISCO categorization
-Version 05:~Final report:
+Version 05:~Prelim report:
 				Using ISCO in range 6,000-9,999 as low professions
 				Somehow weird results of SE sample >> to be resolved?
 Version 06:~ReRun of analyses:
@@ -1733,3 +1733,7 @@ ta SE, m
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
 
 texdoc s c 
+
+/***
+\end{document}
+***/
