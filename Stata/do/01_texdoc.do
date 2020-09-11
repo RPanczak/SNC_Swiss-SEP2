@@ -18,7 +18,6 @@ local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
 
 
 * ANALYSIS
-
 texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\03_data_analysis.do
 
 * COMPILE TEX 
