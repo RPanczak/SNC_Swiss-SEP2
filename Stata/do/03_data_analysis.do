@@ -484,7 +484,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cau mortality - 2.0}
+\subsubsection{All cause mortality - 2.0}
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al_adj2.pdf} 
 \end{center}
@@ -545,7 +545,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cau specific mortality - 2.0}
+\subsubsection{Cause specific mortality - 2.0}
 ***/
 
 
@@ -591,7 +591,7 @@ texdoc s c
 ***/
 
 * clean graphs
-! del D:\Data_RP\data\projects\EOLC\Stata\*.gph
+! del C:\projects\EOLC\Stata\*.gph
 
 * ===================================================
 * CHECKING HRs OF INDIVIDUAL COMPONENTS OF THE INDEX
