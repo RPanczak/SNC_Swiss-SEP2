@@ -80,6 +80,9 @@ clear
 
 \usepackage{multirow}
 
+% https://tex.stackexchange.com/questions/52317/pdftex-warning-version-allowed
+\pdfminorversion=6
+
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
 Report 1.06 - data prep}}
 
