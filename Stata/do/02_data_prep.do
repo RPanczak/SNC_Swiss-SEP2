@@ -24,6 +24,8 @@ Version 06:~ReRun of analyses:
 
 qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
+qui version 15
+
 texdoc init $td\report_sep2_prep.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
@@ -132,7 +134,7 @@ ta org_bu_class, m sort
 compress
 sa "$dd\buclass" , replace 
 
-* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
+/* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
 u "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 keep if r14_pe_flag == 1
@@ -168,7 +170,7 @@ list if org_bu_class == 1274
 
 list if org_bu_class == 1220
 * r14_buildid 890985601 >> César Ritz hotel school https://goo.gl/maps/G4squepw5pQ2
-
+*/
 
 * *****
 * COLLECT ALL YEARS 
@@ -264,7 +266,7 @@ ta dupli, m
 * 33 caravans
 * 2581575 1176360 <> 47.052499592 7.072425038 <> https://goo.gl/maps/EKWKJuS7SCk 
 
-egen gisid = group(geox geoy)
+egen long gisid = group(geox geoy)
 distinct buildid gisid
 order gisid, a(buildid)
 
@@ -1625,6 +1627,7 @@ drop if mi(buildid)
 mmerge buildid using $dd\ORIGINS, t(n:1)
 keep if _merge == 3
 drop _merge 
+distinct buildid gisid
 
 * ALL DEATHS >> LATER CASUE SPECIFIC WILL BE ADDED
 gen d_all = (inlist(stopcode, 5, 15))
