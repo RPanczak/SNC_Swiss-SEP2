@@ -175,7 +175,7 @@ list if org_bu_class == 1220
 * *****
 * COLLECT ALL YEARS 
 forv year = 10/14 {
-
+	
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
 		using "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
@@ -267,7 +267,6 @@ ta dupli, m
 * 2581575 1176360 <> 47.052499592 7.072425038 <> https://goo.gl/maps/EKWKJuS7SCk 
 
 egen long gisid = group(geox geoy)
-distinct buildid gisid
 order gisid, a(buildid)
 
 * *****
@@ -302,6 +301,9 @@ note hec: "Hectar coordinates defined analytically, ie. both end with 00 - it mi
 note: Last changes: $S_DATE $S_TIME
 compress
 sa $dd\ORIGINS, replace
+
+distinct buildid gisid
+mdesc buildid gisid
 
 bysort gisid: keep if _n == 1
 drop buildid hec dupli
@@ -403,10 +405,13 @@ br *buildid *geox *geoy if r10_buildid == r11_buildid & r10_geox != r11_geox & !
 * hist temp if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
 
 * CHECKING COVERAGE
-* mmerge r10_buildid using $dd\ORIGINS, t(n:1) umatch(buildid)
+mmerge r10_buildid using $dd\ORIGINS, t(n:1) umatch(buildid)
+fre _merge
 
 * CHECKING COVERAGE <> VICE VERSA
-* mmerge buildid using "$od\snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r14_buildid)
+u $dd\ORIGINS, clear
+mmerge buildid using "$od\snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
+fre _merge
 
 texdoc s c 
 
