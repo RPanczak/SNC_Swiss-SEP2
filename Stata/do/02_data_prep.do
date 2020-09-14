@@ -171,7 +171,7 @@ list if org_bu_class == 1220
 
 
 * *****
-* COLLECT ALL YEARS <> 15 STILL NOT AVIALABLE
+* COLLECT ALL YEARS 
 forv year = 10/14 {
 
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
@@ -439,7 +439,7 @@ Key variables\footnote{Where 'yy' in the name stands for the year of the SE} nee
 	
 \begin{enumerate}
 
-	\item \texttt{sncid, hhyid, age, educ\_agg, educ\_curr, occup\_isco, workstatus} from the 
+	\item \texttt{sncid, hhyid, age, sex, educ\_agg, educ\_curr, occup\_isco, workstatus} from the 
 		\texttt{SEyy\_pers\_full} dataset.
 		
 	\item \texttt{hhyid, hhtype, hhpos, hhpers, flatrooms, typeowner, rentnet}
@@ -461,8 +461,11 @@ At next stage, individuals are excluded if:
 	\item Are younger than 19 at the time of SE.
 	
 	\item Have one of the 'unusual' types of residence permit 
-	(Cross-border commuter (G), Short stay (L), Asylum seeker (N), People in need of protection (S), Person required to notify (Meldepflichtige), 
-	Diplomat/internat. official with diplomatic immunity, Internat. official without diplomatic immunity, Not classified elsewhere)	
+	(Cross-border commuter (G), Short stay (L), Asylum seeker (N), People in need of protection (S), 
+	Person required to notify (Meldepflichtige), 
+	Diplomat/internat. official with diplomatic immunity, 
+	Internat. official without diplomatic immunity, 
+	Not classified elsewhere)	
 	
 	\item If individual participated in more than one SE, the latest record is kept.
 
@@ -763,9 +766,6 @@ order age_cat, a(age)
 /*
 fre age_cat
 table age_cat, contents(min age max age)
-
-tab sex mis_ocu_isco if den_ocu , m row
-tab age_cat mis_ocu_isco if den_ocu , m row
 */
 
 sa $dd\SE_dupli, replace
@@ -783,6 +783,14 @@ sa $dd\SE, replace
 texdoc s c
 
 
+/*
+* missing ISCO by sex&age
+
+ta sex mis_ocu_isco if den_ocu , m row
+ta age_cat mis_ocu_isco if den_ocu , m row
+ta age_cat mis_ocu_isco if den_ocu & sex , m row
+ta age_cat mis_ocu_isco if den_ocu & !sex, m row
+*/
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
