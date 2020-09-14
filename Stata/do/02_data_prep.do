@@ -514,7 +514,8 @@ forv YR = 12/15 {
 	gen num_ocu3 = 0
 	* gen num_ocu4 = 0 // ISEI
 	* gen num_ocu5 = 0 // SIOPS
-	gen den_ocu = 1 // !!! change below !!!
+	gen den_ocu1 = 1 // !!! change below !!!
+	gen den_ocu2 = 1 // !!! change below !!!
 	
 	gen num_edu = 0
 	
@@ -573,35 +574,30 @@ forv YR = 12/15 {
 	* http://www.harryganzeboom.nl/isco08/index.htm 
 
 	* FIX DENOMINATOR >> NOT IN PAID EMPLOYMENT
-	replace den_ocu = 0 if workstatus >= 6
+	replace den_ocu1 = 0 if workstatus >= 6
+	replace den_ocu2 = 0 if workstatus >= 6
 
 	* MISSING INDICATOR
 	gen mis_ocu_isco = mi(occup_isco)
 	replace mis_ocu_isco = 0 if workstatus >= 6
-	replace den_ocu = . if mis_ocu_isco // also removed from denominator
+	replace den_ocu2 = 0 if mis_ocu_isco // also removed from denominator #2
 	
 	* FARMERS >> inrange(occup_isco, 9200, 9299) IS IN UNSKILLED OCCUP!
 	* UNSKILLED & MANUAL WORKERS >> BROADEST DEFINITION
 
-	replace num_ocu1 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu
-	replace num_ocu1 = 1 if inrange(occup_isco, 7000, 9999) & den_ocu
-	replace num_ocu1 = . if mis_ocu_isco
+	replace num_ocu1 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu1
+	replace num_ocu1 = 1 if inrange(occup_isco, 7000, 9999) & den_ocu1
+	replace num_ocu1 = 0 if mis_ocu_isco
 
 	* UNSKILLED & MANUAL WORKERS >> NARROWER DEFINITION
-	replace num_ocu2 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu
-	replace num_ocu2 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu
-	replace num_ocu2 = . if mis_ocu_isco
+	replace num_ocu2 = 1 if inrange(occup_isco, 6000, 6399) & den_ocu1
+	replace num_ocu2 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu1
+	replace num_ocu2 = 0 if mis_ocu_isco
 	
 	* UNSKILLED & MANUAL WORKERS >> NARROW DEFINITION >> NO FARMERS!
-	replace num_ocu3 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu
-	replace num_ocu3 = . if mis_ocu_isco
-
-	* ISEI 
-	if `YR' == 12 { 
-		qui do $dod\isco08\iskoisei08.do // only once needed to define
-	}
-	iskoisei08 num_ocu4, isko(occup_isco) 
-
+	replace num_ocu3 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu1
+	replace num_ocu3 = 0 if mis_ocu_isco
+	
 	/*
 	ta den_ocu, m
 	ta mis_ocu_isco, m
@@ -610,8 +606,30 @@ forv YR = 12/15 {
 	ta num_ocu3, m 
 	
 	univar num_ocu4
-	* hist num_ocu4, w(5) start(0)
+	hist num_ocu4, w(5) start(0)
+
+	tab den_ocu1 mis_ocu_isco , m
+	tab den_ocu2 mis_ocu_isco , m
+
+	tab num_ocu1 mis_ocu_isco , m
+	tab num_ocu2 mis_ocu_isco , m
+	tab num_ocu3 mis_ocu_isco , m
+	
+	tab num_ocu1 den_ocu1 , m
+	tab num_ocu2 den_ocu1 , m
+	tab num_ocu3 den_ocu1 , m
+	
+	tab num_ocu1 den_ocu2 , m
+	tab num_ocu2 den_ocu2 , m
+	tab num_ocu3 den_ocu2 , m
 	*/
+
+	* ISEI 
+	if `YR' == 12 { 
+		qui do $dod\isco08\iskoisei08.do // only once needed to define
+	}
+	iskoisei08 num_ocu4, isko(occup_isco) 
+
 
 	* *****
 	/* EDUCATION 
@@ -793,6 +811,7 @@ texdoc s c
 /*
 * missing ISCO by sex&age
 
+ta SE mis_ocu_isco if den_ocu , m row
 ta sex mis_ocu_isco if den_ocu , m row
 ta age_cat mis_ocu_isco if den_ocu , m row
 ta age_cat mis_ocu_isco if den_ocu & sex , m row
@@ -1083,7 +1102,7 @@ ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using $dd\SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu num_edu) umatch(gisid) 
+mmerge gisid_dest using $dd\SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
 assert _merge == 3
 drop _merge
 
@@ -1131,11 +1150,16 @@ sa $dd\NEIGHB_PREP, replace
 * u $dd\NEIGHB_PREP, clear
 
 * AGGREGATING
-by gisid_orig: egen tot_ocu = total(den_ocu)
+by gisid_orig: egen tot_ocu1 = total(den_ocu1)
+by gisid_orig: egen tot_ocu2 = total(den_ocu2)
+assert tot_ocu2 <= tot_ocu1
 by gisid_orig: egen mis_ocu = total(mis_ocu_isco)
+assert tot_ocu1 == tot_ocu2 + mis_ocu
 by gisid_orig: egen ocu1 = total(num_ocu1)
 by gisid_orig: egen ocu2 = total(num_ocu2)
 by gisid_orig: egen ocu3 = total(num_ocu3)
+assert ocu2 <= ocu1
+assert ocu3 <= ocu2
 by gisid_orig: egen ocu4p = mean(num_ocu4) // ! achtung >> not counts !!
 
 * edu0 = tot_hh
@@ -1144,35 +1168,56 @@ by gisid_orig: egen ppr1 = mean(ppr) // ! achtung >> not counts !!
 
 keep if dest_rank_hh == 1 
 
-drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu num_edu ppr dest_rank_hh mis_ocu_isco
+drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu? num_edu ppr dest_rank_hh mis_ocu_isco 
 
-gen ocu1p = ocu1/tot_ocu
-gen ocu2p = ocu2/tot_ocu
-gen ocu3p = ocu3/tot_ocu
-gen mis_ocu_pr = mis_ocu / (tot_ocu + mis_ocu)
+gen ocu1p = ocu1/tot_ocu1
+gen ocu2p = ocu2/tot_ocu1
+gen ocu3p = ocu3/tot_ocu1
+
+gen mis_ocu_pr = mis_ocu / (tot_ocu1)
+
+gen ocu1p2 = ocu1/tot_ocu2
+gen ocu2p2 = ocu2/tot_ocu2
+gen ocu3p2 = ocu3/tot_ocu2
+
 drop ocu1 ocu2 ocu3 
 
+/*
+corr ocu1p ocu1p2
+gen temp = ocu1p - ocu1p2
+univar temp
+drop temp
+
 univar tot_hh
-univar tot_ocu			// should not have small numbers o_O
+univar tot_ocu?			// should not have small numbers o_O
 * br if tot_ocu <= 10
 univar ocu1p-ocu3p 		// should be nicely <= 1 :>
+univar ocu1p2-ocu3p2 		// should be nicely <= 1 :>
 univar mis_ocu_pr 		// few places with half n'hood missing; but median is 7% :>
 * br if mis_ocu_pr > 0.5
+*/
 
 gen edu1p = edu1/tot_hh
-univar edu1p
+* univar edu1p
 drop edu1
 
 * drop mis_ocu_isco mis_ocu tot_ocu 
 
-order gisid_orig tot_hh tot_bb max_dist ocu1p ocu2p ocu3p ocu4p tot_ocu mis_ocu mis_ocu_pr edu1p ppr1 
+order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
 
 la var tot_hh		"Total no of households in n'hood"
 la var ocu1p 		"Percent low occupation 1"
 la var ocu2p 		"Percent low occupation 2"
 la var ocu3p 		"Percent low occupation 3"
+
+la var ocu1p2 		"Percent low occupation 1 (mis!)"
+la var ocu2p2 		"Percent low occupation 2 (mis!)"
+la var ocu3p2 		"Percent low occupation 3 (mis!)"
+
 la var ocu4p 		"Low occupation - mean ISEI"
+
 la var edu1p 		"Percent low education"
+
 la var ppr1			"Mean no of people per room"
 
 la var mis_ocu		"Individuals with missing ISCO"
@@ -1576,7 +1621,7 @@ u "$od\snc2_std_pers_90_00_14_all_207_full", clear
 
 * VARS NOT NEEDED
 drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *_nat *_dseparation *_dcivil *_ddiv_dod_p *_dmar *_civil_old *_canton dswiss zarflag zar natbirth *_comm2006 *_comm *_dmove *_canton2006 *_lang2006 *_urban2006 dis_conc1_icd8* dis_conc2_icd8* dis_init_icd8* dis_init_icd10* dis_cons_icd10* dis_conc1_icd10* dis_conc2_icd10*  *_mo_flag
-drop r10_* se10_flag r11_commyears r11_commsincebirth m_nat_bin
+drop se10_flag r11_commyears r11_commsincebirth m_nat_bin // r10_* 
 
 * NO IMPUTED FOR THE MOMENT 
 * ta imputed, m
@@ -1586,7 +1631,7 @@ drop imputed *_imputed
 drop if inlist(link, 9)
 
 * KEEPING ONLY THOSE AVAILABLE IN CENSUSES 2012+
-keep if r11_pe_flag | r12_pe_flag | r13_pe_flag | r14_pe_flag
+keep if r12_pe_flag | r13_pe_flag | r14_pe_flag
 * ta last_census_seen, m 
 drop r??_pe_flag
 
@@ -1604,13 +1649,17 @@ drop if age < 30
 * su dstart, f
 replace dstart = mdy(1, 1, 2012) if dstart < mdy(1, 1, 2012)
 
+* distinct *buildid
+
 * UPDATE TO LATES AVAILABLE INFORMATION
 foreach VAR in nat_bin urban lang civil buildid {
-
-	gen `VAR' = r14_`VAR' if 	!mi(r14_`VAR')
-	replace `VAR' = r13_`VAR' if mi(r14_`VAR') & !mi(r13_`VAR')
-	replace `VAR' = r12_`VAR' if mi(r14_`VAR') &  mi(r13_`VAR') & !mi(r12_`VAR')
-	replace `VAR' = r11_`VAR' if mi(r14_`VAR') &  mi(r13_`VAR') &  mi(r12_`VAR') & !mi(r11_`VAR')
+	
+	gen long `VAR' = .
+	replace `VAR'  = r14_`VAR' if !mi(r14_`VAR')
+	replace `VAR'  = r13_`VAR' if  mi(`VAR') & !mi(r13_`VAR')
+	replace `VAR'  = r12_`VAR' if  mi(`VAR') & !mi(r12_`VAR')
+	replace `VAR'  = r11_`VAR' if  mi(`VAR') & !mi(r11_`VAR')
+	replace `VAR'  = r10_`VAR' if  mi(`VAR') & !mi(r10_`VAR')
 	
 	if "`VAR'" !=  "buildid" {
 		la val `VAR' `VAR'_l
@@ -1628,11 +1677,14 @@ drop if mi(civil)
 * mdesc buildid
 drop if mi(buildid)
 
+* distinct buildid
+
 * EXCLUDE THOSE FROM BUILDINGS WITHOUT SEP
 mmerge buildid using $dd\ORIGINS, t(n:1)
 keep if _merge == 3
 drop _merge 
-distinct buildid gisid
+isid sncid 
+* distinct sncid buildid gisid
 
 * ALL DEATHS >> LATER CASUE SPECIFIC WILL BE ADDED
 gen d_all = (inlist(stopcode, 5, 15))
