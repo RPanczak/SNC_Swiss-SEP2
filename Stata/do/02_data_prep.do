@@ -492,7 +492,7 @@ texdoc s , nolog // nodo
 
 forv YR = 12/15 { 
 
-	u sncid age hhyid educ_agg educ_curr occup_isco workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
+	u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
 
 	order hhyid, a(sncid)
 	isid sncid
@@ -755,6 +755,18 @@ forv YR = 12/15 {
 	rm $dd\SE`YR'_hh_full.dta
 	rm $dd\SE`YR'_pers_full.dta
 }
+
+* age cat
+egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
+order age_cat, a(age)
+
+/*
+fre age_cat
+table age_cat, contents(min age max age)
+
+tab sex mis_ocu_isco if den_ocu , m row
+tab age_cat mis_ocu_isco if den_ocu , m row
+*/
 
 sa $dd\SE_dupli, replace
 
