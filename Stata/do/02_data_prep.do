@@ -1572,6 +1572,7 @@ drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *
 drop r10_* se10_flag r11_commyears r11_commsincebirth m_nat_bin
 
 * NO IMPUTED FOR THE MOMENT 
+* ta imputed, m
 drop imputed *_imputed 
 
 * DROPPING: link == 9 >> 'Only census 1990'
@@ -1593,6 +1594,7 @@ gen age = (mdy(1, 1, 2012) - dob ) / 365.25
 drop if age < 30 
 
 * FIXING `dstart' VARIABLE >> CANNOT BE LOWER THAN 1.1.2012
+* su dstart, f
 replace dstart = mdy(1, 1, 2012) if dstart < mdy(1, 1, 2012)
 
 * UPDATE TO LATES AVAILABLE INFORMATION
@@ -1614,6 +1616,10 @@ recode lang (4=1)
 
 * MISSING CIVIL
 drop if mi(civil)
+
+* MISSING buildid
+* mdesc buildid
+drop if mi(buildid)
 
 * EXCLUDE THOSE FROM BUILDINGS WITHOUT SEP
 mmerge buildid using $dd\ORIGINS, t(n:1)
