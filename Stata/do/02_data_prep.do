@@ -766,6 +766,11 @@ forv YR = 12/15 {
 	rm $dd\SE`YR'_pers_full.dta
 }
 
+sa $dd\SE_dupli, replace
+
+sort sncid SE, stable 
+by sncid: keep if _n == _N 
+
 * age cat
 egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
 order age_cat, a(age)
@@ -774,11 +779,6 @@ order age_cat, a(age)
 fre age_cat
 table age_cat, contents(min age max age)
 */
-
-sa $dd\SE_dupli, replace
-
-sort sncid SE, stable 
-by sncid: keep if _n == _N 
 
 la da "SSEP 2.0 - 'destination' SE 2012-15 data for SwissSEP 2.0"
 note drop _all
