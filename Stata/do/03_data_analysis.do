@@ -136,6 +136,7 @@ xtile ssep_10 = ssep, nq(10)
 
 drop  i_hw ind A B
 
+
 * PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
 
 pca  ocu1p2 edu1p ppr1 rent [aw = tot_hh]
@@ -166,11 +167,11 @@ drop  i_hw ind A B
 ren gisid_orig gisid
 
 la de ssep_10 1 "1 (lowest SEP)" 2 "2" 3 "3" 4 "4" 5 "5th decile" 6 "6" 7 "7" 8 "8" 9 "9" 10 "10 (highest SEP)", modify 
-la val ssep_10 ssep2_10 ssep_10
+la val ssep_10 ssep2_10
 
 gen occup_diff = ssep - ssep2
-univar occup_diff
-hist occup_diff, w(0.25) start(-10) percent
+* univar occup_diff
+* hist occup_diff, w(0.25) start(-10) percent
 
 ta ssep_10 ssep2_10 , m
 
@@ -188,6 +189,14 @@ la var ssep2_10 	"Swiss-SEP 2.0 - deciles (ALT)"
 
 la var occup_diff 	"SSEP & ALT occup DIFF"
 
+* ACHTUNG THAT WILL MAKE MORE BUILDINGS 
+* gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
+mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid geox geoy)
+keep if _merge==3
+* assert _merge == 3
+drop _merge
+order gisid buildid geox geoy , first 
+
 compress
 sa $dd\SSEP_FULL_v03, replace
 
@@ -196,21 +205,12 @@ sa $dd\SSEP_FULL_v03, replace
 somersd ssep ssep2, taua transf(z) tdist
 scsomersd difference 0, transf(z) tdist
 
-
 * baplot ssep ssep2, info
 
 * batplot ssep ssep2, info
 batplot ssep ssep2, notrend info dp(0)
 gr export $td\gr\BA_occu.png, replace width(800) height(600)
 */
-
-* ACHTUNG THAT WILL MAKE MORE BUILDINGS 
-* gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
-mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid geox geoy)
-keep if _merge==3
-* assert _merge == 3
-drop _merge
-order gisid buildid geox geoy , first 
 
 * ALSO NOTE THAT QUINTILES ARE A BIT 'BROKEN' NOW
 * ta ssep_10, m
@@ -241,7 +241,6 @@ log using "$dd\FINAL\SSEP_USER_v03_data_description.txt", replace text
 d, f
 notes
 log close
-
 
 texdoc s c 
 
@@ -389,7 +388,7 @@ global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xs
 global groups 	"groups(*.ssep_10 = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cau mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_al.pdf, replace
 
@@ -465,7 +464,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cau specific mortality - 2.0 results}
+\subsubsection{Cause specific mortality - 2.0 results}
 ***/
 
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
@@ -530,7 +529,7 @@ global misc 	"xline( 0.9(0.1)1.5, lcolor(gs14) lwidth(thin)) base ysize(3) xsize
 global groups 	"groups(*.ssep_10 = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang *.educ *.ocu)"
 
-coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cau mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_al_adj2.pdf, replace
 
@@ -675,9 +674,8 @@ texdoc s , nolog  nodo
 u $dd\FINAL\SSEP_USER_v03, clear
 drop ssep_3 ssep_5 buildid
 bysort gisid: keep if _n == 1
-sa $dd\temp, replace
 
-import delim H:\RP\projects\networkSEP3\Stata\textres\SwissSEP-share\ssep_user_geo.csv, delimiter(comma) clear 
+use "C:\projects\SNC_Swiss-SEP1\Stata\textres\FINAL\DTA\ssep_user.dta"
 
 isid v0_buildid
 isid gwr_x00 gwr_y00
