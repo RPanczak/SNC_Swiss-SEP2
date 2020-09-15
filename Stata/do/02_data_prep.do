@@ -852,7 +852,7 @@ texdoc s , cmdstrip // nodo
 
 qui u $dd\SE_dupli, replace
 duplicates report sncid
-* qui rm $dd\SE_dupli.dta
+qui rm $dd\SE_dupli.dta
 
 texdoc s c
 
@@ -1153,12 +1153,14 @@ sa $dd\NEIGHB_PREP, replace
 by gisid_orig: egen tot_ocu1 = total(den_ocu1)
 by gisid_orig: egen tot_ocu2 = total(den_ocu2)
 assert tot_ocu2 <= tot_ocu1
+
 by gisid_orig: egen mis_ocu = total(mis_ocu_isco)
 assert tot_ocu1 == tot_ocu2 + mis_ocu
+
 by gisid_orig: egen ocu1 = total(num_ocu1)
 by gisid_orig: egen ocu2 = total(num_ocu2)
-by gisid_orig: egen ocu3 = total(num_ocu3)
 assert ocu2 <= ocu1
+by gisid_orig: egen ocu3 = total(num_ocu3)
 assert ocu3 <= ocu2
 by gisid_orig: egen ocu4p = mean(num_ocu4) // ! achtung >> not counts !!
 
@@ -1206,23 +1208,24 @@ drop edu1
 order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
 
 la var tot_hh		"Total no of households in n'hood"
+
 la var ocu1p 		"Percent low occupation 1"
 la var ocu2p 		"Percent low occupation 2"
 la var ocu3p 		"Percent low occupation 3"
+la var ocu4p 		"Low occupation - mean ISEI"
 
 la var ocu1p2 		"Percent low occupation 1 (mis!)"
 la var ocu2p2 		"Percent low occupation 2 (mis!)"
 la var ocu3p2 		"Percent low occupation 3 (mis!)"
 
-la var ocu4p 		"Low occupation - mean ISEI"
+la var mis_ocu		"Individuals with missing ISCO"
+la var mis_ocu_pr	"Share with missing ISCO"
+la var tot_ocu1		"Denominator for ISCO"
+la var tot_ocu2		"Denominator for ISCO (mis!)"
 
 la var edu1p 		"Percent low education"
 
 la var ppr1			"Mean no of people per room"
-
-la var mis_ocu		"Individuals with missing ISCO"
-la var mis_ocu_pr	"Share with missing ISCO"
-la var tot_ocu		"Denominator for ISCO"
 
 la var tot_bb		"Total no of buildings in n'hood"
 la var max_dist		"Distance to furthest building"
@@ -1338,7 +1341,6 @@ sort gisid_orig gisid_dest // , stable
 by gisid_orig gisid_dest: gen tot_bb_rnt = _n == 1 
 by gisid_orig: replace tot_bb_rnt = sum(tot_bb)
 by gisid_orig: replace tot_bb_rnt = tot_bb[_N] 
-
 
 * FURTHEST BUILDING DISTANCE
 by gisid_orig: egen max_dist_rnt = max(total_length)
@@ -1655,11 +1657,11 @@ replace dstart = mdy(1, 1, 2012) if dstart < mdy(1, 1, 2012)
 foreach VAR in nat_bin urban lang civil buildid {
 	
 	gen long `VAR' = .
-	replace `VAR'  = r14_`VAR' if !mi(r14_`VAR')
-	replace `VAR'  = r13_`VAR' if  mi(`VAR') & !mi(r13_`VAR')
-	replace `VAR'  = r12_`VAR' if  mi(`VAR') & !mi(r12_`VAR')
-	replace `VAR'  = r11_`VAR' if  mi(`VAR') & !mi(r11_`VAR')
-	replace `VAR'  = r10_`VAR' if  mi(`VAR') & !mi(r10_`VAR')
+	replace  `VAR'  = r14_`VAR' if !mi(r14_`VAR')
+	replace  `VAR'  = r13_`VAR' if  mi(`VAR') & !mi(r13_`VAR')
+	replace  `VAR'  = r12_`VAR' if  mi(`VAR') & !mi(r12_`VAR')
+	replace  `VAR'  = r11_`VAR' if  mi(`VAR') & !mi(r11_`VAR')
+	replace  `VAR'  = r10_`VAR' if  mi(`VAR') & !mi(r10_`VAR')
 	
 	if "`VAR'" !=  "buildid" {
 		la val `VAR' `VAR'_l
@@ -1772,7 +1774,7 @@ u $dd\SNC_ALL, clear
 drop recid yod m_civil geox geoy year dupli hec
 
 * LIMIT TO SE DATA
-mmerge sncid using $dd\SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu SE)
+mmerge sncid using $dd\SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
 /*
 ta _merge se11_flag, m 
 ta _merge se12_flag, m 
@@ -1796,8 +1798,8 @@ replace ocu = 1 if inrange(occup_isco, 100, 110)
 replace ocu = 2 if inrange(occup_isco, 200, 210)
 replace ocu = 3 if inrange(occup_isco, 300, 310)
 replace ocu = 5 if mi(occup_isco)
-replace ocu = 4 if den_ocu == 0 
-drop occup_isco den_ocu 
+replace ocu = 4 if den_ocu1 == 0 
+drop occup_isco den_ocu?
 
 la de ocu 1 "High occup" 2 "Medium occup" 3 "Low occup " 4 "Not in paid employ" 5 "Missing", modify 
 
