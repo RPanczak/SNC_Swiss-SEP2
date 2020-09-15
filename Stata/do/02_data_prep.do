@@ -1150,6 +1150,8 @@ sa $dd\NEIGHB_PREP, replace
 * u $dd\NEIGHB_PREP, clear
 
 * AGGREGATING
+drop sncid
+
 by gisid_orig: egen tot_ocu1 = total(den_ocu1)
 by gisid_orig: egen tot_ocu2 = total(den_ocu2)
 assert tot_ocu2 <= tot_ocu1
@@ -1822,6 +1824,21 @@ u $dd\SNC_SE, clear
 
 ta SE, m 
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Appendix}
+\subsection{Non-residential buildings}
+'Non-residential' buildings that were excluded from calculation of the index.
+***/
+
+texdoc s , cmdstrip
+
+u "$dd\buclass", clear
+ta org_bu_class, m sort
 
 texdoc s c 
 

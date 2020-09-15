@@ -11,6 +11,8 @@
 
 qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
 
+qui version 15
+
 texdoc init $td\report_sep2_analysis.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
@@ -134,23 +136,73 @@ xtile ssep_10 = ssep, nq(10)
 
 drop  i_hw ind A B
 
+* PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
+
+pca  ocu1p2 edu1p ppr1 rent [aw = tot_hh]
+
+predict i_hw
+
+/* DIAGNOSTICS
+estat kmo 
+estat residual, fit format(%7.3f)
+estat smc
+estat anti, nocov format(%7.3f)
+* screeplot, mean ci
+*/
+
+* 0-100 score
+* based on p.6 http://www.geosoft.com/media/uploads/resources/technical-notes/Principal%20Component%20Analysis.pdf
+egen A = min(i_hw)
+egen B = max(i_hw)
+gen ind = (i_hw-A)*100/(B-A)
+gen ssep2 = (ind - 100)*(-1)
+
+*xtile ssep2_3 = ssep, nq(3)
+*xtile ssep2_5 = ssep, nq(5)
+xtile ssep2_10 = ssep, nq(10)
+
+drop  i_hw ind A B
+
 ren gisid_orig gisid
 
 la de ssep_10 1 "1 (lowest SEP)" 2 "2" 3 "3" 4 "4" 5 "5th decile" 6 "6" 7 "7" 8 "8" 9 "9" 10 "10 (highest SEP)", modify 
-la val ssep_10 ssep_10
+la val ssep_10 ssep2_10 ssep_10
+
+gen occup_diff = ssep - ssep2
+univar occup_diff
+hist occup_diff, w(0.25) start(-10) percent
+
+ta ssep_10 ssep2_10 , m
 
 la da "SSEP 2.0 - index"
 note drop _all
 note: Last changes: $S_DATE $S_TIME
 
-la var gisid "Spatial ID"
-la var ssep "Swiss-SEP 2.0 index"
-la var ssep_3 "Swiss-SEP 2.0 - tertiles"
-la var ssep_5 "Swiss-SEP 2.0 - quintiles"
-la var ssep_10 "Swiss-SEP 2.0 - deciles"
+la var gisid 		"Spatial ID"
+la var ssep 		"Swiss-SEP 2.0 index"
+la var ssep2 		"Swiss-SEP 2.0 index (ALT)"
+la var ssep_3 		"Swiss-SEP 2.0 - tertiles"
+la var ssep_5 		"Swiss-SEP 2.0 - quintiles"
+la var ssep_10 		"Swiss-SEP 2.0 - deciles"
+la var ssep2_10 	"Swiss-SEP 2.0 - deciles (ALT)"
+
+la var occup_diff 	"SSEP & ALT occup DIFF"
 
 compress
-sa $dd\SSEP, replace
+sa $dd\SSEP_FULL_v03, replace
+
+/*
+* https://www.stata.com/meeting/uk19/slides/uk19_newson.pdf
+somersd ssep ssep2, taua transf(z) tdist
+scsomersd difference 0, transf(z) tdist
+
+
+* baplot ssep ssep2, info
+
+* batplot ssep ssep2, info
+batplot ssep ssep2, notrend info dp(0)
+gr export $td\gr\BA_occu.png, replace width(800) height(600)
+*/
 
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS 
 * gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
@@ -167,25 +219,25 @@ order gisid buildid geox geoy , first
 preserve 
 	bysort gisid: keep if _n == 1
 	drop buildid 
-	export delim using "$sp\SSEP.csv", delim(",")  replace
+	export delim using "$sp\SSEP_FULL_v03.csv", delim(",")  replace
 restore 
 
 * USER DATASET
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent
+drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* ssep2* occup_diff
 
 note drop _all
 la da "SSEP 2.0 - index and coordinates"
 
-note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates and u for geographical analyses and geovisualization!
-note buildid: 	Unique ID. u to link to SNC!
+note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates and use for geographical analyses and geovisualization!
+note buildid: 	Unique ID. use to link to SNC!
 note: 			Last changes: $S_DATE $S_TIME
 
-sa $dd\FINAL\SSEP_USER_v02, replace
-export delim using "$dd\FINAL\SSEP_USER_v02.csv", delim(",")  replace
+sa $dd\FINAL\SSEP_USER_v03, replace
+export delim using "$dd\FINAL\SSEP_USER_v03.csv", delim(",")  replace
 
-codebookout "$dd\FINAL\SSEP_USER_v02_codebook.xls", replace
+codebookout "$dd\FINAL\SSEP_USER_v03_codebook.xls", replace
 
-log using "$dd\FINAL\SSEP_USER_v02_data_description.txt", replace text 
+log using "$dd\FINAL\SSEP_USER_v03_data_description.txt", replace text 
 d, f
 notes
 log close
@@ -201,7 +253,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u $dd\FINAL\SSEP_USER_v02, clear
+u $dd\FINAL\SSEP_USER_v03, clear
 tabstat ssep, statistics( N min mean max ) by(ssep_10) format(%9.2fc)
 
 texdoc s c 
@@ -212,8 +264,8 @@ Note the small discrepancies in deciles distribution when switching back to \tex
 and assigns them \texttt{gisid} which is unique in the dataset. 
 For more details - see the section above on data preparation and spatial duplicates. \\
 \\
-u \texttt{buildid} for linkage to the SNC. \\
-Remove duplicates of \texttt{buildid} and u \texttt{gisid} for spatial analyses and geovisualization. 
+use \texttt{buildid} for linkage to the SNC. \\
+Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyses and geovisualization. 
 ***/
 
 
@@ -241,7 +293,7 @@ texdoc s , nolog // nodo
 
 u $dd\SHP, clear
 
-mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
@@ -309,8 +361,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_ALL, clear
 
-mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
-* mmerge gisid using N:\HSR\RP\sep2\Stata\data\SSEP, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
@@ -450,7 +501,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_SE, clear
 
-mmerge gisid using $dd\SSEP, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
@@ -575,21 +626,6 @@ Note: results of traffic accidents were not possible to estimate due to small nu
 ***/
 
 /***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{Appendix}
-\subsection{Non-residential buildings}
-'Non-residential' buildings that were excluded from calculation of the index.
-***/
-
-texdoc s , cmdstrip
-
-u "$dd\buclass", clear
-ta org_bu_class, m sort
-
-texdoc s c 
-
-/***
 \end{document}
 ***/
 
@@ -601,7 +637,7 @@ texdoc s c
 
 texdoc s , nolog  nodo   
 
-u $dd\SSEP, clear
+u $dd\SSEP_FULL_v03, clear
 keep gisid ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent
 
 foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
@@ -636,7 +672,7 @@ texdoc s c
 
 texdoc s , nolog  nodo   
 
-u $dd\FINAL\SSEP_USER_v02, clear
+u $dd\FINAL\SSEP_USER_v03, clear
 drop ssep_3 ssep_5 buildid
 bysort gisid: keep if _n == 1
 sa $dd\temp, replace
