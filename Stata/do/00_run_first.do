@@ -17,8 +17,6 @@ if "`c(os)'" == "Windows" {
 	* PATH SETTINGS
 	global dd  = "$pp\stata\data"
 	global dod = "$pp\stata\do"
-	global gd  = "$pp\stata\graphres"
-	global ld  = "$pp\stata\log"
 	global od  = "$pp\stata\orig"
 	global td  = "$pp\stata\textres"
 	global sp  = "$pp\stata\gis"
@@ -33,8 +31,6 @@ else if "`c(os)'" == "Unix"{
 	* general project path settings
 	global dd  = "$pp/Stata/data"
 	global dod = "$pp/Stata/do"
-	global gd  = "$pp/Stata/graphres"
-	global ld  = "$pp/Stata/log"
 	global od  = "$pp/Stata/orig"
 	global td  = "$pp/Stata/textres"
 	global sp  = "$pp/stata/gis"
@@ -42,7 +38,7 @@ else if "`c(os)'" == "Unix"{
 	cd $pp/Stata
 }
 
-set seed 1234
+set seed 12345
 
 * set scheme plottig 
 set scheme plotplain
