@@ -2,6 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+/data/Swiss-SEP1
+/data-raw/Swiss-SEP1
 /geoadmin
 /gis
 /misc
@@ -12,3 +14,5 @@
 /Stata/orig
 /Stata/textres
 bfg*
+*.zip
+*.qgz
