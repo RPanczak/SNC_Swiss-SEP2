@@ -1,0 +1,3 @@
+https://www.bfe.admin.ch/bfe/de/home/versorgung/statistik-und-geodaten/geoinformation/geodaten/mobilitaet/bikesharing-und-veloverleihsystem.html
+https://opendata.swiss/en/dataset/bikesharing-und-veloverleihsysteme
+https://data.geo.admin.ch/ch.bfe.bikesharing/

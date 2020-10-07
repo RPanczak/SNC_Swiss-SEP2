@@ -1,0 +1,19 @@
+[DE] Freie Nutzung. Quellenangabe ist Pflicht.
+- Sie dürfen diesen Datensatz für nicht kommerzielle Zwecke nutzen.
+- Sie dürfen diesen Datensatz für kommerzielle Zwecke nutzen.
+- Eine Quellenangabe ist Pflicht (Autor, Titel und Link zum Datensatz).
+
+[FR] Utilisation libre. Obligation d’indiquer la source.
+- Vous pouvez utiliser ce jeu de données à des fins non commerciales.
+- Vous pouvez utiliser ce jeu de données à des fins commerciales.
+- L’indication de la source (auteur, titre et lien vers le jeu de données) est obligatoire.
+
+[IT] Libero utilizzo. Indicazione della fonte obbligatoria.
+- Questo set di dati può essere utilizzato a fini non commerciali.
+- Questo set di dati può essere utilizzato a fini commerciali.
+- È obbligatoria l’indicazione della fonte (autore, titolo e link al set di dati)
+
+[EN] Open use. Must provide the source.
+- You may use this dataset for non-commercial purposes.
+- You may use this dataset for commercial purposes.
+- You must provide the source (author, title and link to the dataset).
