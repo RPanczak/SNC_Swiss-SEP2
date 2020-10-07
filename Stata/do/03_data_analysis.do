@@ -130,14 +130,14 @@ egen B = max(i_hw)
 gen ind = (i_hw-A)*100/(B-A)
 gen ssep = (ind - 100)*(-1)
 
-xtile ssep_3 = ssep, nq(3)
-xtile ssep_5 = ssep, nq(5)
+xtile ssep_3  = ssep, nq(3)
+xtile ssep_5  = ssep, nq(5)
 xtile ssep_10 = ssep, nq(10)
 
 drop  i_hw ind A B
 
 
-* PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
+/* PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
 
 pca  ocu1p2 edu1p ppr1 rent [aw = tot_hh]
 
@@ -164,8 +164,6 @@ xtile ssep2_10 = ssep, nq(10)
 
 drop  i_hw ind A B
 
-ren gisid_orig gisid
-
 la de ssep_10 1 "1 (lowest SEP)" 2 "2" 3 "3" 4 "4" 5 "5th decile" 6 "6" 7 "7" 8 "8" 9 "9" 10 "10 (highest SEP)", modify 
 la val ssep_10 ssep2_10
 
@@ -174,20 +172,23 @@ gen occup_diff = ssep - ssep2
 * hist occup_diff, w(0.25) start(-10) percent
 
 ta ssep_10 ssep2_10 , m
+*/
 
 la da "SSEP 2.0 - index"
 note drop _all
 note: Last changes: $S_DATE $S_TIME
 
+ren gisid_orig gisid
+
 la var gisid 		"Spatial ID"
 la var ssep 		"Swiss-SEP 2.0 index"
-la var ssep2 		"Swiss-SEP 2.0 index (ALT)"
+* la var ssep2 		"Swiss-SEP 2.0 index (ALT)"
 la var ssep_3 		"Swiss-SEP 2.0 - tertiles"
 la var ssep_5 		"Swiss-SEP 2.0 - quintiles"
 la var ssep_10 		"Swiss-SEP 2.0 - deciles"
-la var ssep2_10 	"Swiss-SEP 2.0 - deciles (ALT)"
+* la var ssep2_10 	"Swiss-SEP 2.0 - deciles (ALT)"
 
-la var occup_diff 	"SSEP & ALT occup DIFF"
+* la var occup_diff 	"SSEP & ALT occup DIFF"
 
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS 
 * gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
@@ -219,11 +220,12 @@ gr export $td\gr\BA_occu.png, replace width(800) height(600)
 preserve 
 	bysort gisid: keep if _n == 1
 	drop buildid 
+	sa  $dd\temp, replace
 	export delim using "$sp\SSEP_FULL_v03.csv", delim(",")  replace
 restore 
 
 * USER DATASET
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* ssep2* occup_diff
+drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu*  // ssep2* occup_diff
 
 note drop _all
 la da "SSEP 2.0 - index and coordinates"
@@ -291,8 +293,9 @@ Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyse
 texdoc s , nolog // nodo   
 
 u $dd\SHP, clear
+keep if geocoded
 
-mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
@@ -360,7 +363,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_ALL, clear
 
-mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
 
@@ -500,10 +503,9 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_SE, clear
 
-mmerge gisid using $dd\SSEP_FULL_v03, t(n:1) ukeep(ssep_10)
+mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_10)
 keep if _merge == 3
 drop _merge
-
 
 * STSETTING
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
@@ -636,7 +638,7 @@ Note: results of traffic accidents were not possible to estimate due to small nu
 
 texdoc s , nolog  nodo   
 
-u $dd\SSEP_FULL_v03, clear
+u $dd\temp, clear
 keep gisid ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent
 
 foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {

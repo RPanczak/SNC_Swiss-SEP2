@@ -203,7 +203,8 @@ forv year = 10/14 {
 
 
 * *****
-* 1M PRECISION IS FINE
+* 1M PRECISION IS FINE 
+* might be worth to investigate why 191 buildings have submeter coords?
 replace geox = round(geox)
 replace geoy = round(geoy)
 
@@ -224,7 +225,7 @@ drop dupli n N
 * *****
 * KEEP LATEST YEAR IF SAME ID BUT DIFFERENT COORDINATES
 duplicates t buildid, gen(dupli)
-ta dupli
+ta dupli, m
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
@@ -629,6 +630,8 @@ forv YR = 12/15 {
 		qui do $dod\isco08\iskoisei08.do // only once needed to define
 	}
 	iskoisei08 num_ocu4, isko(occup_isco) 
+	order num_ocu4 mis_ocu_isco, a(num_ocu3)
+	order mis_ocu_isco, b(den_ocu2)
 
 
 	* *****
@@ -1152,6 +1155,8 @@ sa $dd\NEIGHB_PREP, replace
 * AGGREGATING
 drop sncid
 
+sort gisid_orig dest_rank_bb gisid_dest, stable
+
 by gisid_orig: egen tot_ocu1 = total(den_ocu1)
 by gisid_orig: egen tot_ocu2 = total(den_ocu2)
 assert tot_ocu2 <= tot_ocu1
@@ -1205,8 +1210,6 @@ gen edu1p = edu1/tot_hh
 * univar edu1p
 drop edu1
 
-* drop mis_ocu_isco mis_ocu tot_ocu 
-
 order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
 
 la var tot_hh		"Total no of households in n'hood"
@@ -1235,6 +1238,8 @@ la var max_dist		"Distance to furthest building"
 la da "SSEP 2.0 - household n'hood aggregated stats"
 note drop _all
 note: Last changes: $S_DATE $S_TIME
+
+* drop tot_ocu? mis_ocu*
 
 compress
 sa $dd\NEIGHB_PREP_AGG, replace
@@ -1318,7 +1323,7 @@ drop if inlist(gisid_orig, 644959, 1182865)
 drop if !rent35
 drop rent35
 
-* ERROR >> SE SE DATA PREP ABOVE !!!
+* ERROR >> SE DATA PREP ABOVE !!!
 drop if mi(rentnet)
 
 * 50 HOUSEHOLDS + ALL HOUSEHOLDS FROM LAST BUILDING
@@ -1358,9 +1363,13 @@ compress
 sa $dd\NEIGHB_RENT_PREP, replace
 
 * AGGREGATING
+sort gisid_orig // dest_rank_hh_rnt, stable
+
 by gisid_orig: egen rent = mean(rentnet) 
 
-keep if dest_rank_hh_rnt == 1 
+by gisid_orig: keep if _n == 1 
+
+isid gisid_orig
 
 drop gisid_dest dest_rank_bb_rnt ind_dist_rnt rentnet dest_rank_hh_rnt sncid 
 
