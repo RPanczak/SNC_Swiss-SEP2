@@ -1,0 +1,51 @@
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(RColorBrewer)
+
+canton <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV03/shp/g1k20.shp")
+
+lake <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV03/shp/g1s20.shp")
+
+ssep_user_geo <- readRDS("data/Swiss-SEP1/ssep_user_geo.Rds") %>% 
+  mutate(ssep_d = factor(ssep_d,
+                         levels = 1:10,
+                         labels = c("1st - lowest", 
+                                    "2", "3", "4", 
+                                    "5th decile", 
+                                    "6", "7", "8", "9", 
+                                    "10th - highest")))
+         
+
+ssep_user_geo_samp <- ssep_user_geo %>% 
+  sample_frac(0.01)
+
+# display.brewer.pal(n = 10, name = "RdYlGn") 
+
+# sf plotting
+plot(st_geometry(canton), 
+     col = NA, border = "gray50", lwd = 0.1, 
+     reset = FALSE)
+plot(st_geometry(lake), 
+     # col = rgb(0, 135, 208, max = 255), border = NA, 
+     col = rgb(156, 213, 248, max = 255), border = NA, 
+     add = TRUE)
+plot(ssep_user_geo_samp["ssep_d"], 
+     pal = brewer.pal(n = 10, name = "RdYlGn"), 
+     cex = 0.01, pch = 16, 
+     add = TRUE)
+
+# gg version
+ggplot() + 
+  geom_sf(data = lake, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
+  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.25) +
+  geom_sf(data = ssep_user_geo, aes(colour = ssep_d), 
+          alpha = 0.66, size = 0.0001) +
+  scale_colour_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  guides(colour = guide_legend(title = "Swiss-SEP",
+                               override.aes = list(alpha = 1, size = 2)))
+
+
+ggsave("carto/01_sep-dots-r.png", width = 297, height = 210, units = "mm", dpi = 300)
+
