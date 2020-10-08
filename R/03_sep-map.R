@@ -8,14 +8,14 @@ canton <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV03/shp/g1k20.shp")
 lake <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV03/shp/g1s20.shp")
 
 ssep_user_geo <- readRDS("data/Swiss-SEP2/ssep_user_geo.Rds") %>% 
-  mutate(ssep_d = factor(ssep_10,
-                         levels = 1:10,
-                         labels = c("1st - lowest", 
-                                    "2", "3", "4", 
-                                    "5th decile", 
-                                    "6", "7", "8", "9", 
-                                    "10th - highest")))
-         
+  mutate(ssep_10 = factor(ssep_10,
+                          levels = 1:10,
+                          labels = c("1st - lowest", 
+                                     "2", "3", "4", 
+                                     "5th decile", 
+                                     "6", "7", "8", "9", 
+                                     "10th - highest")))
+
 
 ssep_user_geo_samp <- ssep_user_geo %>% 
   sample_frac(0.01)
@@ -32,7 +32,7 @@ plot(st_geometry(lake),
      add = TRUE)
 plot(ssep_user_geo_samp["ssep_10"], 
      pal = brewer.pal(n = 10, name = "RdYlGn"), 
-     cex = 0.01, pch = 16, 
+     cex = 0.1, pch = 16, 
      add = TRUE)
 
 # gg version
@@ -44,7 +44,7 @@ ggplot() +
   scale_colour_brewer(palette = "RdYlGn") +
   theme_void() + 
   guides(colour = guide_legend(title = "Swiss-SEP",
-                               override.aes = list(alpha = 1, size = 3)))
+                               override.aes = list(alpha = 1, shape = 16, size = 3)))
 
 
 ggsave("carto/01_sep-dots-r.png", width = 297, height = 210, units = "mm", dpi = 300)
