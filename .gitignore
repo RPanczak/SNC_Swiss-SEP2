@@ -3,8 +3,11 @@
 .RData
 .Ruserdata
 /data/Swiss-SEP1
-/data-raw/statpop
 /data-raw/Swiss-SEP1
+/data/Swiss-SEP2
+/data-raw/Swiss-SEP2
+/data-raw/statpop
+/data/statpop
 /geoadmin
 /gis
 /misc
