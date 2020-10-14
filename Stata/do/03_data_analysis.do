@@ -668,37 +668,3 @@ foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
 texdoc s c 
 
 
-* ===================================================
-* (SPATIAL) DIFFERENCES BETWEEN 1.0 AND 2.0
-* ??? UNFINISHED ??? 
-
-texdoc s , nolog  nodo   
-
-u $dd\FINAL\ssep2_user_geo, clear
-drop ssep_t ssep_q buildid
-bysort gisid: keep if _n == 1
-
-use "C:\projects\SNC_Swiss-SEP1\Stata\textres\FINAL\DTA\ssep_user.dta"
-
-isid v0_buildid
-isid gwr_x00 gwr_y00
-
-egen gisid_old = group(gwr_x00 gwr_y00)
-order gisid_old, first 
-distinct v0_buildid gisid_old
-
-sort gisid_old
-/*
-by gisid_old: egen t1 = max(ssep)
-by gisid_old: egen t2 = min(ssep)
-count if t1 != t2 
-drop t?
-*/
-by gisid_old: keep if _n == 1
-drop v0_buildid ssep_q ssep_t
-ren ssep ssep1
-ren ssep_d ssep_d1
-
-* mmerge gwr_x00 gwr_y00 using $dd\temp, t(1:1) umatch(geox geoy)
-
-texdoc s c 
