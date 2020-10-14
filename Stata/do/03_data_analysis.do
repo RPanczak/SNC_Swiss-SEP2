@@ -90,8 +90,7 @@ Report 1.06 - data analysis}}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Results}
-\subsection{PCA on n'hood aghgregated characteristics}
+\section{PCA on n'hood aghgregated characteristics}
 ***/
 
 texdoc s , nolog // nodo   
@@ -197,7 +196,7 @@ note gisid: "Unique ID groupping small amount of GWR buildings with the same coo
 
 compress
 note: Last changes: $S_DATE $S_TIME
-sa $dd\ssep2_full, replace
+sa $dd\FINAL\ssep2_full, replace
 
 /*
 * https://www.stata.com/meeting/uk19/slides/uk19_newson.pdf
@@ -256,7 +255,7 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Index deciles}
+\section{Index deciles}
 ***/
 
 texdoc s , cmdstrip
@@ -275,7 +274,7 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Maps}
+\section{Maps}
 
 \begin{center}
 \includegraphics[width=\textwidth]{gr/sep-old.png} 
@@ -288,7 +287,7 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Validation - SHP data}
+\section{Validation - SHP data}
 ***/
 
 texdoc s , nolog // nodo   
@@ -308,14 +307,14 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Income graph - 1.0}
+\subsection{Income graph - 1.0}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/orig/orig_income.png} 
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Income graph - 2.0}
+\subsection{Income graph - 2.0}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/shp_income.pdf} 
@@ -323,7 +322,7 @@ texdoc s c
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsubsection{Financial variables table - 1.0}
+\subsection{Financial variables table - 1.0}
 
 \begin{center}
 \includegraphics[width=.95\textwidth]{gr/orig/orig_shp_table.png} 
@@ -331,7 +330,7 @@ texdoc s c
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsubsection{Financial variables table - 2.0}
+\subsection{Financial variables table - 2.0}
 ***/
 
 texdoc s , cmdstrip
@@ -351,9 +350,9 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Validation - SNC mortality}
+\section{Validation - SNC mortality}
 
-\subsubsection{All cause mortality - 1.0}
+\subsection{All cause mortality - 1.0}
 
 \begin{center}
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
@@ -364,7 +363,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_ALL, clear
 
-mmerge gisid using $dd\temp, t(n:1) ukeep(ssep2_d)
+mmerge gisid using $dd\FINAL\ssep2_user, t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
@@ -400,7 +399,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cause mortality - 2.0 results}
+\subsection{All cause mortality - 2.0 results}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al.pdf} 
@@ -410,7 +409,7 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 1.0}
+\subsection{Cause specific mortality - 1.0}
 
 \begin{center}
 \includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
@@ -468,7 +467,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 2.0 results}
+\subsection{Cause specific mortality - 2.0 results}
 ***/
 
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
@@ -497,14 +496,14 @@ Breast and prostate cancer: for men and women respectively.
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Validation - SNC SE mortality}
+\section{Validation - SNC SE mortality}
 ***/
 
 texdoc s , nolog // nodo   
 
 u $dd\SNC_SE, clear
 
-mmerge gisid using $dd\temp, t(n:1) ukeep(ssep2_d)
+mmerge gisid using $dd\FINAL\ssep2_user, t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
@@ -540,7 +539,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{All cause mortality - 2.0}
+\subsection{All cause mortality - 2.0}
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/d_al_adj2.pdf} 
 \end{center}
@@ -601,7 +600,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Cause specific mortality - 2.0}
+\subsection{Cause specific mortality - 2.0}
 ***/
 
 
@@ -639,7 +638,7 @@ Note: results of traffic accidents were not possible to estimate due to small nu
 
 texdoc s , nolog  nodo   
 
-u $dd\temp, clear
+u $dd\FINAL\ssep2_user, clear
 keep gisid ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent
 
 foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
