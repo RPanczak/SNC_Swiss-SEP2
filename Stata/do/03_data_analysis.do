@@ -357,6 +357,8 @@ texdoc s c
 \begin{center}
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
+
+Note: calculations from old SNC data from the \textbf{2001 - 2008 period}, as described in paper!
 ***/
 
 texdoc s , nolog // nodo   
@@ -370,12 +372,8 @@ drop _merge
 * STSETTING
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
-* SHOULD BE (THEORETICALLY) FASTER THX TO MULTICORE SUPPORT 
-* BUT HARD TO ESTIMATE FOR UNIDENTIFIED REASONS???
-* streg i.sex b10.ssep2_d, $SET d(weibull)
-
 * AGE & SEX
-global SET = "nopv base cf(%5.2f)"
+global SET = "nopv base cformat(%5.2f)"
 stcox i.sex b10.ssep2_d, $SET
 est sto s1
 * ADJUSTED
@@ -418,7 +416,7 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 
 texdoc s , nolog // nodo   
 
-global SET = "nopv base cf(%5.2f)"
+global SET = "nopv base cformat(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
@@ -511,7 +509,7 @@ drop _merge
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 * AGE & SEX
-global SET = "nopv base cf(%5.2f)"
+global SET = "nopv base cformat(%5.2f)"
 stcox i.sex b10.ssep2_d, $SET
 est sto s1
 * ADJUSTED
@@ -550,7 +548,7 @@ Note: See notes from previous section.
 
 texdoc s , nolog // nodo   
 
-global SET = "nopv base cf(%5.2f)"
+global SET = "nopv base cformat(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
 global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
 
