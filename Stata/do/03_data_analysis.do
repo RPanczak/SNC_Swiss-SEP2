@@ -358,7 +358,7 @@ texdoc s c
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
 
-Note: calculations from old SNC data from the \textbf{2001 - 2008 period}, as described in paper!
+Note: calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
 ***/
 
 texdoc s , nolog // nodo   
@@ -414,6 +414,75 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 \end{center}
 ***/
 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{All cause mortality - 1.0 vs 2.0 using new data}
+***/
+
+texdoc s , nolog // nodo   
+
+import delim using "C:\projects\SNC_Swiss-SEP1\Stata\textres\FINAL\CSV\ssep_user_geo.csv", clear
+keep v0_buildid ssep_d
+save $dd\temp , replace
+
+u $dd\SNC_ALL, clear
+
+mdesc v0_buildid
+
+mmerge v0_buildid using $dd\temp, t(n:1) 
+keep if _merge == 3
+drop _merge
+rm $dd\temp.dta
+
+mmerge gisid using $dd\FINAL\ssep2_user, t(n:1) ukeep(ssep2_d)
+keep if _merge == 3
+drop _merge
+
+* STSETTING
+stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
+
+* v1
+global SET = "nopv base cformat(%5.2f)"
+stcox i.sex b10.ssep_d, $SET
+est sto sep1
+* v2
+global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+stcox i.sex b10.ssep2_d, $SET
+est sto sep2
+
+la var ssep2_d ""
+
+global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
+global title 	"size(medsmall) color(black) margin(vsmall)"
+global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
+global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
+global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+global groups 	"groups(*.ssep2_d = "Index 2.0" *.ssep_d = "Index 1.0")"
+global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
+
+coefplot (sep1, label(SSEP1)) (sep2, label(SSEP2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+
+gr export $td/gr/d_new_old.pdf, replace
+
+texdoc s c 
+
+/***
+\begin{center}
+\includegraphics[width=.75\textwidth]{gr/d_new_old.pdf} 
+\end{center}
+
+Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex. 
+
+\textbf{Both calculations} from new SNC data from the \textbf{2012 - 2014 period}!
+***/
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cause specific mortality - 2.0 results}
+***/
+
 texdoc s , nolog // nodo   
 
 global SET = "nopv base cformat(%5.2f)"
@@ -462,11 +531,6 @@ coefplot d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su, title("HRs of mortality",
 */
 texdoc s c 
 
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Cause specific mortality - 2.0 results}
-***/
 
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
 texdoc s , cmdstrip
