@@ -234,12 +234,12 @@ note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove 
 note buildid: 	Unique ID. use to link to SNC!
 note: 			Last changes: $S_DATE $S_TIME
 
-sa $dd\FINAL\SSEP_USER_v03, replace
-export delim using "$dd\FINAL\SSEP_USER_v03.csv", delim(",")  replace
+sa $dd\FINAL\ssep2_user_geo, replace
+export delim using "$dd\FINAL\ssep2_user_geo.csv", delim(",")  replace
 
-codebookout "$dd\FINAL\SSEP_USER_v03_codebook.xls", replace
+codebookout "$dd\FINAL\ssep2_user_geo_codebook.xls", replace
 
-log using "$dd\FINAL\SSEP_USER_v03_data_description.txt", replace text 
+log using "$dd\FINAL\ssep2_user_geo_data_description.txt", replace text 
 d, f
 notes
 log close
@@ -673,7 +673,7 @@ texdoc s c
 
 texdoc s , nolog  nodo   
 
-u $dd\FINAL\SSEP_USER_v03, clear
+u $dd\FINAL\ssep2_user_geo, clear
 drop ssep_3 ssep_5 buildid
 bysort gisid: keep if _n == 1
 
