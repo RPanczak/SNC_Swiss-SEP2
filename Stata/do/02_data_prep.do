@@ -1631,10 +1631,13 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 texdoc s , nolog // nodo   
 
 u "$od\snc2_std_pers_90_00_14_all_207_full", clear 
+ren v0_buildid buildid
 
 * VARS NOT NEEDED
 drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *_nat *_dseparation *_dcivil *_ddiv_dod_p *_dmar *_civil_old *_canton dswiss zarflag zar natbirth *_comm2006 *_comm *_dmove *_canton2006 *_lang2006 *_urban2006 dis_conc1_icd8* dis_conc2_icd8* dis_init_icd8* dis_init_icd10* dis_cons_icd10* dis_conc1_icd10* dis_conc2_icd10*  *_mo_flag
 drop se10_flag r11_commyears r11_commsincebirth m_nat_bin // r10_* 
+
+ren buildid v0_buildid
 
 * NO IMPUTED FOR THE MOMENT 
 * ta imputed, m
