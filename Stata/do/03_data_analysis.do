@@ -668,3 +668,30 @@ foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
 texdoc s c 
 
 
+* ===================================================
+* ver1.0 spatial checks
+
+texdoc s , nolog  nodo   
+
+import delim using "C:\projects\SNC_Swiss-SEP1\Stata\textres\FINAL\CSV\ssep_user_geo.csv", clear
+
+isid v0_buildid
+isid gwr_x00 gwr_y00
+
+egen gisid_old = group(gwr_x00 gwr_y00)
+order gisid_old, first 
+distinct v0_buildid gisid_old
+
+sort gisid_old
+/*
+by gisid_old: egen t1 = max(ssep)
+by gisid_old: egen t2 = min(ssep)
+count if t1 != t2 
+drop t?
+*/
+by gisid_old: keep if _n == 1
+drop v0_buildid ssep_q ssep_t
+ren ssep ssep1
+ren ssep_d ssep_d1
+
+texdoc s c 
