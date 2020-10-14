@@ -243,7 +243,6 @@ drop gisid
 
 la var buildid 		"SNC building ID"
 
-note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates when using for geographical analyses or geovisualization!
 note buildid: 	Unique GWR building ID. Use to link to SNC!
 
 la da "SSEP 2.0 - SNC user dataset of index and XY coordinates"
@@ -278,7 +277,7 @@ texdoc s c
 
 \begin{center}
 \includegraphics[width=\textwidth]{gr/sep-old.png} 
-\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/sep-new.png} 
+\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/01_sep-dots.png} 
 \end{center}
 ***/
 
@@ -407,16 +406,6 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Cause specific mortality - 1.0}
-
-\begin{center}
-\includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
-\end{center}
-***/
-
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{All cause mortality - 1.0 vs 2.0 using new data}
 ***/
@@ -476,9 +465,14 @@ texdoc s c
 Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex. 
 
 \textbf{Both calculations} from new SNC data from the \textbf{2012 - 2014 period}!
-***/
 
-/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cause specific mortality - 1.0}
+
+\begin{center}
+\includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
+\end{center}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Cause specific mortality - 2.0 results}
 ***/
