@@ -117,37 +117,9 @@ predict i_hw
 
 /* DIAGNOSTICS
 estat kmo 
-estat residual, fit format(%7.3f)
+estat residual, fit f(%7.3f)
 estat smc
-estat anti, nocov format(%7.3f)
-* screeplot, mean ci
-*/
-
-* 0-100 score
-* based on p.6 http://www.geosoft.com/media/uploads/resources/technical-notes/Principal%20Component%20Analysis.pdf
-egen A = min(i_hw)
-egen B = max(i_hw)
-gen ind = (i_hw-A)*100/(B-A)
-gen ssep = (ind - 100)*(-1)
-
-xtile ssep_t  = ssep, nq(3)
-xtile ssep_q  = ssep, nq(5)
-xtile ssep_d = ssep, nq(10)
-
-drop  i_hw ind A B
-
-
-/* PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
-
-pca  ocu1p2 edu1p ppr1 rent [aw = tot_hh]
-
-predict i_hw
-
-/* DIAGNOSTICS
-estat kmo 
-estat residual, fit format(%7.3f)
-estat smc
-estat anti, nocov format(%7.3f)
+estat anti, nocov f(%7.3f)
 * screeplot, mean ci
 */
 
@@ -158,91 +130,126 @@ egen B = max(i_hw)
 gen ind = (i_hw-A)*100/(B-A)
 gen ssep2 = (ind - 100)*(-1)
 
-*xtile ssep2_3 = ssep, nq(3)
-*xtile ssep2_5 = ssep, nq(5)
-xtile ssep2_10 = ssep, nq(10)
+xtile ssep2_t  = ssep2, nq(3)
+xtile ssep2_q  = ssep2, nq(5)
+xtile ssep2_d = ssep2, nq(10)
 
 drop  i_hw ind A B
 
-la de ssep_d 1 "1 (lowest SEP)" 2 "2" 3 "3" 4 "4" 5 "5th decile" 6 "6" 7 "7" 8 "8" 9 "9" 10 "10 (highest SEP)", modify 
-la val ssep_d ssep2_10
+/* PCA >> USING DIFFERENT OCCUP DENOMINATOR >> FOR SENSITIVITY ANALYSIS
 
-gen occup_diff = ssep - ssep2
+pca  ocu1p2 edu1p ppr1 rent [aw = tot_hh]
+
+predict i_hw
+
+/* DIAGNOSTICS
+estat kmo 
+estat residual, fit f(%7.3f)
+estat smc
+estat anti, nocov f(%7.3f)
+* screeplot, mean ci
+*/
+
+* 0-100 score
+* based on p.6 http://www.geosoft.com/media/uploads/resources/technical-notes/Principal%20Component%20Analysis.pdf
+egen A = min(i_hw)
+egen B = max(i_hw)
+gen ind = (i_hw-A)*100/(B-A)
+gen ssepALT = (ind - 100)*(-1)
+
+*xtile ssepALT_t = ssepALT, nq(3)
+*xtile ssepALT_q = ssepALT, nq(5)
+xtile ssepALT_d = ssepALT, nq(10)
+
+drop  i_hw ind A B
+
+la de ssepALT_d 1 "1 (lowest SEP)" 2 "2" 3 "3" 4 "4" 5 "5th decile" 6 "6" 7 "7" 8 "8" 9 "9" 10 "10 (highest SEP)", modify 
+la val ssepALT_d ssep2_10
+
+gen occup_diff = ssep2 - ssepALT
 * univar occup_diff
 * hist occup_diff, w(0.25) start(-10) percent
 
-ta ssep_d ssep2_10 , m
+ta ssep2_d ssepALT_d , m
 */
 
-la da "SSEP 2.0 - index"
-note drop _all
-note: Last changes: $S_DATE $S_TIME
 
+* BRING COORDINATES
+* ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
+mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(geox geoy)
+keep if _merge==3
+drop _merge
+order gisid geox geoy, first 
+bysort gisid: keep if _n == 1
+
+note drop _all
+
+la da "SSEP 2.0 - user dataset of index and coordinates with variables used for PCA"
 
 la var gisid 		"Spatial ID"
-la var ssep 		"Swiss-SEP 2.0 index"
-* la var ssep2 		"Swiss-SEP 2.0 index (ALT)"
-la var ssep_t 		"Swiss-SEP 2.0 - tertiles"
-la var ssep_q 		"Swiss-SEP 2.0 - quintiles"
-la var ssep_d 		"Swiss-SEP 2.0 - deciles"
-* la var ssep2_10 	"Swiss-SEP 2.0 - deciles (ALT)"
+la var ssep2 		"Swiss-SEP 2.0 index"
+la var ssep2_t 		"Swiss-SEP 2.0 - tertiles"
+la var ssep2_q 		"Swiss-SEP 2.0 - quintiles"
+la var ssep2_d 		"Swiss-SEP 2.0 - deciles"
 
-* la var occup_diff 	"SSEP & ALT occup DIFF"
-
-* ACHTUNG THAT WILL MAKE MORE BUILDINGS 
-* gisid IS NOT LONGER UNIQUE >> SWITCH TO buildid
-mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid geox geoy)
-keep if _merge==3
-* assert _merge == 3
-drop _merge
-order gisid buildid geox geoy , first 
+note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
 
 compress
-sa $dd\SSEP_FULL_v03, replace
+note: Last changes: $S_DATE $S_TIME
+sa $dd\ssep2_full, replace
 
 /*
 * https://www.stata.com/meeting/uk19/slides/uk19_newson.pdf
-somersd ssep ssep2, taua transf(z) tdist
+somersd ssep2 ssep2, taua transf(z) tdist
 scsomersd difference 0, transf(z) tdist
 
-* baplot ssep ssep2, info
+* baplot ssep ssepALT, info
 
-* batplot ssep ssep2, info
-batplot ssep ssep2, notrend info dp(0)
+* batplot ssep ssepALT, info
+batplot ssep ssepALT, notrend info dp(0)
 gr export $td\gr\BA_occu.png, replace width(800) height(600)
 */
-
-* ALSO NOTE THAT QUINTILES ARE A BIT 'BROKEN' NOW
-* ta ssep_d, m
-
-* FOR DATA VIZ WE CAN KILL THE SPATIAL DUPLICATES
-preserve 
-	bysort gisid: keep if _n == 1
-	drop buildid 
-	sa  $dd\temp, replace
-	export delim using "$sp\SSEP_FULL_v03.csv", delim(",")  replace
-restore 
 
 * USER DATASET
 drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu*  // ssep2* occup_diff
 
-note drop _all
-la da "SSEP 2.0 - index and coordinates"
+la da "SSEP 2.0 - user dataset of index and XY coordinates"
 
-note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates and use for geographical analyses and geovisualization!
-note buildid: 	Unique ID. use to link to SNC!
-note: 			Last changes: $S_DATE $S_TIME
+sa $dd\FINAL\ssep2_user, replace
 
-sa $dd\FINAL\ssep2_user_geo, replace
-export delim using "$dd\FINAL\ssep2_user_geo.csv", delim(",")  replace
+codebookout "$dd\FINAL\ssep2_user_codebook.xls", replace
 
-codebookout "$dd\FINAL\ssep2_user_geo_codebook.xls", replace
-
-log using "$dd\FINAL\ssep2_user_geo_data_description.txt", replace text 
+log using "$dd\FINAL\ssep2_user_data_description.txt", replace text 
 d, f
 notes
 log close
+
+export delim using "$dd\FINAL\ssep2_user_geo.csv", delim(",")  replace
+
+* BRING COORDINATES
+* ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
+mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid)
+keep if _merge==3
+drop _merge
+order gisid buildid, first 
+drop geox geoy
+
+* NOT UNIQUE ANY LONGER!
+distinct gisid
+drop gisid
+
+* ALSO NOTE THAT QUINTILES ARE A BIT 'BROKEN' NOW
+* ta ssep2_d, m
+
+la var buildid 		"SNC building ID"
+
+note gisid: 	Nonunique ID groupping buildings with the same coordinates. Remove duplilcates when using for geographical analyses or geovisualization!
+note buildid: 	Unique GWR building ID. Use to link to SNC!
+
+la da "SSEP 2.0 - SNC user dataset of index and XY coordinates"
+
+sa $dd\FINAL\ssep2_user_snc, replace
 
 texdoc s c 
 
@@ -254,21 +261,15 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u $dd\FINAL\ssep2_user_geo, clear
-tabstat ssep, statistics( N min mean max ) by(ssep_d) format(%9.2fc)
+u $dd\FINAL\ssep2_user, clear
+/*
+tabstat ssep2, s(min mean max ) by(ssep2_t) f(%9.6fc)
+tabstat ssep2, s(min mean max ) by(ssep2_q) f(%9.6fc)
+tabstat ssep2, s(min mean max ) by(ssep2_d) f(%9.6fc)
+*/
+tabstat ssep2, s( min mean max ) by(ssep2_d) f(%9.2fc)
 
 texdoc s c 
-
-/***
-Note the small discrepancies in deciles distribution when switching back to \texttt{buildid}. 
-\texttt{buildid} is not unique - it is 'spatial ID' that groups buildings with the same coordinates
-and assigns them \texttt{gisid} which is unique in the dataset. 
-For more details - see the section above on data preparation and spatial duplicates. \\
-\\
-use \texttt{buildid} for linkage to the SNC. \\
-Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyses and geovisualization. 
-***/
-
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -278,7 +279,7 @@ Remove duplicates of \texttt{buildid} and use \texttt{gisid} for spatial analyse
 
 \begin{center}
 \includegraphics[width=\textwidth]{gr/sep-old.png} 
-\includegraphics[width=\textwidth]{gr/sep-new.png} 
+\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/sep-new.png} 
 \end{center}
 ***/
 
@@ -295,11 +296,11 @@ texdoc s , nolog // nodo
 u $dd\SHP, clear
 keep if geocoded
 
-mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_d)
+mmerge gisid using $dd\FINAL\ssep2_user, t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
-gr box i13eqon, over(ssep_d) nooutsides ytitle("Equivalised yearly household income (SFr)") ylab(, angle(horizontal)) scheme(plotplain)
+gr box i13eqon, over(ssep2_d) noout ytitle("Equivalised yearly household income (SFr)") ylab(, angle(horizontal)) scheme(plotplain)
 
 gr export $td/gr/shp_income.pdf, replace
 
@@ -335,15 +336,15 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-tabstat i13eqon if inlist(ssep_d, 1, 5, 10), statistics( mean sd ) by(ssep_d) format(%4.1f) not 
-tabstat h13i51 if inlist(ssep_d, 1, 5, 10), statistics( mean sd ) by(ssep_d) format(%4.1f) not 
+tabstat i13eqon if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
+tabstat h13i51 if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
 
-ta h13i20ac ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
-ta h13i21ac ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
-ta h13i22   ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
-ta h13i23   ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
-ta h13i76a  ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
-ta h13i50   ssep_d if inlist(ssep_d, 1, 5, 10), m col nokey 
+ta h13i20ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+ta h13i21ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+ta h13i22   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+ta h13i23   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+ta h13i76a  ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+ta h13i50   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
 
 texdoc s c 
 
@@ -363,7 +364,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_ALL, clear
 
-mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_d)
+mmerge gisid using $dd\temp, t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
@@ -372,15 +373,15 @@ stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 * SHOULD BE (THEORETICALLY) FASTER THX TO MULTICORE SUPPORT 
 * BUT HARD TO ESTIMATE FOR UNIDENTIFIED REASONS???
-* streg i.sex b10.ssep_d, $SET d(weibull)
+* streg i.sex b10.ssep2_d, $SET d(weibull)
 
 * AGE & SEX
-global SET = "nopv base cformat(%5.2f)"
-stcox i.sex b10.ssep_d, $SET
+global SET = "nopv base cf(%5.2f)"
+stcox i.sex b10.ssep2_d, $SET
 est sto s1
 * ADJUSTED
 global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-stcox $ADJ b10.ssep_d, $SET
+stcox $ADJ b10.ssep2_d, $SET
 est sto s1a
 
 global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
@@ -388,7 +389,7 @@ global title 	"size(medsmall) color(black) margin(vsmall)"
 global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
 global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep_d = "Swiss-SEP index 2.0")"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
 coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
@@ -418,7 +419,7 @@ Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stse
 
 texdoc s , nolog // nodo   
 
-global SET = "nopv base cformat(%5.2f)"
+global SET = "nopv base cf(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
@@ -432,26 +433,26 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 	* LADIES 
 	if "`EVENT'" == "d_bc" {
 		
-		stcox b10.ssep_d if sex, $SET 
+		stcox b10.ssep2_d if sex, $SET 
 		est sto `EVENT'
-		stcox $ADJ b10.ssep_d if sex, $SET
+		stcox $ADJ b10.ssep2_d if sex, $SET
 		est sto `EVENT'_a		
 	}
 	
 	* GENTS
 	else if "`EVENT'" == "d_pc" {
 
-		stcox b10.ssep_d if !sex, $SET
+		stcox b10.ssep2_d if !sex, $SET
 		est sto `EVENT'
-		stcox $ADJ b10.ssep_d if !sex, $SET
+		stcox $ADJ b10.ssep2_d if !sex, $SET
 		est sto `EVENT'_a		
 	}	
 
 	else {
 	
-		stcox i.sex b10.ssep_d, $SET
+		stcox i.sex b10.ssep2_d, $SET
 		est sto `EVENT'
-		stcox i.sex $ADJ b10.ssep_d, $SET
+		stcox i.sex $ADJ b10.ssep2_d, $SET
 		est sto `EVENT'_a		
 	}	
 }
@@ -460,7 +461,7 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 global lab 		"ylab(none) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.78 3.1)) xlab(0.8(0.2)2.4) xline(0.8(0.2)2.6, lcolor(gs14) lwidth(thin))"
 global misc 	"ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
 
-coefplot d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su, title("HRs of mortality", $title) eform $lab $region $misc $legend keep(1.ssep_d)
+coefplot d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su, title("HRs of mortality", $title) eform $lab $region $misc $legend keep(1.ssep2_d)
 */
 texdoc s c 
 
@@ -473,18 +474,18 @@ texdoc s c
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
 texdoc s , cmdstrip
 
-estout d_lc d_lc_a, varl(1.ssep_d "Lung cancer") 				c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep_d) eform  mlabels("Age & sex" "Adjusted")
-estout d_bc d_bc_a, varl(1.ssep_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_pc d_pc_a, varl(1.ssep_d "Prostate cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_lc d_lc_a, varl(1.ssep2_d "Lung cancer") 				c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep2_d) eform  mlabels("Age & sex" "Adjusted")
+estout d_bc d_bc_a, varl(1.ssep2_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_pc d_pc_a, varl(1.ssep2_d "Prostate cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
-estout d_cv d_cv_a, varl(1.ssep_d "Cardiovascular")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a, varl(1.ssep_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a, varl(1.ssep_d "Stroke")					c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_cv d_cv_a, varl(1.ssep2_d "Cardiovascular")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a, varl(1.ssep2_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a, varl(1.ssep2_d "Stroke")					c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
  
-estout d_re d_re_a, varl(1.ssep_d "Respiratory")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_re d_re_a, varl(1.ssep2_d "Respiratory")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
-estout d_ac d_ac_a, varl(1.ssep_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_su d_su_a, varl(1.ssep_d "Suicide")					c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_ac d_ac_a, varl(1.ssep2_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_su d_su_a, varl(1.ssep2_d "Suicide")					c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
 texdoc s c 
 
@@ -503,7 +504,7 @@ texdoc s , nolog // nodo
 
 u $dd\SNC_SE, clear
 
-mmerge gisid using $dd\temp, t(n:1) ukeep(ssep_d)
+mmerge gisid using $dd\temp, t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
@@ -511,16 +512,16 @@ drop _merge
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 * AGE & SEX
-global SET = "nopv base cformat(%5.2f)"
-stcox i.sex b10.ssep_d, $SET
+global SET = "nopv base cf(%5.2f)"
+stcox i.sex b10.ssep2_d, $SET
 est sto s1
 * ADJUSTED
 global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-stcox $ADJ b10.ssep_d, $SET
+stcox $ADJ b10.ssep2_d, $SET
 est sto s1a
 * ADJUSTED 2
 global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
-stcox $ADJ2 b10.ssep_d, $SET
+stcox $ADJ2 b10.ssep2_d, $SET
 est sto s1a2
 
 global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
@@ -528,7 +529,7 @@ global title 	"size(medsmall) color(black) margin(vsmall)"
 global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.85 1.62)) xlab(0.9(0.1)1.5)"
 global misc 	"xline( 0.9(0.1)1.5, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep_d = "Swiss-SEP index 2.0")"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0")"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang *.educ *.ocu)"
 
 coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
@@ -550,7 +551,7 @@ Note: See notes from previous section.
 
 texdoc s , nolog // nodo   
 
-global SET = "nopv base cformat(%5.2f)"
+global SET = "nopv base cf(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
 global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
 
@@ -565,32 +566,32 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 	* LADIES 
 	if "`EVENT'" == "d_bc" {
 		
-		stcox b10.ssep_d if sex, $SET 
+		stcox b10.ssep2_d if sex, $SET 
 		est sto `EVENT'
-		stcox $ADJ b10.ssep_d if sex, $SET
+		stcox $ADJ b10.ssep2_d if sex, $SET
 		est sto `EVENT'_a	
-		stcox $ADJ2 b10.ssep_d if sex, $SET
+		stcox $ADJ2 b10.ssep2_d if sex, $SET
 		est sto `EVENT'_a2		
 	}
 	
 	* GENTS
 	else if "`EVENT'" == "d_pc" {
 
-		stcox b10.ssep_d if !sex, $SET
+		stcox b10.ssep2_d if !sex, $SET
 		est sto `EVENT'
-		stcox $ADJ b10.ssep_d if !sex, $SET
+		stcox $ADJ b10.ssep2_d if !sex, $SET
 		est sto `EVENT'_a
-		stcox $ADJ2 b10.ssep_d if !sex, $SET
+		stcox $ADJ2 b10.ssep2_d if !sex, $SET
 		est sto `EVENT'_a2		
 	}	
 
 	else {
 	
-		stcox i.sex b10.ssep_d, $SET
+		stcox i.sex b10.ssep2_d, $SET
 		est sto `EVENT'
-		stcox i.sex $ADJ b10.ssep_d, $SET
+		stcox i.sex $ADJ b10.ssep2_d, $SET
 		est sto `EVENT'_a
-		stcox i.sex $ADJ2 b10.ssep_d, $SET
+		stcox i.sex $ADJ2 b10.ssep2_d, $SET
 		est sto `EVENT'_a2		
 	}	
 }
@@ -607,18 +608,18 @@ texdoc s c
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
 texdoc s , cmdstrip
 
-estout d_lc d_lc_a d_lc_a2, varl(1.ssep_d "Lung cancer") 			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep_d) eform  mlabels("Age & sex" "Adjusted 1" "Adjusted 2")
-estout d_bc d_bc_a d_bc_a2, varl(1.ssep_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_pc d_pc_a d_pc_a2, varl(1.ssep_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_lc d_lc_a d_lc_a2, varl(1.ssep2_d "Lung cancer") 			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep2_d) eform  mlabels("Age & sex" "Adjusted 1" "Adjusted 2")
+estout d_bc d_bc_a d_bc_a2, varl(1.ssep2_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_pc d_pc_a d_pc_a2, varl(1.ssep2_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
-estout d_cv d_cv_a d_cv_a2, varl(1.ssep_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a d_mi_a2, varl(1.ssep_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a d_mi_a2, varl(1.ssep_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_cv d_cv_a d_cv_a2, varl(1.ssep2_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a d_mi_a2, varl(1.ssep2_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a d_mi_a2, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
  
-estout d_re d_re_a d_re_a2, varl(1.ssep_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+estout d_re d_re_a d_re_a2, varl(1.ssep2_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
-* estout d_ac d_ac_a d_ac_a2, varl(1.ssep_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
-estout d_su d_su_a d_su_a2, varl(1.ssep_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep_d) eform  mlabels(, none) collabels(, none)
+* estout d_ac d_ac_a d_ac_a2, varl(1.ssep2_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_su d_su_a d_su_a2, varl(1.ssep2_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
 texdoc s c 
 
@@ -652,7 +653,7 @@ mmerge gisid using $dd\SNC_ALL, t(1:n)
 keep if _merge == 3
 drop _merge
 
-global SET = "nopv base cformat(%5.2f)"
+global SET = "nopv base cf(%5.2f)"
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 
