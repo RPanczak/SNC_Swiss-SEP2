@@ -229,6 +229,8 @@ sep_dif_freq %>%
   theme_classic()
 ```
 
+<!-- ------------------------------------------------------------ --> 
+
 # Spatial discrepancies
 
 ## SSEP 2.0 higher
