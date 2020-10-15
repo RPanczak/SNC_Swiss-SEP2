@@ -1,0 +1,132 @@
+---
+title: "Swiss-SEP 2.0"
+description: "Differences 1.0 vs 2.0"
+date: "`r Sys.Date()`"
+author:
+  - name: Radoslaw Panczak 
+    url: https://github.com/RPanczak
+    affiliation: ISPM
+    affiliation_url: https://www.ispm.unibe.ch/
+    orcid_id: 0000-0001-5141-683X
+# bibliography: biblio.bib
+output:
+  distill::distill_article:
+    highlight: pygments
+    toc: true
+    toc_depth: 1
+    number_sections: true
+editor_options: 
+  chunk_output_type: console
+---
+
+<!-- ------------------------------------------------------------ --> 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
+                      cache = FALSE, 
+                      # fig.width=8, fig.height=6, 
+                      # out.width="800px", out.height="600px",
+                      dpi=300)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+options(scipen=999)
+set.seed(12345)
+library(pacman) 
+p_load(dplyr, scales, sf, tmap, tmaptools)
+tmap_mode("view") # makes map interactive
+```
+
+<!-- ------------------------------------------------------------ --> 
+
+# Data
+
+## Input 
+
+```{r load, include=FALSE}
+# important to work with planar coords!
+
+sep1 <- readRDS("data/Swiss-SEP1/ssep_user_geo.Rds") %>% 
+  select(v0_buildid, ssep, ssep_d) %>% 
+  rename(ssep1 = ssep,
+         ssep1_d = ssep_d) %>% 
+  mutate(ssep1_d = factor(ssep1_d,
+                          levels = 1:10,
+                          labels = c("1st - lowest", 
+                                     "2", "3", "4", 
+                                     "5th decile", 
+                                     "6", "7", "8", "9", 
+                                     "10th - highest")))
+
+sep2 <- readRDS("data/Swiss-SEP2/ssep2_user_geo.Rds") %>% 
+  select(gisid, ssep2, ssep2_d) %>% 
+  mutate(ssep2_d = factor(ssep2_d,
+                          levels = 1:10,
+                          labels = c("1st - lowest", 
+                                     "2", "3", "4", 
+                                     "5th decile", 
+                                     "6", "7", "8", "9", 
+                                     "10th - highest")))
+```
+
+Using `r number(nrow(sep1), big.mark = ",")` n'hoods from version 1.0 and `r number(nrow(sep2), big.mark = ",")` from version 2.0.
+
+```{r}
+sep2 %>% 
+  slice(1:5) %>% 
+  knitr::kable(digits = c(0, 1, 0),
+               caption = 'An example of Swiss-SEP 2.0 data.')
+```
+
+## Spatial join & distance
+
+Calculations done with `sf` package funcion `st_join` (with `st_nearest_feature` option) and `st_distance` (of the nearest feature)
+
+```{r eval=FALSE, include=FALSE}
+# results with coordinates of 'sep2' features
+# takes some time to compute distance
+
+sep2_sep1_join <- st_join(sep2, sep1,
+                          join = st_nearest_feature)
+
+# adding distance
+# solution from @Spacedman
+# https://gis.stackexchange.com/questions/349955/getting-a-new-column-with-distance-to-the-nearest-feature-in-r
+nearest <- st_nearest_feature(sep2, sep1)
+distance <- st_distance(sep2, sep1[nearest, ], by_element = TRUE)
+sep2_sep1_join$distance <- distance
+rm(nearest, dist)
+
+saveRDS(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
+```
+
+<!-- ------------------------------------------------------------ --> 
+
+# Distance discrepancies
+
+Top 20 n'hood centres of 2.0 index that are furthest from 1.0 n'hood. Using straight line distance.
+
+```{r dist-discrep, fig.fullwidth = TRUE, fig.cap = "A full width figure."}
+sep2_sep1_join <- readRDS("data/Swiss-SEP2/sep2_sep1_join.Rds")
+
+top20_dist <- sep2_sep1_join %>% 
+  arrange(-distance) %>% 
+  slice(1:20) %>% 
+  mutate(rank = row_number(),
+         distance = as.numeric(distance))
+
+top20_dist_neigh <- sep1 %>% 
+  inner_join(st_drop_geometry(select(top20_dist, v0_buildid)))
+
+tm_shape(top20_dist) +
+  tm_markers(col = "distance", clustering = FALSE) +
+  tm_shape(top20_dist_neigh) +
+  tm_dots()
+```
+
+
+
+
+
+
+
+
+
