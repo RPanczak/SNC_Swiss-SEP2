@@ -18,6 +18,7 @@
 /Stata/orig
 /Stata/textres
 bfg*
+*.html
 *.zip
 *.qgz
 *.pgw
