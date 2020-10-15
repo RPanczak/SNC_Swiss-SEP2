@@ -19,6 +19,7 @@
 /Stata/textres
 bfg*
 *.html
+*.png
 *.zip
 *.qgz
 *.pgw
