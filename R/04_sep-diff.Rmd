@@ -31,7 +31,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(dplyr, scales, sf, tmap, tmaptools)
+p_load(dplyr, ggplot2, scales, sf, tmap, tmaptools)
 tmap_mode("view") # makes map interactive
 ```
 
@@ -102,9 +102,9 @@ saveRDS(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
 
 # Distance discrepancies
 
-Top 20 n'hood centres of 2.0 index that are furthest from 1.0 n'hood. Using straight line distance.
+Top 20 n'hood centres of 2.0 index (in red) that are furthest from 1.0 n'hood (in black). Using straight line distance.
 
-```{r dist-discrep, fig.fullwidth = TRUE, fig.cap = "A full width figure."}
+```{r, layout="l-page", fig.width=6, fig.height=4}
 sep2_sep1_join <- readRDS("data/Swiss-SEP2/sep2_sep1_join.Rds")
 
 top20_dist <- sep2_sep1_join %>% 
@@ -117,14 +117,175 @@ top20_dist_neigh <- sep1 %>%
   inner_join(st_drop_geometry(select(top20_dist, v0_buildid)))
 
 tm_shape(top20_dist) +
-  tm_markers(col = "distance", clustering = FALSE) +
+  tm_dots(col = "red") +
   tm_shape(top20_dist_neigh) +
   tm_dots()
 ```
 
+<!-- ------------------------------------------------------------ --> 
+
+# Decile discrepancies
+
+```{r}
+start <- nrow(st_drop_geometry(sep2_sep1_join))
+
+sep2_sep1_join %>% 
+  st_drop_geometry() %>% 
+  filter(ssep2_d == ssep1_d) %>% 
+  nrow() -> agreement
+
+sep2_sep1_join %>% 
+  st_drop_geometry() %>% 
+  mutate(diff = as.numeric(ssep2_d) - as.numeric(ssep1_d)) %>% 
+  filter(diff >= -1 & diff <= 1) %>% 
+  nrow() -> partial
+
+sep2_sep1_join %>% 
+  st_drop_geometry() %>% 
+  mutate(diff = as.numeric(ssep2_d) - as.numeric(ssep1_d)) %>% 
+  filter(diff == -9 | diff == 9) %>% 
+  nrow() -> disagreement
+```
 
 
+Out of `r number(start, big.mark = ",")` n'hoods of SSEP 2.0 `r number(agreement, big.mark = ",")` or `r percent(agreement/start)` has been assigned to the same decile as **the closest** SSEP 1.0. 
 
+If we relax this assumption and alow variation +/- 1 decile then `r percent(partial/start)` of n'hoods are matching.
+
+There are only `r number(disagreement, big.mark = ",")` (`r percent(disagreement/start, accuracy = 0.001)`) n'hoods that are on the opposite scale of the index. 
+
+## Full numbers
+
+Counts
+
+```{r}
+sep_dif_xtab <- table(sep2_sep1_join$ssep1_d, sep2_sep1_join$ssep2_d) # first var in rows
+# sep_dif_xtab
+
+sep_dif_xtab %>% # 
+  knitr::kable(caption = 'SSEP 1.0 (rows) vs. 2.0 (columns).')
+```
+
+Share (cell %)
+
+```{r}
+prop.table(sep_dif_xtab) %>% # cell percentages
+  knitr::kable(digits = 3,
+               caption = '% SSEP 1.0 (rows) vs. 2.0 (columns).')
+```
+
+```{r eval=FALSE, include=FALSE}
+mosaicplot(sep_dif_xtab, shade=TRUE, legend=TRUE)
+
+spineplot(sep2_sep1_join$ssep1_d, sep2_sep1_join$ssep2_d)
+
+library(vcd)
+agreementplot(sep_dif_xtab)
+```
+
+Visually 
+
+```{r, layout="l-page", fig.width=6, fig.height=6}
+sep_dif_freq <- as.data.frame(table(sep2_sep1_join$ssep1_d, sep2_sep1_join$ssep2_d)) %>% 
+  rename(SSEP1 = Var1, SSEP2 = Var2)
+
+sep_dif_freq %>% 
+  ggplot(aes(SSEP1, Freq)) +
+  geom_col() +
+  facet_grid(vars(SSEP2))
+```
+
+Alternative view
+
+```{r, layout="l-body-outset"}
+# sep_dif_freq %>% 
+#   ggplot(aes(SSEP1, SSEP2)) +
+#   geom_tile(aes(fill = Freq / nrow(sep2_sep1_join)), colour = "black") +
+#   scale_fill_distiller(palette = "RdYlBu", direction = 1)
+# 
+# sep_dif_freq %>% 
+#   filter(SSEP1 != SSEP2) %>% 
+#   ggplot(aes(SSEP1, SSEP2)) +
+#   geom_tile(aes(fill = Freq / nrow(sep2_sep1_join)), colour = "black") +
+#   scale_fill_distiller(palette = "RdYlBu", direction = 1)
+
+sep_dif_freq %>% 
+  ggplot(aes(SSEP1, SSEP2)) +
+  geom_point(aes(size = Freq, color = Freq / nrow(sep2_sep1_join)), shape = 15) +
+  scale_size_continuous(range = c(2, 10)) + 
+  scale_color_distiller(palette = "RdYlBu", direction = 1) +
+  theme_classic()
+```
+
+Excluding diagonal
+
+```{r, layout="l-body-outset"}
+sep_dif_freq %>% 
+  filter(SSEP1 != SSEP2) %>% 
+  ggplot(aes(SSEP1, SSEP2)) +
+  geom_point(aes(size = Freq, color = Freq / nrow(sep2_sep1_join)), shape = 15) +
+  scale_size_continuous(range = c(2, 10)) + 
+  scale_color_distiller(palette = "RdYlBu", direction = 1) +
+  theme_classic()
+```
+
+# Spatial discrepancies
+
+## SSEP 2.0 higher
+
+```{r, layout="l-page"}
+diff_plus <- sep2_sep1_join %>% 
+  mutate(diff = as.numeric(ssep2_d) - as.numeric(ssep1_d)) %>% 
+  filter(diff == 9) %>% 
+  select(-diff)
+
+diff_plus_neigh <- sep1 %>% 
+  inner_join(st_drop_geometry(select(diff_plus, v0_buildid)))
+
+tm_shape(diff_plus) +
+  tm_dots(col = "red") +
+  tm_shape(diff_plus_neigh) +
+  tm_dots()
+
+# library(mapview)
+# library(leaflet)
+# library(leafpop)
+# 
+# mapview(list(diff_plus, diff_plus_neigh),
+#         col.regions = list("red", "black"),
+#         popup = list(popupTable(diff_plus,
+#                            zcol = "ssep2"), 
+#                      (popupTable(diff_plus_neigh,
+#                            zcol = "ssep1")
+#                      )))
+```
+
+Example of [redeveloped area](https://goo.gl/maps/VLQShvxNNjmCpPam9) that migh experienced a bump.
+
+## SSEP 2.0 lower
+
+```{r, layout="l-page"}
+diff_minus <- sep2_sep1_join %>% 
+  mutate(diff = as.numeric(ssep2_d) - as.numeric(ssep1_d)) %>% 
+  filter(diff == -9) %>% 
+  select(-diff)
+
+diff_minus_neigh <- sep1 %>% 
+  inner_join(st_drop_geometry(select(diff_minus, v0_buildid)))
+
+tm_shape(diff_minus) +
+  tm_dots(col = "red") +
+  tm_shape(diff_minus_neigh) +
+  tm_dots()
+
+# mapview(list(diff_minus, diff_minus_neigh),
+#         col.regions = list("red", "black"),
+#         popup = list(popupTable(diff_minus,
+#                            zcol = "ssep2"), 
+#                      (popupTable(diff_minus_neigh,
+#                            zcol = "ssep1")
+#                      )))
+```
 
 
 
