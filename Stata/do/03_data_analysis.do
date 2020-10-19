@@ -73,7 +73,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.06 - data analysis}}
+Report 1.07 - data analysis}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -357,7 +357,7 @@ texdoc s c
 \includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
 
-Note: calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
+Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
 ***/
 
 texdoc s , nolog // nodo   
@@ -385,7 +385,7 @@ global title 	"size(medsmall) color(black) margin(vsmall)"
 global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
 global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0")"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0", angle(vertical))"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
 coefplot (s1, label(Age & sex)) (s1a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
@@ -402,9 +402,10 @@ texdoc s c
 \includegraphics[width=.75\textwidth]{gr/d_al.pdf} 
 \end{center}
 
-Note: Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in figure above); 
-'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
-
+Note: 	Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in figure above); 
+		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
+		Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}, as described in paper!
+		
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{All cause mortality - 1.0 vs 2.0 using new data}
@@ -448,7 +449,7 @@ global title 	"size(medsmall) color(black) margin(vsmall)"
 global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
 global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Index 2.0" *.ssep_d = "Index 1.0")"
+global groups 	"groups(*.ssep2_d = "Index 2.0" *.ssep_d = "Index 1.0", angle(vertical))"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
 coefplot (sep1, label(SSEP1)) (sep2, label(SSEP2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
@@ -464,7 +465,7 @@ texdoc s c
 
 Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex. 
 
-\textbf{Both calculations} from new SNC data from the \textbf{2012 - 2014 period}!
+\textbf{Both calculations} from new SNC data from the \textbf{2012 - 2018 period}!
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Cause specific mortality - 1.0}
