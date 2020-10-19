@@ -1616,7 +1616,7 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 (additionally taking into account: nationality, civil status, language region \& level of urbanization). Setup for the analyses in this scenario: 
 \begin{enumerate}
 
-	\item Individuals who are recorded in (at least one of the) 2012, 2013 or 2014 Censuses are included
+	\item Individuals who are recorded in (at least one of the) 2012 - 2018 Censuses are included
 	\item Individuals below age 30 on the 1.1.2012 are excluded
 	\item Date of entry is either 1.1.2012 or earliest census if individual was not recorderd in 2012
 	\item Individuals who died on or before 12.31.2011 are excluded (unless the death was cancelled in the dataset)

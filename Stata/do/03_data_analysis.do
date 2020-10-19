@@ -354,7 +354,7 @@ texdoc s c
 \subsection{All cause mortality - 1.0}
 
 \begin{center}
-\includegraphics[width=.60\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
+\includegraphics[width=.50\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
 
 Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
@@ -399,7 +399,7 @@ texdoc s c
 \subsection{All cause mortality - 2.0 results}
 
 \begin{center}
-\includegraphics[width=.75\textwidth]{gr/d_al.pdf} 
+\includegraphics[width=.6\textwidth]{gr/d_al.pdf} 
 \end{center}
 
 Note: 	Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in figure above); 
@@ -468,6 +468,7 @@ Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex.
 \textbf{Both calculations} from new SNC data from the \textbf{2012 - 2018 period}!
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \subsection{Cause specific mortality - 1.0}
 
 \begin{center}
