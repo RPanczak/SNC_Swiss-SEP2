@@ -17,7 +17,7 @@ Version 05:~Prelim report:
 				Somehow weird results of SE sample >> to be resolved?
 Version 06:~ReRun of analyses:
 				Fixing directories & renaming files a bit
-				
+Version 07:~Change to SNC 4.0				
 */
 
 * ***************************************************
@@ -86,7 +86,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.06 - data prep}}
+Report 1.07 - data prep}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -174,6 +174,7 @@ list if org_bu_class == 1220
 
 * *****
 * COLLECT ALL YEARS 
+* still using snc 2.0 here >> might be worth changing to 4.0 but new network analyses would be needed!
 forv year = 10/14 {
 	
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
@@ -1615,7 +1616,7 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 (additionally taking into account: nationality, civil status, language region \& level of urbanization). Setup for the analyses in this scenario: 
 \begin{enumerate}
 
-	\item Individuals who are recorded in (at least one of the) 2012, 2013 or 2014 Censuses are included
+	\item Individuals who are recorded in (at least one of the) 2012 - 2018 Censuses are included
 	\item Individuals below age 30 on the 1.1.2012 are excluded
 	\item Date of entry is either 1.1.2012 or earliest census if individual was not recorderd in 2012
 	\item Individuals who died on or before 12.31.2011 are excluded (unless the death was cancelled in the dataset)
@@ -1630,29 +1631,31 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 
 texdoc s , nolog // nodo   
 
-u "$od\snc2_std_pers_90_00_14_all_207_full", clear 
-ren v0_buildid buildid
+u "$od\snc4_90_00_18_full_vs2", clear 
+
+ren v0_buildid buildid // temp rename to keep
 
 * VARS NOT NEEDED
-drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *_nat *_dseparation *_dcivil *_ddiv_dod_p *_dmar *_civil_old *_canton dswiss zarflag zar natbirth *_comm2006 *_comm *_dmove *_canton2006 *_lang2006 *_urban2006 dis_conc1_icd8* dis_conc2_icd8* dis_init_icd8* dis_init_icd10* dis_cons_icd10* dis_conc1_icd10* dis_conc2_icd10*  *_mo_flag
-drop se10_flag r11_commyears r11_commsincebirth m_nat_bin // r10_* 
+drop v9* v0* *_geox *_geoy *_flatid *_hhid shs92 *_hhpers *_dch_arriv *_permit *_nat *_dseparation *_dcivil *_dmar *_civil_old *_canton dswiss zar natbirth *_comm2006 *_comm *_dmove *_canton2006 *_lang2006 *_urban2006 dis_conc1_icd8* dis_conc2_icd8* dis_init_icd8* dis_init_icd10* dis_cons_icd10* dis_conc1_icd10* dis_conc2_icd10*  *_mo_flag se10_flag r11_commyears r11_commsincebirth m_nat_bin // r10_* 
 
 ren buildid v0_buildid
 
 * NO IMPUTED FOR THE MOMENT 
-* ta imputed, m
+* fre imputed
 drop imputed *_imputed 
 
 * DROPPING: link == 9 >> 'Only census 1990'
+* fre link
 drop if inlist(link, 9)
 
 * KEEPING ONLY THOSE AVAILABLE IN CENSUSES 2012+
-keep if r12_pe_flag | r13_pe_flag | r14_pe_flag
-* ta last_census_seen, m 
+keep if r12_pe_flag == 1 | r13_pe_flag == 1 | r14_pe_flag == 1 | r15_pe_flag == 1 | r16_pe_flag == 1 | r17_pe_flag == 1 | r18_pe_flag == 1
+* fre last_census_seen
 drop r??_pe_flag
 
 * DOD DISCREPANCIES ???
 su dod, f d 
+* br if dod <= mdy(12, 31, 2011) & !cancelled_death
 drop if dod <= mdy(12, 31, 2011) & !cancelled_death
 
 * AGE ON 1.1.2012; KEEP ONLY 30YEARS AND OLDER
@@ -1671,7 +1674,11 @@ replace dstart = mdy(1, 1, 2012) if dstart < mdy(1, 1, 2012)
 foreach VAR in nat_bin urban lang civil buildid {
 	
 	gen long `VAR' = .
-	replace  `VAR'  = r14_`VAR' if !mi(r14_`VAR')
+	replace  `VAR'  = r18_`VAR' if !mi(r18_`VAR')
+	replace  `VAR'  = r17_`VAR' if  mi(`VAR') & !mi(r17_`VAR')
+	replace  `VAR'  = r16_`VAR' if  mi(`VAR') & !mi(r16_`VAR')
+	replace  `VAR'  = r15_`VAR' if  mi(`VAR') & !mi(r15_`VAR')
+	replace  `VAR'  = r14_`VAR' if  mi(`VAR') & !mi(r14_`VAR')
 	replace  `VAR'  = r13_`VAR' if  mi(`VAR') & !mi(r13_`VAR')
 	replace  `VAR'  = r12_`VAR' if  mi(`VAR') & !mi(r12_`VAR')
 	replace  `VAR'  = r11_`VAR' if  mi(`VAR') & !mi(r11_`VAR')
@@ -1684,9 +1691,11 @@ foreach VAR in nat_bin urban lang civil buildid {
 }
 
 * RHAETO-ROMANSCH 
+* fre lang
 recode lang (4=1)
 
 * MISSING CIVIL
+* fre civil
 drop if mi(civil)
 
 * MISSING buildid
@@ -1703,7 +1712,8 @@ isid sncid
 * distinct sncid buildid gisid
 
 * ALL DEATHS >> LATER CASUE SPECIFIC WILL BE ADDED
-gen d_all = (inlist(stopcode, 5, 15))
+* fre stopcode
+gen d_all = (inlist(stopcode, 5, 15)) // what was 15? o_O
 
 * LUNG CANCER 
 gen d_lc = ( d_all & (cause_prim_icd10s=="C" & (cause_prim_icd10n2d>=33 & cause_prim_icd10n2d<=34)) )
@@ -1748,7 +1758,7 @@ la var d_al  "Alc liver disease"
 la var d_su  "Suicide"
 
 note drop _all
-la da "SSEP 2.0 - full SNC 2012-2014 data for mortality analyses"
+la da "SSEP 2.0 - full SNC 4.0 2012-2018 data for mortality analyses"
 
 note: 			SNC: people 30 and over; linked to building with index; covariates calculated using latest available info.
 note civil: 	Missing data excluded
@@ -1767,7 +1777,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-ta last_census_seen, m
+fre last_census_seen
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
 distinct mortid gisid
 
@@ -1793,6 +1803,9 @@ mmerge sncid using $dd\SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? S
 ta _merge se11_flag, m 
 ta _merge se12_flag, m 
 ta _merge se13_flag, m 
+ta _merge se14_flag, m 
+ta _merge se15_flag, m 
+ta _merge se16_flag, m 
 ta _merge SE, m 
 */
 keep if _merge == 3
@@ -1820,7 +1833,7 @@ la de ocu 1 "High occup" 2 "Medium occup" 3 "Low occup " 4 "Not in paid employ" 
 * UPDATE TO LATEST SURVEY ???
 replace dstart = mdy(1, 1, SE) if dstart < mdy(1, 1, SE)
 
-la da "SSEP 2.0 - SNC 2012-2014 data for mortality analyses - SE overlap"
+la da "SSEP 2.0 - SNC 2012-2015 data for mortality analyses - SE overlap"
 
 note: 			Including people from SE used to calculate index
 note: 			Last changes: $S_DATE $S_TIME
