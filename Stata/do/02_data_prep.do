@@ -17,7 +17,7 @@ Version 05:~Prelim report:
 				Somehow weird results of SE sample >> to be resolved?
 Version 06:~ReRun of analyses:
 				Fixing directories & renaming files a bit
-				
+Version 07:~Change to SNC 4.0				
 */
 
 * ***************************************************
@@ -86,7 +86,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.06 - data prep}}
+Report 1.07 - data prep}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -174,6 +174,7 @@ list if org_bu_class == 1220
 
 * *****
 * COLLECT ALL YEARS 
+* still using snc 2.0 here >> might be worth changing to 4.0 but new network analyses would be needed!
 forv year = 10/14 {
 	
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
