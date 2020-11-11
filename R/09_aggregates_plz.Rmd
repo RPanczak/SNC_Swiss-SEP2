@@ -1,6 +1,6 @@
 ---
 title: "Swiss-SEP project"
-description: "Aggregating point data to communities"
+description: "Aggregating point data to PLZs"
 date: "`r Sys.Date()`"
 author:
   - name: Radoslaw Panczak 
@@ -39,15 +39,6 @@ tmap_mode("view")
 ```
 
 # Raw data 
-
-<!-- ## Communities -->
-
-<!-- swissBOUNDARIES3D 2020 from [swisstopo](https://shop.swisstopo.admin.ch/en/products/landscape/boundaries3D) -->
-
-```{r eval=FALSE, include=FALSE}
-gem20 <- readRDS("data/swissBOUNDARIES3D/gem20.Rds") %>% 
-  st_transform(crs = 2056)
-```
 
 ## PLZ
 
