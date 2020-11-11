@@ -85,7 +85,7 @@ gem18 <- gem_18_raw %>%
   filter(ICC == "CH") %>% 
   filter(BFS_NUMMER < 9000) %>% 
   filter(OBJEKTART == "Gemeindegebiet") %>% 
-  select(-ICC, OBJEKTART) %>% 
+  select(BFS_NUMMER, NAME, GEM_TEIL) %>% 
   rename(GMDNR = BFS_NUMMER) %>% 
   arrange(GMDNR, GEM_TEIL)
 
@@ -98,6 +98,7 @@ plot(st_geometry(gem18))
 
 lac18 <- gem_18_raw %>% 
   st_zm(drop = TRUE) %>% 
+  select(BFS_NUMMER, NAME, GEM_TEIL) %>% 
   rename(GMDNR = BFS_NUMMER) %>% 
   filter(GMDNR >= 9000)
 
@@ -105,11 +106,11 @@ plot(st_geometry(lac18))
 View(st_drop_geometry(lac18))
 
 gem18 %>% 
-  select(GMDNR) %>% 
+  # select(GMDNR) %>% 
   saveRDS("data/swissBOUNDARIES3D/gem18.Rds")
 
 gem18 %>% 
-  select(GMDNR) %>% 
+  # select(GMDNR) %>% 
   st_write("data/swissBOUNDARIES3D/gem18.shp", delete_dsn = TRUE)
 
 # lac18 %>% 
