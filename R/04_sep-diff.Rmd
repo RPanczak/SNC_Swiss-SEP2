@@ -131,13 +131,7 @@ tm_shape(top20_dist) +
 # Exact values discrepancies
 
 ```{r}
-p_load(blandr)
-blandr.output.text (sep2_sep1_join$ssep1, sep2_sep1_join$ssep2, sig.level=0.95 )
-p_unload(blandr)
-```
-
-```{r echo=FALSE}
-p_load(BlandAltmanLeh)
+p_load(blandr, BlandAltmanLeh)
 
 bas_data <- sep2_sep1_join %>% 
   st_drop_geometry() %>% 
@@ -145,6 +139,11 @@ bas_data <- sep2_sep1_join %>%
   mutate(ssep1 = as.integer(ssep1),
          ssep2 = as.integer(ssep2))
 
+blandr.output.text (bas_data$ssep1, bas_data$ssep2, sig.level=0.95 )
+p_unload(blandr)
+```
+
+```{r echo=FALSE}
 bas_list <- bland.altman.stats(bas_data$ssep1, bas_data$ssep2)
 bas <- tibble(means = bas_list$means, diffs = bas_list$diffs)
 
@@ -169,6 +168,12 @@ ggplot(bas, aes(x = means, y = diffs)) +
 p_unload(BlandAltmanLeh)
 ```
 
+```{r eval=FALSE, include=FALSE}
+# Diff histogram:
+ggplot(bas, aes(x = diffs)) + 
+  geom_histogram(binwidth = 1)
+```
+
 Mean diff and CI lines:
 
 ```{r}
@@ -180,7 +185,7 @@ Proportion within 95%:
 ```{r}
 prop.table(table(bas_list$diffs >= bas_list$lines[1] & bas_list$diffs <= bas_list$lines[3]))
 ```
-
+  
 <!-- ------------------------------------------------------------ --> 
 
 # Decile discrepancies
