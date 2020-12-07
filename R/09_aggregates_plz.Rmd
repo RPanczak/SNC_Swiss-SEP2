@@ -128,7 +128,7 @@ The nearest building with SSEP 1 was found; point dataset was then overlaid with
 `r18_nrpers_total` was used for population - slightly different populations would be obtained with different conceptual models of *residential populations* by using either `r18_nrpers_main` or `r18_nrpers_perm` variables
 
 
-```{r}
+```{r include=FALSE}
 rm(r18_bu_orig)
 gc()
 ```
@@ -213,15 +213,15 @@ write_rds(mapdata_neigh, "data/mapdata_neigh.rds")
 ```
 
 Watch out for small n!
-- hospitals: 4031, 1011, 4101, 5017, 3010, 5404, 8208
-- generally small: 6441, 6068, 7517, 
-- no pop? Ried-Brig: 3901, Laura: 6549
-- Technopark Luzern: 6039
-- Jungfraujoch: 3801
-- Genève Aéroport: 1215
-- remote: 6867, 7710
-- Kloster Fahr: 8109
-- uni: 1015
+- hospitals: 4031, 1011, 4101, 5017, 3010, 5404, 8208  
+- generally small: 6441, 6068, 7517  
+- no pop? Ried-Brig: 3901, Laura: 6549  
+- Technopark Luzern: 6039  
+- Jungfraujoch: 3801  
+- Genève Aéroport: 1215  
+- remote: 6867, 7710  
+- Kloster Fahr: 8109  
+- uni: 1015  
 
 ```{r}
 mapdata_neigh %>% 
