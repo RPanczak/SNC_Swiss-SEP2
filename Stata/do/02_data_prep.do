@@ -504,8 +504,15 @@ texdoc s , nolog // nodo
 
 forv YR = 12/15 { 
 
-	u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm using $od\SE\SE`YR'_pers_full.dta, clear
+	if `YR' <= 14 { 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using $od\SE\SE`YR'_pers_full.dta, clear 
+	}
 
+	if `YR' == 15 { 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using $od\SE\SE`YR'_pers_full.dta, clear 
+		gen urban = .
+	}
+		
 	order hhyid, a(sncid)
 	isid sncid
 	isid hhyid
@@ -533,16 +540,16 @@ forv YR = 12/15 {
 
 	/* RESIDENCE PERMIT
 
-	0 "Swiss" 
-	1 "Seasonal residence permit (A)" 
-	2 "Annual residence permit (B)" 
-	3 "Permanent residence permit (C)" 
-	4 "Permit with gainful employment (Ci)" 
-	5 "Provisionally admitted foreigners (F)" 
-	6 "Cross-border commuter permit (G)" 
-	7 "Short stay (L)" 
-	8 "Asylum seeker (N)" 
-	9 "People in need of protection (S)" 
+	0  "Swiss" 
+	1  "Seasonal residence permit (A)" 
+	2  "Annual residence permit (B)" 
+	3  "Permanent residence permit (C)" 
+	4  "Permit with gainful employment (Ci)" 
+	5  "Provisionally admitted foreigners (F)" 
+	6  "Cross-border commuter permit (G)" 
+	7  "Short stay (L)" 
+	8  "Asylum seeker (N)" 
+	9  "People in need of protection (S)" 
 	10 "Person required to notify (Meldepflichtige)" 
 	11 "Diplomat/internat. official with diplomatic immunity " 
 	12 "Internat. official without diplomatic immunity" 
@@ -601,7 +608,8 @@ forv YR = 12/15 {
 	replace num_ocu3 = 0 if mis_ocu_isco
 	
 	/*
-	ta den_ocu, m
+	ta den_ocu1, m
+	ta den_ocu2, m
 	ta mis_ocu_isco, m
 	ta num_ocu1, m 
 	ta num_ocu2, m 
@@ -646,9 +654,9 @@ forv YR = 12/15 {
 
 	fre educ_agg 
 
-		Compulsory education or less       1
-	 Upper secondary level education       2
-			Tertiary level education       3
+		Compulsory education or less      1
+	 Upper secondary level education      2
+			Tertiary level education      3
 
 	ta educ_agg educ_curr, m 
 	ta educ_agg educ_curr if den, m 
@@ -716,6 +724,14 @@ forv YR = 12/15 {
 	
 	* ADD HH
 	mmerge sncid using $dd\SE`YR'_hh_full
+	
+	preserve
+		ren _merge miss
+		replace miss = 0 if miss == 3
+		la de miss 0 "Fine" 1 "Missing hh" 2 "Missing pe", replace
+		la val miss miss
+		save $dd\SE`YR'_miss, replace
+	restore
 
 	count if _merge == 1
 	texdoc local hhl_`YR' = `r(N)'	
@@ -808,6 +824,59 @@ note: Last changes: $S_DATE $S_TIME
 
 compress
 sa $dd\SE, replace
+
+* dataset for missing hh sensitivity analysis
+forv YR = 12/15 { 
+	if `YR' == 12 {
+		use $dd\SE`YR'_miss, clear
+		gen SE = 2012
+		la var SE "Survey year"
+		order SE, first
+	
+		sa $dd\SE_miss, replace
+	}
+	else {
+		use $dd\SE`YR'_miss, clear
+		gen SE = 2000 + `YR'
+		la var SE "Survey year"
+		order SE, first
+	
+		append using $dd\SE_miss
+		sa $dd\SE_miss, replace
+	}
+}	
+sort sncid SE, stable 
+* by sncid: gen n = _N 
+by sncid: keep if _n == _N 
+
+* age cat
+egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
+order age_cat, a(age)
+
+compress 
+sa $dd\SE_miss, replace
+
+drop if miss == 2
+
+recode migratstat (4=3) (5=3)
+la de migratstat2_enl 3 "Foreigner", modify
+
+logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.nat_bin
+logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.migratstat
+
+logistic miss i.sex b3.age_cat b2.civil i.num_edu i.num_ocu1 i.nat_bin i.canton
+
+coefplot, drop(_cons *canton) eform baselevels ///
+	ti(Missing household link) xti(OR)
+	
+gr export $td/gr/hh_miss_ind.png, width(800) height(600)
+ 
+coefplot, keep( *canton) eform baselevels ///
+	ti(Missing household link) xti(OR)
+
+gr export $td/gr/hh_miss_cant.png, width(800) height(600)
+
+melogit miss i.sex b3.age_cat b2.civil i.num_edu i.num_ocu1 i.nat_bin || canton:
 
 texdoc s c
 
