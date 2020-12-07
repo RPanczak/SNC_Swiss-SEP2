@@ -861,6 +861,15 @@ drop if miss == 2
 recode migratstat (4=3) (5=3)
 la de migratstat2_enl 3 "Foreigner", modify
 
+ta sex miss, m row nokey
+ta age_cat miss, m row nokey
+ta civil miss, m row nokey
+ta num_edu miss, m row nokey
+ta num_ocu1 miss, m row nokey
+ta nat_bin miss, m row nokey
+ta canton miss, m row nokey
+
+
 logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.nat_bin
 logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.migratstat
 
