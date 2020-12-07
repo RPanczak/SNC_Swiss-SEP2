@@ -96,6 +96,10 @@ sep2_sep1_join$distance <- distance
 rm(nearest, dist)
 
 saveRDS(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
+
+sep2_sep1_join %>% 
+  st_drop_geometry() %>% 
+  haven::write_dta("data/Swiss-SEP2/sep2_sep1_join.dta")
 ```
 
 <!-- ------------------------------------------------------------ --> 
@@ -120,6 +124,61 @@ tm_shape(top20_dist) +
   tm_dots(col = "red") +
   tm_shape(top20_dist_neigh) +
   tm_dots()
+```
+
+<!-- ------------------------------------------------------------ --> 
+
+# Exact values discrepancies
+
+```{r}
+p_load(blandr)
+blandr.output.text (sep2_sep1_join$ssep1, sep2_sep1_join$ssep2, sig.level=0.95 )
+p_unload(blandr)
+```
+
+```{r echo=FALSE}
+p_load(BlandAltmanLeh)
+
+bas_data <- sep2_sep1_join %>% 
+  st_drop_geometry() %>% 
+  # sample_frac(0.01) %>% 
+  mutate(ssep1 = as.integer(ssep1),
+         ssep2 = as.integer(ssep2))
+
+bas_list <- bland.altman.stats(bas_data$ssep1, bas_data$ssep2)
+bas <- tibble(means = bas_list$means, diffs = bas_list$diffs)
+
+# bas_list$mean.diffs 
+# bas_list$critical.diff 
+
+ggplot(bas, aes(x = means, y = diffs)) + 
+  geom_count(alpha = 0.05) + 
+  # geom_point() + 
+  geom_hline(yintercept = bas_list$lines[-2], 
+             linetype = 2, 
+             size = 1,
+             colour = "slateblue1") + 
+  geom_hline(yintercept = bas_list$lines[2], 
+             linetype = 2, 
+             size = 1, 
+             colour = "slateblue4") + 
+  xlab("Mean of measurements") + 
+  ylab("Difference") + 
+  theme_classic()
+
+p_unload(BlandAltmanLeh)
+```
+
+Mean diff and CI lines:
+
+```{r}
+bas_list$lines
+```
+
+Proportion within 95%:
+
+```{r}
+prop.table(table(bas_list$diffs >= bas_list$lines[1] & bas_list$diffs <= bas_list$lines[3]))
 ```
 
 <!-- ------------------------------------------------------------ --> 
