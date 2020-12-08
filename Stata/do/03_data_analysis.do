@@ -469,6 +469,68 @@ Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\subsection{All cause mortality - stratified by age}
+***/
+
+texdoc s , nolog // nodo   
+
+* STRATIDFIED
+* age cat
+egen age_bin = cut(age), at(19, 65, 110) label
+order age_bin, a(age)
+
+/*
+fre age_bin
+table age_bin, contents(min age max age)
+*/
+
+la var ssep_d "ssep_d " // better for graph
+la var ssep2_d "ssep2_d" // better for graph
+
+foreach SEP in ssep_d ssep2_d {
+	forv AGE = 0/1 {
+		* AGE & SEX
+		stcox i.sex b10.`SEP' if age_bin == `AGE', $SET
+		est sto u_`SEP'_age_`AGE'
+		* FULLY
+		global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+		stcox $ADJ b10.`SEP' if age_bin == `AGE', $SET
+		est sto a_`SEP'_age_`AGE'
+	}
+}
+
+* est tab  u_*   a_*, eform
+
+global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
+global title 	"size(medsmall) color(black) margin(vsmall)"
+global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
+global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.72)) xlab(1.0(0.1)1.7)"
+global misc 	"xline( 1.00(0.1)1.70, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0", angle(vertical))"
+global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
+
+coefplot (u_ssep_d_age_0, label(Young)) (u_ssep_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 1", $title) eform $drop $lab $region $misc $legend $groups
+
+gr export $td/gr/strat_sep1.pdf, replace
+gr export $td/gr/strat_sep1.png, replace
+
+coefplot (u_ssep2_d_age_0, label(Young)) (u_ssep2_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 2", $title) eform $drop $lab $region $misc $legend $groups
+
+gr export $td/gr/strat_sep2.pdf, replace
+gr export $td/gr/strat_sep2.png, replace
+
+texdoc s c  
+
+/***
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf} \newline
+\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf} 
+\end{center}
+***/
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \subsection{Cause specific mortality - 1.0}
 
 \begin{center}
