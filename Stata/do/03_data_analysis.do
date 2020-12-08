@@ -469,7 +469,7 @@ Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{All cause mortality - stratified by age}
+\subsection{All cause mortality - two indices, stratified by age}
 ***/
 
 texdoc s , nolog // nodo   
@@ -501,13 +501,9 @@ foreach SEP in ssep_d ssep2_d {
 
 * est tab  u_*   a_*, eform
 
-global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
-global title 	"size(medsmall) color(black) margin(vsmall)"
-global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.72)) xlab(1.0(0.1)1.7)"
 global misc 	"xline( 1.00(0.1)1.70, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0", angle(vertical))"
-global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0" *.ssep_d = "Swiss-SEP index 1.0", angle(vertical))"
 
 coefplot (u_ssep_d_age_0, label(Young)) (u_ssep_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 1", $title) eform $drop $lab $region $misc $legend $groups
 
@@ -527,6 +523,90 @@ texdoc s c
 \includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf} 
 \end{center}
 ***/
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{All cause mortality - combining two SEP indices}
+
+***/
+
+texdoc s , nolog // nodo   
+
+preserve 
+	* done in preserve mode since deletions are necessary
+	* there are individuals from unlinked buildings
+
+	mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+
+	* br if _merge == 1 // check who is there??
+	keep if _merge == 3
+	drop _merge
+
+	rename r18_buildper buildper
+
+	/*
+	Periode vor 1919				8011
+	Periode von 1919 bis 1945		8012
+	Periode von 1946 bis 1960		8013
+	Periode von 1961 bis 1970		8014
+	Periode von 1971 bis 1980		8015
+	Periode von 1981 bis 1985		8016
+	Periode von 1986 bis 1990		8017
+	Periode von 1991 bis 1995		8018
+	Periode von 1996 bis 2000		8019
+	Periode von 2001 bis 2005		8020
+	Periode von 2006 bis 2010		8021
+	Periode von 2011 bis 2015		8022
+	Periode nach 2015				8023
+	*/
+
+	gen buildper2 = (buildper >= 8020)
+	* ta buildper buildper2, m
+
+	la de buildper2 0 "Before 2000" 1 "After 2000"
+
+	gen ssep3_d = ssep_d
+	replace ssep3_d = ssep2_d if buildper2
+
+	foreach SEP in ssep_d ssep2_d ssep3_d {
+		* AGE & SEX
+		stcox i.sex b10.`SEP', $SET
+		est sto u_`SEP'
+		* FULLY
+		global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+		stcox $ADJ b10.`SEP', $SET
+		est sto a_`SEP'
+	}
+	
+	la var ssep3_d ""
+
+	global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
+	global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+	global groups 	"groups(*.ssep3_d = "Index 3.0" *.ssep2_d = "Index 2.0" *.ssep_d = "Index 1.0", angle(vertical))"
+	global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
+
+	coefplot (u_ssep_d, label("SSEP 1")) (u_ssep2_d, label("SSEP 2")) (u_ssep3_d, label("SSEP 3")), title("Age & sex adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
+
+	gr export $td/gr/strat_sep3u.pdf, replace
+	gr export $td/gr/strat_sep3u.png, replace
+
+	coefplot (a_ssep_d, label("SSEP 1")) (a_ssep2_d, label("SSEP 2")) (a_ssep3_d, label("SSEP 3")), title("Fully adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
+
+	gr export $td/gr/strat_sep3a.pdf, replace
+	gr export $td/gr/strat_sep3a.png, replace
+
+restore 
+
+texdoc s c
+
+/***
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf} \newline
+\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf} 
+\end{center}
+***/
+
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
