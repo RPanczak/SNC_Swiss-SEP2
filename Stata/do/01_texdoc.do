@@ -13,10 +13,10 @@ local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 * di "`date'"
 ! COPY $td\report_sep2_prep.pdf $td\report_sep2_prep_`date'.pdf
 ! COPY $td\report_sep2_prep.pdf $dd\FINAL\report_sep2_prep_`date'.pdf
-
+/*
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
 ! start `acroread' $td\report_sep2_prep_`date'.pdf
-
+*/
 
 * ANALYSIS
 texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\03_data_analysis.do
@@ -31,9 +31,9 @@ local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 ! COPY $td\report_sep2_analysis.pdf $td\report_sep2_analysis_`date'.pdf
 ! COPY $td\report_sep2_analysis.pdf $dd\FINAL\report_sep2_analysis_`date'.pdf
 
-*
+/*
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
 ! start `acroread' $td\report_sep2_analysis_`date'.pdf
-
+*/
 
 
