@@ -383,6 +383,7 @@ la var ssep1_d ""
 la var ssep2_d ""
 
 * STSETTING
+est clear
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 * AGE & SEX
@@ -473,6 +474,8 @@ fre age_bin
 table age_bin, contents(min age max age)
 */
 
+est clear
+
 foreach SEP in ssep1_d ssep2_d {
 	forv AGE = 0/1 {
 		* AGE & SEX
@@ -557,6 +560,8 @@ distinct buildid if buildper2
 gen ssep3_d = ssep1_d
 replace ssep3_d = ssep2_d if buildper2
 
+est clear
+
 foreach SEP in ssep1_d ssep2_d ssep3_d {
 	* AGE & SEX
 	stcox i.sex b10.`SEP', $SET
@@ -611,6 +616,8 @@ texdoc s , nolog // nodo
 
 global SET = "nopv base cformat(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
+
+est clear
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 
@@ -683,6 +690,8 @@ Breast and prostate cancer: for men and women respectively.
 ***/
 
 texdoc s , nolog // nodo   
+
+est clear
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 
@@ -787,6 +796,7 @@ gen ssep3_d = ssep1_d
 replace ssep3_d = ssep2_d if buildper2
 
 * STSETTING
+est clear
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 
 * AGE & SEX
@@ -825,7 +835,7 @@ Note: See notes from previous section.
 'Adjusted 2' - additionally adjusted for education and occupation.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Cause specific mortality - 2.0}
+\subsection{Cause specific mortality - 3.0}
 ***/
 
 texdoc s , nolog // nodo   
@@ -834,6 +844,7 @@ global SET = "nopv base cformat(%5.2f)"
 global ADJ = "nat_bin b2.civil b2.urban b1.lang"
 global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
 
+est clear
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 
@@ -880,18 +891,18 @@ texdoc s c
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
 texdoc s , cmdstrip
 
-estout d_lc d_lc_a d_lc_a2, varl(1.ssep2_d "Lung cancer") 			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep2_d) eform  mlabels("Age & sex" "Adjusted 1" "Adjusted 2")
-estout d_bc d_bc_a d_bc_a2, varl(1.ssep2_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_pc d_pc_a d_pc_a2, varl(1.ssep2_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_lc d_lc_a d_lc_a2, varl(1.ssep3_d "Lung cancer") 			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep3_d) eform  mlabels("Age & sex" "Adjusted 1" "Adjusted 2")
+estout d_bc d_bc_a d_bc_a2, varl(1.ssep3_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_pc d_pc_a d_pc_a2, varl(1.ssep3_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
 
-estout d_cv d_cv_a d_cv_a2, varl(1.ssep2_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a d_mi_a2, varl(1.ssep2_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_st_a d_st_a2, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_cv d_cv_a d_cv_a2, varl(1.ssep3_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a d_mi_a2, varl(1.ssep3_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_st_a d_st_a2, varl(1.ssep3_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
  
-estout d_re d_re_a d_re_a2, varl(1.ssep2_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_re d_re_a d_re_a2, varl(1.ssep3_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
 
-estout d_ac d_ac_a d_ac_a2, varl(1.ssep2_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_su d_su_a d_su_a2, varl(1.ssep2_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_ac d_ac_a d_ac_a2, varl(1.ssep3_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_su d_su_a d_su_a2, varl(1.ssep3_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
 
 texdoc s c 
 
