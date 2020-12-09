@@ -5,6 +5,9 @@
 2. global pp=...	=> the path to of project omitting the drive letter
 */
 
+* rscript 
+global RSCRIPT_PATH "C:/Program Files/R/R-4.0.3/bin/Rscript.exe"
+
 * NAME OF PROJECT
 global np = "SNC_Swiss-SEP2"
 
