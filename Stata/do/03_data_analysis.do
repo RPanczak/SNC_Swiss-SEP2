@@ -224,6 +224,10 @@ log close
 
 export delim using "$dd\FINAL\CSV\ssep2_user_geo.csv", delim(",")  replace
 
+cd ..
+rscript using data-raw/Swiss-SEP2/Swiss-SEP2.R
+cd Stata
+
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid)
@@ -364,6 +368,8 @@ u $dd\SNC_ALL, clear
 
 * bring sep 2
 mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d)
+* distinct buildid if _merge == 1
+* list buildid if _merge == 1
 keep if _merge == 3
 drop _merge
 
@@ -382,7 +388,7 @@ stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
 * AGE & SEX
 global SET = "nopv base cformat(%5.2f)"
 stcox i.sex b10.ssep2_d, $SET
-est sto sep2
+est sto sep2u
 * ADJUSTED
 global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
 stcox $ADJ b10.ssep2_d, $SET
@@ -396,9 +402,10 @@ global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xs
 global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0", angle(vertical))"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-coefplot (sep2, label(Age & sex)) (sep2a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (sep2u, label(Age & sex)) (sep2a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_al.pdf, replace
+gr export $td/gr/d_al.png, replace
 
 texdoc s c 
 
@@ -413,6 +420,7 @@ texdoc s c
 Note: 	Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in figure above); 
 		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
 		Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}, as described in paper!
+		Keep in mind that the latter model does NOT have information adout individual level education or employment!  
 		
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
@@ -421,9 +429,8 @@ Note: 	Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{sts
 
 texdoc s , nolog // nodo   
 
-* v1
 stcox i.sex b10.ssep1_d, $SET
-est sto sep1
+est sto sep1u
 
 global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
 global title 	"size(medsmall) color(black) margin(vsmall)"
@@ -433,7 +440,7 @@ global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xs
 global groups 	"groups(*.ssep2_d = "Index 2.0" *.ssep1_d = "Index 1.0", angle(vertical))"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-coefplot (sep1, label(SSEP1)) (sep2, label(SSEP2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (sep1u, label(SSEP1)) (sep2u, label(SSEP2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
 
 gr export $td/gr/d_new_old.pdf, replace
 gr export $td/gr/d_new_old.png, replace
@@ -515,72 +522,67 @@ Then 789,759 individuals in 202,015 buildings (14.1\% building stock) had their 
 
 texdoc s , nolog // nodo   
 
-preserve 
-	* done in preserve mode since deletions are necessary
-	* there are individuals from unlinked buildings
+mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 
-	mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+* br if _merge == 1 // check who is there??
+keep if _merge == 3
+drop _merge
 
-	* br if _merge == 1 // check who is there??
-	keep if _merge == 3
-	drop _merge
+rename r18_buildper buildper
 
-	rename r18_buildper buildper
+/*
+Periode vor 1919				8011
+Periode von 1919 bis 1945		8012
+Periode von 1946 bis 1960		8013
+Periode von 1961 bis 1970		8014
+Periode von 1971 bis 1980		8015
+Periode von 1981 bis 1985		8016
+Periode von 1986 bis 1990		8017
+Periode von 1991 bis 1995		8018
+Periode von 1996 bis 2000		8019
+Periode von 2001 bis 2005		8020
+Periode von 2006 bis 2010		8021
+Periode von 2011 bis 2015		8022
+Periode nach 2015				8023
+*/
 
-	/*
-	Periode vor 1919				8011
-	Periode von 1919 bis 1945		8012
-	Periode von 1946 bis 1960		8013
-	Periode von 1961 bis 1970		8014
-	Periode von 1971 bis 1980		8015
-	Periode von 1981 bis 1985		8016
-	Periode von 1986 bis 1990		8017
-	Periode von 1991 bis 1995		8018
-	Periode von 1996 bis 2000		8019
-	Periode von 2001 bis 2005		8020
-	Periode von 2006 bis 2010		8021
-	Periode von 2011 bis 2015		8022
-	Periode nach 2015				8023
-	*/
+gen buildper2 = (buildper >= 8020)
+* ta buildper buildper2, m
 
-	gen buildper2 = (buildper >= 8020)
-	* ta buildper buildper2, m
+la de buildper2 0 "Before 2000" 1 "After 2000", replace
+fre buildper2
+distinct buildid 
+distinct buildid if buildper2
 
-	la de buildper2 0 "Before 2000" 1 "After 2000", replace
-	distinct buildid 
-	distinct buildid if buildper2
+gen ssep3_d = ssep1_d
+replace ssep3_d = ssep2_d if buildper2
 
-	gen ssep3_d = ssep1_d
-	replace ssep3_d = ssep2_d if buildper2
+foreach SEP in ssep1_d ssep2_d ssep3_d {
+	* AGE & SEX
+	stcox i.sex b10.`SEP', $SET
+	est sto u_`SEP'
+	* FULLY
+	global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+	stcox $ADJ b10.`SEP', $SET
+	est sto a_`SEP'
+}
 
-	foreach SEP in ssep1_d ssep2_d ssep3_d {
-		* AGE & SEX
-		stcox i.sex b10.`SEP', $SET
-		est sto u_`SEP'
-		* FULLY
-		global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-		stcox $ADJ b10.`SEP', $SET
-		est sto a_`SEP'
-	}
-	
-	la var ssep3_d ""
+la var ssep3_d ""
 
-	global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.52)) xlab(1.0(0.1)1.5)"
-	global misc 	"xline( 1.00(0.05)1.50, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-	global groups 	"groups(*.ssep3_d = "Index 3.0" *.ssep2_d = "Index 2.0" *.ssep1_d = "Index 1.0", angle(vertical))"
-	global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
+global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.52)) xlab(1.0(0.1)1.5)"
+global misc 	"xline( 1.00(0.05)1.50, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+global groups 	"groups(*.ssep3_d = "Index 3.0" *.ssep2_d = "Index 2.0" *.ssep1_d = "Index 1.0", angle(vertical))"
+global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-	coefplot (u_ssep1_d, label("SSEP 1")) (u_ssep2_d, label("SSEP 2")) (u_ssep3_d, label("SSEP 3")), title("Age & sex adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (u_ssep1_d, label("SSEP 1")) (u_ssep2_d, label("SSEP 2")) (u_ssep3_d, label("SSEP 3")), title("Age & sex adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
 
-	gr export $td/gr/strat_sep3u.pdf, replace
-	gr export $td/gr/strat_sep3u.png, replace
+gr export $td/gr/strat_sep3u.pdf, replace
+gr export $td/gr/strat_sep3u.png, replace
 
-	coefplot (a_ssep1_d, label("SSEP 1")) (a_ssep2_d, label("SSEP 2")) (a_ssep3_d, label("SSEP 3")), title("Fully adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
+coefplot (a_ssep1_d, label("SSEP 1")) (a_ssep2_d, label("SSEP 2")) (a_ssep3_d, label("SSEP 3")), title("Fully adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
 
-	gr export $td/gr/strat_sep3a.pdf, replace
-	gr export $td/gr/strat_sep3a.png, replace
-
-restore 
+gr export $td/gr/strat_sep3a.pdf, replace
+gr export $td/gr/strat_sep3a.png, replace
 
 texdoc s c
 
@@ -663,7 +665,7 @@ estout d_pc d_pc_a, varl(1.ssep2_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,
 
 estout d_cv d_cv_a, varl(1.ssep2_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 estout d_mi d_mi_a, varl(1.ssep2_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_st d_st_a, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
  
 estout d_re d_re_a, varl(1.ssep2_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
@@ -675,68 +677,12 @@ texdoc s c
 /***
 Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
 Breast and prostate cancer: for men and women respectively. 
-***/
 
-/***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{Validation - SNC SE mortality}
+\subsection{Cause specific mortality - 3.0 results}
 ***/
 
 texdoc s , nolog // nodo   
-
-u $dd\SNC_SE, clear
-
-mmerge gisid using $dd\FINAL\DTA\ssep2_user, t(n:1) ukeep(ssep2_d)
-keep if _merge == 3
-drop _merge
-
-* STSETTING
-stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
-
-* AGE & SEX
-global SET = "nopv base cformat(%5.2f)"
-stcox i.sex b10.ssep2_d, $SET
-est sto s1
-* ADJUSTED
-global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-stcox $ADJ b10.ssep2_d, $SET
-est sto s1a
-* ADJUSTED 2
-global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
-stcox $ADJ2 b10.ssep2_d, $SET
-est sto s1a2
-
-global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
-global title 	"size(medsmall) color(black) margin(vsmall)"
-global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
-global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.85 1.62)) xlab(0.9(0.1)1.5)"
-global misc 	"xline( 0.9(0.1)1.5, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0")"
-global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang *.educ *.ocu)"
-
-coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/d_al_adj2.pdf, replace
-
-texdoc s c 
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{All cause mortality - 2.0}
-\begin{center}
-\includegraphics[width=.75\textwidth]{gr/d_al_adj2.pdf} 
-\end{center}
-
-Note: See notes from previous section. 
-'Adjusted 2' - additionally adjusted for education and occupation.
-***/
-
-texdoc s , nolog // nodo   
-
-global SET = "nopv base cformat(%5.2f)"
-global ADJ = "nat_bin b2.civil b2.urban b1.lang"
-global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
 
 foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 
@@ -749,44 +695,187 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 	* LADIES 
 	if "`EVENT'" == "d_bc" {
 		
+		stcox b10.ssep3_d if sex, $SET 
+		est sto `EVENT'_3
+		stcox $ADJ b10.ssep3_d if sex, $SET
+		est sto `EVENT'_3_a		
+	}
+	
+	* GENTS
+	else if "`EVENT'" == "d_pc" {
+
+		stcox b10.ssep3_d if !sex, $SET
+		est sto `EVENT'_3
+		stcox $ADJ b10.ssep3_d if !sex, $SET
+		est sto `EVENT'_3_a		
+	}	
+
+	else {
+	
+		stcox i.sex b10.ssep3_d, $SET
+		est sto `EVENT'_3
+		stcox i.sex $ADJ b10.ssep3_d, $SET
+		est sto `EVENT'_3_a		
+	}	
+}
+
+texdoc s c 
+
+texdoc s , cmdstrip
+
+estout d_lc_3 d_lc_3_a, varl(1.ssep3_d "Lung cancer")		c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep3_d) eform  mlabels("Age & sex" "Adjusted")
+estout d_bc_3 d_bc_3_a, varl(1.ssep3_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_pc_3 d_pc_3_a, varl(1.ssep3_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+
+estout d_cv_3 d_cv_3_a, varl(1.ssep3_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_mi_3 d_mi_3_a, varl(1.ssep3_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_st_3 d_st_3_a, varl(1.ssep3_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+ 
+estout d_re_3 d_re_3_a, varl(1.ssep3_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+
+estout d_ac_3 d_ac_3_a, varl(1.ssep3_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+estout d_su_3 d_su_3_a, varl(1.ssep3_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
+
+texdoc s c 
+
+/***
+Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
+Breast and prostate cancer: for men and women respectively. 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Validation - SNC SE mortality}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{All cause mortality - 3.0}
+***/
+
+texdoc s , nolog // nodo   
+
+u $dd\SNC_SE, clear
+
+* bring sep 2
+mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d)
+* distinct buildid if _merge == 1
+* list buildid if _merge == 1
+keep if _merge == 3
+drop _merge
+
+* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
+mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
+assert _merge != 1
+keep if _merge == 3
+drop _merge
+
+la var ssep1_d ""
+la var ssep2_d ""
+
+* bring sep 3
+mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+keep if _merge == 3
+drop _merge
+
+rename r18_buildper buildper
+
+gen buildper2 = (buildper >= 8020)
+* ta buildper buildper2, m
+
+la de buildper2 0 "Before 2000" 1 "After 2000", replace
+
+gen ssep3_d = ssep1_d
+replace ssep3_d = ssep2_d if buildper2
+
+* STSETTING
+stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
+
+* AGE & SEX
+global SET = "nopv base cformat(%5.2f)"
+stcox i.sex b10.ssep3_d, $SET
+est sto s1
+* ADJUSTED
+global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+stcox $ADJ b10.ssep3_d, $SET
+est sto s1a
+* ADJUSTED 2
+global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
+stcox $ADJ2 b10.ssep3_d, $SET
+est sto s1a2
+
+global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
+global title 	"size(medsmall) color(black) margin(vsmall)"
+global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
+global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.85 1.62)) xlab(0.9(0.1)1.5)"
+global misc 	"xline( 0.9(0.1)1.5, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0")"
+global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang *.educ *.ocu)"
+
+coefplot (s1, label(Age & sex)) (s1a, label(Adjusted 1))  (s1a2, label(Adjusted 2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+
+gr export $td/gr/d_al_adj3.pdf, replace
+
+texdoc s c 
+
+/***
+\begin{center}
+\includegraphics[width=.75\textwidth]{gr/d_al_adj3.pdf} 
+\end{center}
+
+Note: See notes from previous section. 
+'Adjusted 2' - additionally adjusted for education and occupation.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Cause specific mortality - 2.0}
+***/
+
+texdoc s , nolog // nodo   
+
+global SET = "nopv base cformat(%5.2f)"
+global ADJ = "nat_bin b2.civil b2.urban b1.lang"
+global ADJ2 = "i.sex nat_bin b2.civil b2.urban b1.lang b2.educ b2.ocu"
+
+
+foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
+
+	di in red "*************************************************"
+	di in red "Event: `EVENT'" 
+
+	stset dstop, origin(dob) entry(dstart) failure(`EVENT') scale(365.25)
+	
+	* LADIES 
+	if "`EVENT'" == "d_bc" {
+		
 		stcox b10.ssep2_d if sex, $SET 
 		est sto `EVENT'
-		stcox $ADJ b10.ssep2_d if sex, $SET
+		stcox $ADJ b10.ssep3_d if sex, $SET
 		est sto `EVENT'_a	
-		stcox $ADJ2 b10.ssep2_d if sex, $SET
+		stcox $ADJ2 b10.ssep3_d if sex, $SET
 		est sto `EVENT'_a2		
 	}
 	
 	* GENTS
 	else if "`EVENT'" == "d_pc" {
 
-		stcox b10.ssep2_d if !sex, $SET
+		stcox b10.ssep3_d if !sex, $SET
 		est sto `EVENT'
-		stcox $ADJ b10.ssep2_d if !sex, $SET
+		stcox $ADJ b10.ssep3_d if !sex, $SET
 		est sto `EVENT'_a
-		stcox $ADJ2 b10.ssep2_d if !sex, $SET
+		stcox $ADJ2 b10.ssep3_d if !sex, $SET
 		est sto `EVENT'_a2		
 	}	
 
 	else {
 	
-		stcox i.sex b10.ssep2_d, $SET
+		stcox i.sex b10.ssep3_d, $SET
 		est sto `EVENT'
-		stcox i.sex $ADJ b10.ssep2_d, $SET
+		stcox i.sex $ADJ b10.ssep3_d, $SET
 		est sto `EVENT'_a
-		stcox i.sex $ADJ2 b10.ssep2_d, $SET
+		stcox i.sex $ADJ2 b10.ssep3_d, $SET
 		est sto `EVENT'_a2		
 	}	
 }
 
 texdoc s c 
-
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Cause specific mortality - 2.0}
-***/
-
 
 * VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
 texdoc s , cmdstrip
@@ -797,17 +886,17 @@ estout d_pc d_pc_a d_pc_a2, varl(1.ssep2_d "Prostate cancer")		c( "b(fmt(2)) ci(
 
 estout d_cv d_cv_a d_cv_a2, varl(1.ssep2_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 estout d_mi d_mi_a d_mi_a2, varl(1.ssep2_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
-estout d_mi d_mi_a d_mi_a2, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_st_a d_st_a2, varl(1.ssep2_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
  
 estout d_re d_re_a d_re_a2, varl(1.ssep2_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
-* estout d_ac d_ac_a d_ac_a2, varl(1.ssep2_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
+estout d_ac d_ac_a d_ac_a2, varl(1.ssep2_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 estout d_su d_su_a d_su_a2, varl(1.ssep2_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep2_d) eform  mlabels(, none) collabels(, none)
 
 texdoc s c 
 
 /***
-Note: results of traffic accidents were not possible to estimate due to small number of events (n=10)
+Note: results of traffic accidents have small number of events resulting in large CI (n=91)
 ***/
 
 /***
