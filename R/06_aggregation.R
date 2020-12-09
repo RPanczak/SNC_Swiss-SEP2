@@ -8,7 +8,7 @@ library(ggplot2)
 library(RColorBrewer)
 
 # #################################################
-# using gem 2020 from swisstopo
+# new sep with gem 2020 from swisstopo
 
 ssep2_user_geo <- readRDS("data/Swiss-SEP2/ssep2_user_geo.Rds") 
 

@@ -5,6 +5,8 @@
  \__ \ _||  _// / | () |
  |___/___|_| /___(_)__/ 
 
+Data preparation file
+
 Version 01:~Created. 
 Version 02:~New SNC dataset 207. SE processing in loop.
 Version 03:~Network connectivity processing.
@@ -496,7 +498,6 @@ For remaining individuals and their households, the following data are prepared:
 ***/
 
 
-
 * ***************************************************
 * DATA PREP 
 
@@ -826,25 +827,26 @@ compress
 sa $dd\SE, replace
 
 * dataset for missing hh sensitivity analysis
-forv YR = 12/15 { 
-	if `YR' == 12 {
-		use $dd\SE`YR'_miss, clear
-		gen SE = 2012
-		la var SE "Survey year"
-		order SE, first
+use $dd\SE12_miss, clear
+gen SE = 2012
+la var SE "Survey year"
+order SE, first
+
+sa $dd\SE_miss, replace
+		
+forv YR = 13/15 { 
 	
-		sa $dd\SE_miss, replace
-	}
-	else {
-		use $dd\SE`YR'_miss, clear
-		gen SE = 2000 + `YR'
-		la var SE "Survey year"
-		order SE, first
-	
-		append using $dd\SE_miss
-		sa $dd\SE_miss, replace
-	}
+	use $dd\SE`YR'_miss, clear
+	gen SE = 2000 + `YR'
+	la var SE "Survey year"
+	order SE, first
+
+	append using $dd\SE_miss
+	sa $dd\SE_miss, replace
+
+	rm $dd\SE`YR'_miss.dta
 }	
+
 sort sncid SE, stable 
 * by sncid: gen n = _N 
 by sncid: keep if _n == _N 
@@ -869,7 +871,6 @@ ta num_ocu1 miss, m row nokey
 ta nat_bin miss, m row nokey
 ta canton miss, m row nokey
 
-
 logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.nat_bin
 logistic miss i.sex b3.age_cat b2.civil b2.educ_agg i.migratstat
 
@@ -885,10 +886,9 @@ coefplot, keep( *canton) eform baselevels ///
 
 gr export $td/gr/hh_miss_cant.png, width(800) height(600)
 
-melogit miss i.sex b3.age_cat b2.civil i.num_edu i.num_ocu1 i.nat_bin || canton:
+* melogit miss i.sex b3.age_cat b2.civil i.num_edu i.num_ocu1 i.nat_bin || canton:
 
 texdoc s c
-
 
 /*
 * missing ISCO by sex&age
