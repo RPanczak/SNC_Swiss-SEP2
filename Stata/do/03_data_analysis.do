@@ -170,6 +170,9 @@ gen occup_diff = ssep2 - ssepALT
 ta ssep2_d ssepALT_d , m
 */
 
+texdoc s c 
+
+texdoc s , nolog // nodo   
 
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
@@ -296,7 +299,7 @@ texdoc s , nolog // nodo
 u $dd\SHP, clear
 keep if geocoded
 
-mmerge gisid using $dd\FINAL\DTA\ssep2_user, t(n:1) ukeep(ssep2_d)
+mmerge gisid using $dd\FINAL\DTA\ssep2_user, t(n:1) ukeep(ssep2_d) 
 keep if _merge == 3
 drop _merge
 
@@ -367,20 +370,26 @@ texdoc s , nolog // nodo
 u $dd\SNC_ALL, clear
 
 * bring sep 2
-mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d)
+mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d ssep2)
 * distinct buildid if _merge == 1
 * list buildid if _merge == 1
 keep if _merge == 3
 drop _merge
 
 * bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
+mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d ssep1)
 assert _merge != 1
 keep if _merge == 3
 drop _merge
 
+la val ssep2_d ssep1_d
+
 la var ssep1_d ""
 la var ssep2_d ""
+
+batplot ssep2 ssep1, notrend info dp(0)
+
+gr export $td\gr\BA_sep1_sep2.png, replace width(800) height(600)
 
 * STSETTING
 est clear
@@ -558,7 +567,15 @@ distinct buildid
 distinct buildid if buildper2
 
 gen ssep3_d = ssep1_d
+gen ssep3 = ssep1
 replace ssep3_d = ssep2_d if buildper2
+replace ssep3 = ssep2 if buildper2
+
+la val ssep3_d ssep1_d
+
+batplot ssep3 ssep1, notrend info dp(0)
+
+gr export $td\gr\BA_sep1_sep3.png, replace width(800) height(600)
 
 est clear
 
@@ -581,20 +598,20 @@ global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
 coefplot (u_ssep1_d, label("SSEP 1")) (u_ssep2_d, label("SSEP 2")) (u_ssep3_d, label("SSEP 3")), title("Age & sex adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
 
-gr export $td/gr/strat_sep3u.pdf, replace
-gr export $td/gr/strat_sep3u.png, replace
+gr export $td/gr/sep3u.pdf, replace
+gr export $td/gr/sep3u.png, replace
 
 coefplot (a_ssep1_d, label("SSEP 1")) (a_ssep2_d, label("SSEP 2")) (a_ssep3_d, label("SSEP 3")), title("Fully adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
 
-gr export $td/gr/strat_sep3a.pdf, replace
-gr export $td/gr/strat_sep3a.png, replace
+gr export $td/gr/sep3a.pdf, replace
+gr export $td/gr/sep3a.png, replace
 
 texdoc s c
 
 /***
 \begin{center}
-\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf} \newline
-\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf} 
+\includegraphics[width=.6\textwidth]{gr/sep3u.pdf} \newline
+\includegraphics[width=.6\textwidth]{gr/sep3a.pdf} 
 \end{center}
 ***/
 
@@ -609,6 +626,7 @@ texdoc s c
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \subsection{Cause specific mortality - 2.0 results}
 ***/
 
@@ -686,6 +704,7 @@ Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (high
 Breast and prostate cancer: for men and women respectively. 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \subsection{Cause specific mortality - 3.0 results}
 ***/
 
@@ -835,6 +854,7 @@ Note: See notes from previous section.
 'Adjusted 2' - additionally adjusted for education and occupation.
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \subsection{Cause specific mortality - 3.0}
 ***/
 
@@ -916,65 +936,3 @@ Note: results of traffic accidents have small number of events resulting in larg
 
 * clean graphs
 ! del C:\projects\EOLC\Stata\*.gph
-
-* ===================================================
-* CHECKING HRs OF INDIVIDUAL COMPONENTS OF THE INDEX
-
-texdoc s , nolog  nodo   
-
-u $dd\FINAL\DTA\ssep2_user, clear
-keep gisid ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent
-
-foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
-
-	xtile `var'_d = `var', nq(10)
-	drop `var'
-
-}
-
-mmerge gisid using $dd\SNC_ALL, t(1:n) 
-keep if _merge == 3
-drop _merge
-
-global SET = "nopv base cf(%5.2f)"
-stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
-
-
-foreach var of varlist ocu1p ocu2p ocu3p ocu4p edu1p ppr1 rent {
-
-	di in red "******************************"
-	di in red "Variable is `var'"
-	stcox i.sex b10.`var', $SET
-
-}
-
-texdoc s c 
-
-
-* ===================================================
-* ver1.0 spatial checks
-
-texdoc s , nolog  nodo   
-
-import delim using "C:\projects\SNC_Swiss-SEP1\Stata\textres\FINAL\CSV\ssep_user_geo.csv", clear
-
-isid v0_buildid
-isid gwr_x00 gwr_y00
-
-egen gisid_old = group(gwr_x00 gwr_y00)
-order gisid_old, first 
-distinct v0_buildid gisid_old
-
-sort gisid_old
-/*
-by gisid_old: egen t1 = max(ssep)
-by gisid_old: egen t2 = min(ssep)
-count if t1 != t2 
-drop t?
-*/
-by gisid_old: keep if _n == 1
-drop v0_buildid ssep_q ssep_t
-ren ssep ssep1
-ren ssep1_d ssep1_d1
-
-texdoc s c 
