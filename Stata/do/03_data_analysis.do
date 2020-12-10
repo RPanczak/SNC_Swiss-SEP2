@@ -876,7 +876,7 @@ foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
 	* LADIES 
 	if "`EVENT'" == "d_bc" {
 		
-		stcox b10.ssep2_d if sex, $SET 
+		stcox b10.ssep3_d if sex, $SET 
 		est sto `EVENT'
 		stcox $ADJ b10.ssep3_d if sex, $SET
 		est sto `EVENT'_a	
