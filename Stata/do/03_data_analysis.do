@@ -75,7 +75,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.07 - data analysis}}
+Report 1.08 - data analysis}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -84,12 +84,6 @@ Report 1.07 - data analysis}}
 \maketitle
 \tableofcontents
 
-***/
-
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{PCA on n'hood aghgregated characteristics}
@@ -129,7 +123,7 @@ gen ssep2 = (ind - 100)*(-1)
 
 xtile ssep2_t  = ssep2, nq(3)
 xtile ssep2_q  = ssep2, nq(5)
-xtile ssep2_d = ssep2, nq(10)
+xtile ssep2_d  = ssep2, nq(10)
 
 drop  i_hw ind A B
 
@@ -168,38 +162,7 @@ gen occup_diff = ssep2 - ssepALT
 * hist occup_diff, w(0.25) start(-10) percent
 
 ta ssep2_d ssepALT_d , m
-*/
 
-texdoc s c 
-
-texdoc s , nolog // nodo   
-
-* BRING COORDINATES
-* ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
-ren gisid_orig gisid
-mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(geox geoy)
-keep if _merge==3
-drop _merge
-order gisid geox geoy, first 
-bysort gisid: keep if _n == 1
-
-note drop _all
-
-la da "SSEP 2.0 - user dataset of index and coordinates with variables used for PCA"
-
-la var gisid 		"Spatial ID"
-la var ssep2 		"Swiss-SEP 2.0 index"
-la var ssep2_t 		"Swiss-SEP 2.0 - tertiles"
-la var ssep2_q 		"Swiss-SEP 2.0 - quintiles"
-la var ssep2_d 		"Swiss-SEP 2.0 - deciles"
-
-note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
-
-compress
-note: Last changes: $S_DATE $S_TIME
-sa $dd\FINAL\DTA\ssep2_full, replace
-
-/*
 * https://www.stata.com/meeting/uk19/slides/uk19_newson.pdf
 somersd ssep ssepALT, taua transf(z) tdist
 scsomersd difference 0, transf(z) tdist
@@ -211,75 +174,228 @@ batplot ssep ssepALT, notrend info dp(0)
 gr export $td\gr\BA_occu.png, replace width(800) height(600)
 */
 
+* BRING COORDINATES
+* ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
+ren gisid_orig gisid
+mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid geox geoy)
+keep if _merge==3
+drop _merge
+order gisid buildid geox geoy, first 
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Hybrid version of SEP}
+
+This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the colsest (linear dstance) neighbour. 
+
+Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings build before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
+***/
+
+texdoc s , nolog // nodo   
+
+* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
+mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
+assert _merge == 3
+drop _merge
+
+* getting age of the buildings
+mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+
+/*
+* br if _merge == 1 
+
+gen miss_age = (_merge == 1)
+
+tabstat ocu1p, s(mean median) by(miss_age) f(%9.6fc)
+tabstat edu1p, s(mean median) by(miss_age) f(%9.6fc)
+tabstat ppr1,  s(mean median) by(miss_age) f(%9.6fc)
+tabstat rent,  s(mean median) by(miss_age) f(%9.6fc)
+
+logistic miss_age ocu1p edu1p ppr1 rent
+coefplot, drop(_cons) eform
+*/
+
+drop if _merge == 2
+drop _merge
+
+rename r18_buildper buildper
+
+/*
+Periode vor 1919				8011
+Periode von 1919 bis 1945		8012
+Periode von 1946 bis 1960		8013
+Periode von 1961 bis 1970		8014
+Periode von 1971 bis 1980		8015
+Periode von 1981 bis 1985		8016
+Periode von 1986 bis 1990		8017
+Periode von 1991 bis 1995		8018
+Periode von 1996 bis 2000		8019
+Periode von 2001 bis 2005		8020
+Periode von 2006 bis 2010		8021
+Periode von 2011 bis 2015		8022
+Periode nach 2015				8023
+*/
+
+gen buildper2 = (buildper >= 8020)
+* ta buildper buildper2, m
+
+la de buildper2 0 "Before 2000" 1 "After 2000", replace
+/*
+fre buildper
+fre buildper2
+distinct buildid 
+distinct buildid if buildper2
+*/
+
+gen ssep3 = ssep1
+replace ssep3 = ssep2 if buildper2
+
+gen ssep3_t = ssep1_t
+gen ssep3_q = ssep1_q
+gen ssep3_d = ssep1_d
+replace ssep3_t = ssep2_t if buildper2
+replace ssep3_q = ssep2_q if buildper2
+replace ssep3_d = ssep2_d if buildper2
+
+la val ssep2_d ssep1_d
+la val ssep3_d ssep1_d
+
+la var ssep1_d ""
+la var ssep2_d ""
+la var ssep3_d ""
+
+order ssep1* ssep2* ssep3*, last
+
+note drop _all
+
+la da "SSEP 3.0 - user dataset of index and coordinates with variables used for PCA"
+
+la var gisid 		"Spatial ID"
+la var buildid 		"SNC building ID"
+
+la var ssep1 		"Swiss-SEP 1.0 index"
+la var ssep1_t 		"Swiss-SEP 1.0 - tertiles"
+la var ssep1_q 		"Swiss-SEP 1.0 - quintiles"
+la var ssep1_d 		"Swiss-SEP 1.0 - deciles"
+
+la var ssep2 		"Swiss-SEP 2.0 index"
+la var ssep2_t 		"Swiss-SEP 2.0 - tertiles"
+la var ssep2_q 		"Swiss-SEP 2.0 - quintiles"
+la var ssep2_d 		"Swiss-SEP 2.0 - deciles"
+
+la var ssep3 		"Swiss-SEP 3.0 index"
+la var ssep3_t 		"Swiss-SEP 3.0 - tertiles"
+la var ssep3_q 		"Swiss-SEP 3.0 - quintiles"
+la var ssep3_d 		"Swiss-SEP 3.0 - deciles"
+
+note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
+
+note buildid: "Unique GWR building ID. Use to link to SNC!"
+
+compress
+note: Last changes: $S_DATE $S_TIME
+sa $dd\FINAL\DTA\ssep3_full, replace
+
+preserve 
+	drop gisid
+	la da "SSEP 3.0 - SNC user dataset of index and XY coordinates"
+	sa $dd\FINAL\DTA\ssep3_user_snc, replace
+restore 
+
 * USER DATASET
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu*  // ssep2* occup_diff
+bysort gisid: keep if _n == 1
+drop buildid
 
-la da "SSEP 2.0 - user dataset of index and XY coordinates"
+drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* buildper
 
-sa $dd\FINAL\ssep2_user, replace
+la da "SSEP 3.0 - user dataset of index and XY coordinates"
 
-codebookout "$dd\FINAL\ssep2_user_codebook.xls", replace
+sa $dd\FINAL\ssep3_user, replace
 
-log using "$dd\FINAL\ssep2_user_data_description.txt", replace text 
+codebookout "$dd\FINAL\ssep3_user_codebook.xls", replace
+
+log using "$dd\FINAL\ssep3_user_data_description.txt", replace text 
 d, f
 notes
 log close
 
-export delim using "$dd\FINAL\CSV\ssep2_user_geo.csv", delim(",")  replace
+export delim using "$dd\FINAL\CSV\ssep3_user_geo.csv", delim(",") nolab replace
 
 cd ..
 rscript using data-raw/Swiss-SEP2/Swiss-SEP2.R
 cd Stata
 
-* BRING COORDINATES
-* ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
-mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid)
-keep if _merge==3
-drop _merge
-order gisid buildid, first 
-drop geox geoy
-
-* NOT UNIQUE ANY LONGER!
-distinct gisid
-drop gisid
-
-* ALSO NOTE THAT QUINTILES ARE A BIT 'BROKEN' NOW
-* ta ssep2_d, m
-
-la var buildid 		"SNC building ID"
-
-note buildid: 	Unique GWR building ID. Use to link to SNC!
-
-la da "SSEP 2.0 - SNC user dataset of index and XY coordinates"
-
-sa $dd\FINAL\DTA\ssep2_user_snc, replace
-
 texdoc s c 
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Index deciles}
+\subsection{Index deciles}
 ***/
 
 texdoc s , cmdstrip
 
-u $dd\FINAL\DTA\ssep2_user, clear
+u $dd\FINAL\DTA\ssep3_user, clear
 /*
-tabstat ssep2, s(min mean max ) by(ssep2_t) f(%9.6fc)
-tabstat ssep2, s(min mean max ) by(ssep2_q) f(%9.6fc)
-tabstat ssep2, s(min mean max ) by(ssep2_d) f(%9.6fc)
+tabstat ssep3, s(min mean max ) by(ssep3_t) f(%9.6fc)
+tabstat ssep3, s(min mean max ) by(ssep3_q) f(%9.6fc)
+tabstat ssep3, s(min mean max ) by(ssep3_d) f(%9.6fc)
 */
-tabstat ssep2, s( min mean max ) by(ssep2_d) f(%9.2fc)
+tabstat ssep3, s( min mean max ) by(ssep3_d) f(%9.2fc)
 
 texdoc s c 
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Quantiles}
+
+Note that the quantiles of third version are tad 'broken'.
+***/
+
+texdoc s , cmdstrip
+
+* fre ssep2_d
+* fre ssep3_d
+ta ssep2_d ssep3_d, m
+ 
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Bland Altman plots of diffs}
+***/
+
+texdoc s , nolog 
+
+batplot ssep2 ssep1, notrend info dp(0)
+gr export $td\gr\BA_sep1_sep2.png, replace width(800) height(600)
+
+batplot ssep3 ssep1, notrend info dp(0)
+gr export $td\gr\BA_sep1_sep3.png, replace width(800) height(600)
+ 
+texdoc s c 
+
+/***
+
+\begin{center}
+\includegraphics[width=\textwidth]{gr/BA_sep1_sep2.png} 
+\includegraphics[width=\textwidth]{gr/BA_sep1_sep3.png} 
+\end{center}
+***/
+
+/***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Maps}
+***/
 
+cd ..
+rscript using R/03_sep-map.R
+cd Stata
+
+/***
 \begin{center}
 \includegraphics[width=\textwidth]{gr/sep-old.png} 
 \includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/01_sep-dots.png} 
@@ -299,7 +415,7 @@ texdoc s , nolog // nodo
 u $dd\SHP, clear
 keep if geocoded
 
-mmerge gisid using $dd\FINAL\DTA\ssep2_user, t(n:1) ukeep(ssep2_d) 
+mmerge gisid using $dd\FINAL\DTA\ssep3_user, t(n:1) ukeep(ssep2_d) 
 keep if _merge == 3
 drop _merge
 
@@ -370,26 +486,11 @@ texdoc s , nolog // nodo
 u $dd\SNC_ALL, clear
 
 * bring sep 2
-mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d ssep2)
+mmerge buildid using $dd\FINAL\DTA\ssep3_user_snc, t(n:1) ukeep(ssep2_d ssep2)
 * distinct buildid if _merge == 1
 * list buildid if _merge == 1
 keep if _merge == 3
 drop _merge
-
-* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d ssep1)
-assert _merge != 1
-keep if _merge == 3
-drop _merge
-
-la val ssep2_d ssep1_d
-
-la var ssep1_d ""
-la var ssep2_d ""
-
-batplot ssep2 ssep1, notrend info dp(0)
-
-gr export $td\gr\BA_sep1_sep2.png, replace width(800) height(600)
 
 * STSETTING
 est clear
@@ -533,49 +634,6 @@ Then 789,759 individuals in 202,015 buildings (14.1\% building stock) had their 
 ***/
 
 texdoc s , nolog // nodo   
-
-mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
-
-* br if _merge == 1 // check who is there??
-keep if _merge == 3
-drop _merge
-
-rename r18_buildper buildper
-
-/*
-Periode vor 1919				8011
-Periode von 1919 bis 1945		8012
-Periode von 1946 bis 1960		8013
-Periode von 1961 bis 1970		8014
-Periode von 1971 bis 1980		8015
-Periode von 1981 bis 1985		8016
-Periode von 1986 bis 1990		8017
-Periode von 1991 bis 1995		8018
-Periode von 1996 bis 2000		8019
-Periode von 2001 bis 2005		8020
-Periode von 2006 bis 2010		8021
-Periode von 2011 bis 2015		8022
-Periode nach 2015				8023
-*/
-
-gen buildper2 = (buildper >= 8020)
-* ta buildper buildper2, m
-
-la de buildper2 0 "Before 2000" 1 "After 2000", replace
-fre buildper2
-distinct buildid 
-distinct buildid if buildper2
-
-gen ssep3_d = ssep1_d
-gen ssep3 = ssep1
-replace ssep3_d = ssep2_d if buildper2
-replace ssep3 = ssep2 if buildper2
-
-la val ssep3_d ssep1_d
-
-batplot ssep3 ssep1, notrend info dp(0)
-
-gr export $td\gr\BA_sep1_sep3.png, replace width(800) height(600)
 
 est clear
 
@@ -784,7 +842,7 @@ texdoc s , nolog // nodo
 u $dd\SNC_SE, clear
 
 * bring sep 2
-mmerge buildid using $dd\FINAL\DTA\ssep2_user_snc, t(n:1) ukeep(ssep2_d)
+mmerge buildid using $dd\FINAL\DTA\ssep3_user_snc, t(n:1) ukeep(ssep2_d)
 * distinct buildid if _merge == 1
 * list buildid if _merge == 1
 keep if _merge == 3
