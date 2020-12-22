@@ -1,6 +1,6 @@
 ---
 title: "Swiss-SEP project"
-description: "Aggregating point data to Gemeinde"
+description: "Aggregating point data to communities"
 date: "`r Sys.Date()`"
 author:
   - name: Radoslaw Panczak 
@@ -154,7 +154,7 @@ rm(r18_bu_orig)
 gc()
 ```
 
-# PLZ averages
+# Community averages
 
 ## 'nhood based
 
@@ -396,7 +396,7 @@ mapdata_pop %>%
           scale = .5,  shape = 19)
 ```
 
-### Deciles using sample of PLZs vs 'original' deciles
+### Deciles using sample of communities vs 'original' deciles
 
 ```{r}
 frq(mapdata_pop$median_ssep1_samp_d)
