@@ -18,11 +18,10 @@ if "`c(os)'" == "Windows" {
 
 
 	* PATH SETTINGS
-	global dd  = "$pp\stata\data"
-	global dod = "$pp\stata\do"
-	global od  = "$pp\stata\orig"
-	global td  = "$pp\stata\textres"
-	global sp  = "$pp\stata\gis"
+	global dd  = "$pp\data"
+	global dod = "$pp\Stata"
+	global od  = "$pp\data-raw"
+	global td  = "$pp\analyses"
 
 	cd "$pp\Stata"
 }
@@ -32,11 +31,10 @@ else if "`c(os)'" == "Unix"{
 	global pp="/home/rdk/Code/..."
 
 	* general project path settings
-	global dd  = "$pp/Stata/data"
-	global dod = "$pp/Stata/do"
-	global od  = "$pp/Stata/orig"
-	global td  = "$pp/Stata/textres"
-	global sp  = "$pp/stata/gis"
+	global dd  = "$pp\data"
+	global dod = "$pp\Stata"
+	global od  = "$pp\data-raw"
+	global td  = "$pp\analyses"
 
 	cd $pp/Stata
 }

@@ -11,7 +11,7 @@ Data analysis file
 
 * ***************************************************
 
-qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
+qui do C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do
 
 qui version 15
 

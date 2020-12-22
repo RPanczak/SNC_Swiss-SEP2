@@ -24,7 +24,7 @@ Version 07:~Change to SNC 4.0
 
 * ***************************************************
 
-qui do C:\projects\SNC_Swiss-SEP2\Stata\do\00_run_first.do
+qui do C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do
 
 qui version 15
 
@@ -1865,7 +1865,7 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Dataset - SNC SE}
 
-Secondly, only individuals who participated in one of the SE surveys (2012-14) will be used in order to develop 'fully adjusted' model 
+Secondly, only individuals who participated in one of the SE surveys (2012-15) will be used in order to develop 'fully adjusted' model 
 taking into account additionally education and occupation (note the details provided in the SE section!).
 
 ***/
