@@ -86,6 +86,69 @@ Report 1.08 - data analysis}}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\section{Finding n'hoods with new buildings}
+***/
+
+texdoc s , nolog // nodo   
+
+u $dd/NEIGHB, clear
+drop part total_length b_*
+
+* getting buildid back
+mmerge gisid_orig using "../data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+drop if _merge == 2
+drop _merge
+ren buildid buildid_orig
+
+* getting age of the buildings
+mmerge buildid_orig using "../data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+drop if _merge == 2
+drop _merge
+
+gen buildper_orig = (r18_buildper >= 8020)
+drop r18_buildper
+* ta buildper_orig, m
+
+* same procedure on dest side
+mmerge gisid_dest using "../data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+drop if _merge == 2
+drop _merge
+ren buildid buildid_dest
+
+mmerge buildid_dest using "../data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+drop if _merge == 2
+drop _merge
+
+gen buildper_dest = (r18_buildper >= 8020)
+drop r18_buildper
+* ta buildper_dest, m
+
+sort gisid_orig destinationrank, stable
+by gisid_orig: egen temp1 = max(buildper_orig)
+by gisid_orig: egen temp2 = total(buildper_dest)
+by gisid_orig: gen buildper_num = temp1 + temp2
+by gisid_orig: gen buildper_den = _N + 1
+by gisid_orig: keep if _n == 1
+drop gisid_dest destinationrank buildid_orig buildper_orig buildid_dest buildper_dest temp1 temp2
+gen buildper_share = buildper_num / buildper_den
+univar buildper_share
+
+histogram buildper_share, width(0.05) start(0) percent
+
+compress
+save $dd/temp, replace
+
+/*
+br if gisid_orig == 78091
+br if gisid_orig == 78230
+*/
+
+texdoc s c
+
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{PCA on n'hood aghgregated characteristics}
 ***/
 
@@ -197,7 +260,7 @@ Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018
 texdoc s , nolog // nodo   
 
 * bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
+mmerge gisid using "../data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
 
