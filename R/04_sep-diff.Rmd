@@ -31,7 +31,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(dplyr, ggplot2, scales, sf, tmap, tmaptools)
+p_load(readr, dplyr, ggplot2, scales, sf, tmap, tmaptools)
 tmap_mode("view") # makes map interactive
 ```
 
@@ -44,9 +44,11 @@ tmap_mode("view") # makes map interactive
 ```{r load, include=FALSE}
 # important to work with planar coords!
 
-sep1 <- readRDS("data/Swiss-SEP1/ssep_user_geo.Rds") %>% 
-  select(v0_buildid, ssep, ssep_d) %>% 
+sep1 <- read_rds("data/Swiss-SEP1/ssep_user_geo.Rds") %>% 
+  select(v0_buildid, ssep, ssep_t, ssep_q, ssep_d) %>% 
   rename(ssep1 = ssep,
+         ssep1_t = ssep_t, 
+         ssep1_q = ssep_q, 
          ssep1_d = ssep_d) %>% 
   mutate(ssep1_d = factor(ssep1_d,
                           levels = 1:10,
@@ -56,8 +58,8 @@ sep1 <- readRDS("data/Swiss-SEP1/ssep_user_geo.Rds") %>%
                                      "6", "7", "8", "9", 
                                      "10th - highest")))
 
-sep2 <- readRDS("data/Swiss-SEP2/ssep2_user_geo.Rds") %>% 
-  select(gisid, ssep2, ssep2_d) %>% 
+sep2 <- read_rds("data/Swiss-SEP2/ssep2_user_geo.Rds") %>% 
+  select(gisid, ssep2, ssep2_t, ssep2_q, ssep2_d) %>% 
   mutate(ssep2_d = factor(ssep2_d,
                           levels = 1:10,
                           labels = c("1st - lowest", 
@@ -93,9 +95,9 @@ sep2_sep1_join <- st_join(sep2, sep1,
 nearest <- st_nearest_feature(sep2, sep1)
 distance <- st_distance(sep2, sep1[nearest, ], by_element = TRUE)
 sep2_sep1_join$distance <- distance
-rm(nearest, dist)
+rm(nearest, distance)
 
-saveRDS(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
+write_rds(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
 
 sep2_sep1_join %>% 
   st_drop_geometry() %>% 
@@ -109,7 +111,7 @@ sep2_sep1_join %>%
 Top 20 n'hood centres of 2.0 index (in red) that are furthest from 1.0 n'hood (in black). Using straight line distance.
 
 ```{r, layout="l-page", fig.width=6, fig.height=4}
-sep2_sep1_join <- readRDS("data/Swiss-SEP2/sep2_sep1_join.Rds")
+sep2_sep1_join <- read_rds("data/Swiss-SEP2/sep2_sep1_join.Rds")
 
 top20_dist <- sep2_sep1_join %>% 
   arrange(-distance) %>% 
