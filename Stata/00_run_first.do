@@ -23,7 +23,7 @@ if "`c(os)'" == "Windows" {
 	global od  = "$pp\data-raw"
 	global td  = "$pp\analyses"
 
-	cd "$pp\Stata"
+	cd "$pp"
 }
 
 else if "`c(os)'" == "Unix"{
