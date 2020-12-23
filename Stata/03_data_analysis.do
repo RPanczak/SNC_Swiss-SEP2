@@ -504,6 +504,16 @@ cd Stata
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Validation - SHP data}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Income graph - 1.0}
+
+\begin{center}
+\includegraphics[width=.75\textwidth]{gr/orig/orig_income.png} 
+\end{center}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Income graph - 2.0}
 ***/
 
 texdoc s , nolog // nodo   
@@ -517,37 +527,28 @@ drop _merge
 
 preserve 
 
-keep idhous13 i13eqon ssep?_d
+	keep idhous13 i13eqon ssep?_d
 
-drop if mi(i13eqon)
+	drop if mi(i13eqon)
 
-reshape long ssep, i(idhous13 i13eqon) j(sep_version) string
+	reshape long ssep, i(idhous13 i13eqon) j(sep_version) string
 
-graph box i13eqon, ///
-	over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
-	over(ssep) asyvars nooutsides ///
-	ytitle(Household income [CHF]) ylabel(0(50000)180000, format(%9,0gc)) ymtick(##2, grid) ///
-	title(Equivalised yearly household income, ring(0)) ///
-	subtitle(Across deciles of three versions of the indes, size(small) ring(0) margin(medlarge)) ///
-	note("") legend(title(Index version)) ///
-	scheme(plotplainblind) graphregion(margin(zero))
+	graph box i13eqon, ///
+		over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
+		over(ssep) asyvars nooutsides ///
+		ytitle(Household income [CHF]) ylabel(0(50000)180000, format(%9,0gc)) ymtick(##2, grid) ///
+		title(Equivalised yearly household income, ring(0)) ///
+		subtitle(Across deciles of three versions of the indes, size(small) ring(0) margin(medlarge)) ///
+		note("") legend(title(Index version)) ///
+		scheme(plotplainblind) graphregion(margin(zero))
 
-gr export $td/gr/shp_income.pdf, replace
+	gr export $td/gr/shp_income.pdf, replace
 
+restore 
 
 texdoc s c 
 
 /***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Income graph - 1.0}
-
-\begin{center}
-\includegraphics[width=.75\textwidth]{gr/orig/orig_income.png} 
-\end{center}
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Income graph - 2.0}
-
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr/shp_income.pdf} 
 \end{center}
@@ -572,10 +573,66 @@ tabstat h13i51 if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) n
 
 ta h13i20ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
 ta h13i21ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
 ta h13i22   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
 ta h13i23   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
 ta h13i76a  ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
 ta h13i50   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Financial variables table - 3.0}
+***/
+
+texdoc s , cmdstrip
+
+tabstat i13eqon if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
+tabstat h13i51 if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
+
+ta h13i20ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+ta h13i21ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+ta h13i22   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+ta h13i23   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+ta h13i76a  ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+ta h13i50   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
 
 texdoc s c 
 
@@ -590,7 +647,7 @@ texdoc s c
 \includegraphics[width=.50\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
 \end{center}
 
-Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
+Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in original paper!
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{All cause mortality - 2.0 results}
@@ -783,11 +840,11 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\subsection{All cause mortality - exploring  different building age structures of SEP 3}
+%\newpage
+%\subsection{All cause mortality - exploring  different building age structures of SEP 3}
 ***/
 
-texdoc s , nolog // nodo   
+texdoc s , nolog  nodo   
 
 * alternative solutions of 3 using n'hood age structure
 mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep3_d_?)
