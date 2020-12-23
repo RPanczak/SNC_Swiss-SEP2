@@ -85,23 +85,23 @@ Report 1.08 - data analysis}}
 \tableofcontents
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{Finding n'hoods with new buildings}
+% \newpage
+% \section{Finding n'hoods with new buildings}
 ***/
 
-texdoc s , nolog // nodo   
+texdoc s , nolog nodo   
 
 u $dd/NEIGHB, clear
 drop part total_length b_*
 
 * getting buildid back
-mmerge gisid_orig using "../data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_orig using "data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
 drop if _merge == 2
 drop _merge
 ren buildid buildid_orig
 
 * getting age of the buildings
-mmerge buildid_orig using "../data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_orig using "data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
 drop if _merge == 2
 drop _merge
 
@@ -110,12 +110,12 @@ drop r18_buildper
 * ta buildper_orig, m
 
 * same procedure on dest side
-mmerge gisid_dest using "../data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_dest using "data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
 drop if _merge == 2
 drop _merge
 ren buildid buildid_dest
 
-mmerge buildid_dest using "../data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_dest using "data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
 drop if _merge == 2
 drop _merge
 
@@ -133,10 +133,20 @@ drop gisid_dest destinationrank buildid_orig buildper_orig buildid_dest buildper
 gen buildper_share = buildper_num / buildper_den
 univar buildper_share
 
-histogram buildper_share, width(0.05) start(0) percent
+hist buildper_share, width(0.05) start(0) percent
+
+keep gisid_orig buildper_share
+ren gisid_orig  gisid
+
+egen buildper_cat = cut(buildper_share), at(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 1.1) icodes
+
+replace buildper_cat = buildper_cat + 1
+replace buildper_cat = 0 if buildper_share == 0
+
+fre buildper_cat
 
 compress
-save $dd/temp, replace
+save $dd/buildper_share, replace
 
 /*
 br if gisid_orig == 78091
@@ -240,7 +250,7 @@ gr export $td\gr\BA_occu.png, replace width(800) height(600)
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
-mmerge gisid using $dd\ORIGINS, t(1:n) ukeep(buildid geox geoy)
+mmerge gisid using data/ORIGINS, t(1:n) ukeep(buildid geox geoy)
 keep if _merge==3
 drop _merge
 order gisid buildid geox geoy, first 
@@ -252,7 +262,7 @@ texdoc s c
 \newpage
 \section{Hybrid version of SEP}
 
-This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the colsest (linear dstance) neighbour. 
+This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear dstance) neighbour. 
 
 Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings build before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
 ***/
@@ -260,12 +270,12 @@ Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018
 texdoc s , nolog // nodo   
 
 * bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "../data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
+mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
 
 * getting age of the buildings
-mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 
 /*
 * br if _merge == 1 
@@ -284,7 +294,7 @@ coefplot, drop(_cons) eform
 drop if _merge == 2
 drop _merge
 
-rename r18_buildper buildper
+ren r18_buildper buildper
 
 /*
 Periode vor 1919				8011
@@ -358,37 +368,50 @@ note gisid: "Unique ID groupping small amount of GWR buildings with the same coo
 
 note buildid: "Unique GWR building ID. Use to link to SNC!"
 
+/*
+* experimental index replacement depending on share of new buildings
+
+mmerge gisid using $dd/buildper_share, t(n:1) ukeep(buildper_cat)
+drop if _merge == 2
+drop _merge
+
+forv buildper = 1(1)6 {
+	gen ssep3_d_`buildper' = ssep1_d
+	replace ssep3_d_`buildper' = ssep2_d if buildper_cat >= `buildper'
+}
+*/
+
 compress
 note: Last changes: $S_DATE $S_TIME
-sa $dd\FINAL\DTA\ssep3_full, replace
+sa "FINAL/DTA/ssep3_full.dta", replace
+
+drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* buildper
 
 preserve 
 	drop gisid
 	la da "SSEP 3.0 - SNC user dataset of index and XY coordinates"
-	sa $dd\FINAL\DTA\ssep3_user_snc, replace
+	sa "FINAL/DTA/ssep3_user_snc", replace
 restore 
 
 * USER DATASET
 bysort gisid: keep if _n == 1
 drop buildid
 
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* buildper
-
 la da "SSEP 3.0 - user dataset of index and XY coordinates"
 
-sa $dd\FINAL\ssep3_user, replace
+sa "FINAL/DTA/ssep3_user.dta", replace
 
-codebookout "$dd\FINAL\ssep3_user_codebook.xls", replace
+codebookout "FINAL/ssep3_user_codebook.xls", replace
 
-log using "$dd\FINAL\ssep3_user_data_description.txt", replace text 
+log using "FINAL/ssep3_user_data_description.txt", replace text 
 d, f
 notes
 log close
 
-export delim using "$dd\FINAL\CSV\ssep3_user_geo.csv", delim(",") nolab replace
+export delim using "FINAL/CSV/ssep3_user_geo.csv", delim(",") nolab replace
 
 cd ..
-rscript using data-raw/Swiss-SEP2/Swiss-SEP2.R
+rscript using "data-raw/Swiss-SEP2/Swiss-SEP2.R"
 cd Stata
 
 texdoc s c 
@@ -400,12 +423,14 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u $dd\FINAL\DTA\ssep3_user, clear
+u FINAL/DTA/ssep3_user, clear
+
 /*
 tabstat ssep3, s(min mean max ) by(ssep3_t) f(%9.6fc)
 tabstat ssep3, s(min mean max ) by(ssep3_q) f(%9.6fc)
 tabstat ssep3, s(min mean max ) by(ssep3_d) f(%9.6fc)
 */
+
 tabstat ssep3, s( min mean max ) by(ssep3_d) f(%9.2fc)
 
 texdoc s c 
@@ -414,13 +439,21 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Quantiles}
 
-Note that the quantiles of third version are tad 'broken'.
+Note that the original quantiles of second version :
 ***/
 
 texdoc s , cmdstrip
 
-* fre ssep2_d
-* fre ssep3_d
+ta ssep2_d, m
+ 
+texdoc s c 
+
+/***
+... are tad 'broken' after replacements:
+***/
+
+texdoc s , cmdstrip
+
 ta ssep2_d ssep3_d, m
  
 texdoc s c 
@@ -455,7 +488,7 @@ texdoc s c
 ***/
 
 cd ..
-rscript using R/03_sep-map.R
+rscript using "R/03_sep-map.R"
 cd Stata
 
 /***
@@ -475,10 +508,10 @@ cd Stata
 
 texdoc s , nolog // nodo   
 
-u $dd\SHP, clear
+u data/SHP, clear
 keep if geocoded
 
-mmerge gisid using $dd\FINAL\DTA\ssep3_user, t(n:1) ukeep(ssep2_d) 
+mmerge gisid using FINAL/DTA/ssep3_user, t(n:1) ukeep(ssep2_d ) 
 keep if _merge == 3
 drop _merge
 
@@ -542,16 +575,17 @@ texdoc s c
 \end{center}
 
 Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in paper!
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{All cause mortality - 2.0 results}
 ***/
 
 texdoc s , nolog // nodo   
 
-u $dd\SNC_ALL, clear
+u data/SNC_ALL, clear
 
-* bring sep 2
-mmerge buildid using $dd\FINAL\DTA\ssep3_user_snc, t(n:1) ukeep(ssep2_d ssep2)
-* distinct buildid if _merge == 1
-* list buildid if _merge == 1
+* bring sep 2 & 3
+mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep1_d ssep2_d ssep3_d)
 keep if _merge == 3
 drop _merge
 
@@ -584,9 +618,6 @@ gr export $td/gr/d_al.png, replace
 texdoc s c 
 
 /***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{All cause mortality - 2.0 results}
-
 \begin{center}
 \includegraphics[width=.6\textwidth]{gr/d_al.pdf} 
 \end{center}
@@ -637,7 +668,7 @@ Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex.
 
 texdoc s , nolog // nodo   
 
-* STRATIDFIED
+* STRATIFIED
 * age cat
 egen age_bin = cut(age), at(19, 65, 110) label
 order age_bin, a(age)
@@ -689,9 +720,7 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{All cause mortality - combining two SEP indices}
-
-9,144 (0.16\%) individuals were excluded here since there was no info about building age.  
+\subsection{All cause mortality - combining three SEP indices}
 
 Then 789,759 individuals in 202,015 buildings (14.1\% building stock) had their SEP modified to new one.
 ***/
@@ -735,6 +764,39 @@ texdoc s c
 \includegraphics[width=.6\textwidth]{gr/sep3a.pdf} 
 \end{center}
 ***/
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{All cause mortality - exploring  different building age structures of SEP 3}
+***/
+
+texdoc s , nolog // nodo   
+
+* alternative solutions of 3 using n'hood age structure
+mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep3_d_?)
+keep if _merge == 3
+drop _merge
+
+gen SEP = . 
+
+foreach SEP in ssep3_d ssep3_d_1 ssep3_d_2 ssep3_d_3 ssep3_d_4 ssep3_d_5 ssep3_d_6 {
+	* AGE & SEX
+	replace SEP = `SEP' // smae name for better tabs
+	stcox i.sex b10.SEP, $SET
+	est sto u_`SEP'
+	/* FULLY
+	global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+	stcox $ADJ b10.`SEP', $SET
+	est sto a_`SEP'
+	*/
+}
+
+est tab u_*
+
+Results from version 4 onwards converge to simple solution.  
+
+texdoc s c
 
 
 /***
@@ -902,17 +964,17 @@ Breast and prostate cancer: for men and women respectively.
 
 texdoc s , nolog // nodo   
 
-u $dd\SNC_SE, clear
+u data/SNC_SE, clear
 
 * bring sep 2
-mmerge buildid using $dd\FINAL\DTA\ssep3_user_snc, t(n:1) ukeep(ssep2_d)
+mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep2_d)
 * distinct buildid if _merge == 1
 * list buildid if _merge == 1
 keep if _merge == 3
 drop _merge
 
 * bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "..\data\Swiss-SEP2\sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
+mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
 assert _merge != 1
 keep if _merge == 3
 drop _merge
@@ -921,7 +983,7 @@ la var ssep1_d ""
 la var ssep2_d ""
 
 * bring sep 3
-mmerge buildid using "../data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 keep if _merge == 3
 drop _merge
 
