@@ -511,13 +511,29 @@ texdoc s , nolog // nodo
 u data/SHP, clear
 keep if geocoded
 
-mmerge gisid using FINAL/DTA/ssep3_user, t(n:1) ukeep(ssep2_d ) 
+mmerge gisid using FINAL/DTA/ssep3_user, t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
 keep if _merge == 3
 drop _merge
 
-gr box i13eqon, over(ssep2_d) noout ytitle("Equivalised yearly household income (SFr)") ylab(, angle(horizontal)) scheme(plotplain)
+preserve 
+
+keep idhous13 i13eqon ssep?_d
+
+drop if mi(i13eqon)
+
+reshape long ssep, i(idhous13 i13eqon) j(sep_version) string
+
+graph box i13eqon, ///
+	over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
+	over(ssep) asyvars nooutsides ///
+	ytitle(Household income [CHF]) ylabel(0(50000)180000, format(%9,0gc)) ymtick(##2, grid) ///
+	title(Equivalised yearly household income, ring(0)) ///
+	subtitle(Across deciles of three versions of the indes, size(small) ring(0) margin(medlarge)) ///
+	note("") legend(title(Index version)) ///
+	scheme(plotplainblind) graphregion(margin(zero))
 
 gr export $td/gr/shp_income.pdf, replace
+
 
 texdoc s c 
 
