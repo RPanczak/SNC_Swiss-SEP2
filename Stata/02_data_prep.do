@@ -28,7 +28,7 @@ qui do C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do
 
 qui version 15
 
-texdoc init $td\report_sep2_prep.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
+texdoc init $td/report_sep2_prep.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
 clear
 
@@ -114,7 +114,7 @@ texdoc s , nolog // nodo
 
 * *****
 * BU_CLASS >> DATA FROM KS
-u "$od\buclassfloor\gwrgws_buclassfloor_prep" , clear 
+u "data-raw/buclassfloor/gwrgws_buclassfloor_prep" , clear 
 
 ta org_bu_class, m
 keep if !inrange(org_bu_class, 1110, 1122) & !mi(org_bu_class)
@@ -134,14 +134,14 @@ drop ewid floor org_floor
 ta org_bu_class, m sort
 
 compress
-sa "$dd\buclass" , replace 
+sa "data/buclass" , replace 
 
 /* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
-u "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
+u "data-raw/snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 keep if r14_pe_flag == 1
 
-mmerge r14_buildid using "$dd\buclass" , t(n:1) umatch(egid)
+mmerge r14_buildid using "data/buclass" , t(n:1) umatch(egid)
 
 ta org_bu_class, m sort
 
@@ -180,7 +180,7 @@ list if org_bu_class == 1220
 forv year = 10/14 {
 	
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
-		using "$od\snc2_std_pers_90_00_14_all_207_full.dta", clear 
+		using "data-raw/snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 	ren (r`year'_buildid r`year'_geox r`year'_geoy) (buildid geox geoy)
 	
@@ -196,11 +196,11 @@ forv year = 10/14 {
 	gen year = `year'
 	
 	if `year' == 10 {	
-		sa $dd\ORIGINS, replace
+		sa data/ORIGINS, replace
 	}
 	else {
-		append using $dd\ORIGINS
-		sa $dd\ORIGINS, replace
+		append using data/ORIGINS
+		sa data/ORIGINS, replace
 	}
 }
 
@@ -244,7 +244,7 @@ isid buildid
 
 * *****
 * BUILDING TYPE
-mmerge buildid using "$dd\buclass" , t(n:1) umatch(egid) ukeep(org_bu_class)
+mmerge buildid using "data/buclass" , t(n:1) umatch(egid) ukeep(org_bu_class)
 drop if _merge == 2
 
 * ta org_bu_class _merge, m row
@@ -304,7 +304,7 @@ note gisid: "Separate ID for all buildings sharing the same coordinates; removes
 note hec: "Hectar coordinates defined analytically, ie. both end with 00 - it might be still legit pair of coordinates!"
 note: Last changes: $S_DATE $S_TIME
 compress
-sa $dd\ORIGINS, replace
+sa data/ORIGINS, replace
 
 distinct buildid gisid
 mdesc buildid gisid
@@ -315,7 +315,7 @@ drop buildid hec dupli
 xtile part = gisid, nq(6) // around 250k chunks of data
 * ta part, m
 
-* export delim using "$sp\ORIGINS.csv", delim(",")  replace
+* export delim using "$sp/ORIGINS.csv", delim(",")  replace
 
 texdoc s c 
 
@@ -367,7 +367,7 @@ Distribution of years from which coordinates of a building are taken:
 
 texdoc s , cmdstrip
 
-u $dd\ORIGINS, clear
+u data/ORIGINS, clear
 ta year, m
 
 texdoc s c 
@@ -388,7 +388,7 @@ texdoc s c
 
 texdoc s , nolog  nodo
 
-u "$od\snc2_std_pers_90_00_14_all_207_full", clear 
+u "data-raw/snc2_std_pers_90_00_14_all_207_full", clear 
 drop v9* v0*
 
 keep if r10_pe_flag == 1
@@ -409,12 +409,12 @@ br *buildid *geox *geoy if r10_buildid == r11_buildid & r10_geox != r11_geox & !
 * hist temp if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
 
 * CHECKING COVERAGE
-mmerge r10_buildid using $dd\ORIGINS, t(n:1) umatch(buildid)
+mmerge r10_buildid using data/ORIGINS, t(n:1) umatch(buildid)
 fre _merge
 
 * CHECKING COVERAGE <> VICE VERSA
-u $dd\ORIGINS, clear
-mmerge buildid using "$od\snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
+u data/ORIGINS, clear
+mmerge buildid using "data-raw/snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
 fre _merge
 
 texdoc s c 
@@ -506,11 +506,11 @@ texdoc s , nolog // nodo
 forv YR = 12/15 { 
 
 	if `YR' <= 14 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using $od\SE\SE`YR'_pers_full.dta, clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using data-raw/SE/SE`YR'_pers_full.dta, clear 
 	}
 
 	if `YR' == 15 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using $od\SE\SE`YR'_pers_full.dta, clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using data-raw/SE/SE`YR'_pers_full.dta, clear 
 		gen urban = .
 	}
 		
@@ -637,7 +637,7 @@ forv YR = 12/15 {
 
 	* ISEI 
 	if `YR' == 12 { 
-		qui do $dod\isco08\iskoisei08.do // only once needed to define
+		qui do $dod/isco08/iskoisei08.do // only once needed to define
 	}
 	iskoisei08 num_ocu4, isko(occup_isco) 
 	order num_ocu4 mis_ocu_isco, a(num_ocu3)
@@ -673,7 +673,7 @@ forv YR = 12/15 {
 	*/
 	
 	compress 
-	sa $dd\SE`YR'_pers_full, replace
+	sa data/SE`YR'_pers_full, replace
 
 
 	* ***************************************************
@@ -682,7 +682,7 @@ forv YR = 12/15 {
 	* AREA AND RENT
 	* flatarea NOT AVAILABLE IN 10 & 11 !!! :/
 	
-	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "$od\SE\SE`YR'_hh_full.dta", clear
+	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "data-raw/SE/SE`YR'_hh_full.dta", clear
 
 	sort hhyid
 	order hhyid, a(sncid)
@@ -713,25 +713,25 @@ forv YR = 12/15 {
 	* univar ppr
 
 	compress
-	sa $dd\SE`YR'_hh_full, replace
+	sa data/SE`YR'_hh_full, replace
 
 
 	* ***************************************************
 	* START FROM PERSONAL
-	u $dd\SE`YR'_pers_full, clear
+	u data/SE`YR'_pers_full, clear
 	
 	count 
 	texdoc local start_`YR' = `r(N)'	
 	
 	* ADD HH
-	mmerge sncid using $dd\SE`YR'_hh_full
+	mmerge sncid using data/SE`YR'_hh_full
 	
 	preserve
 		ren _merge miss
 		replace miss = 0 if miss == 3
 		la de miss 0 "Fine" 1 "Missing hh" 2 "Missing pe", replace
 		la val miss miss
-		save $dd\SE`YR'_miss, replace
+		save data/SE`YR'_miss, replace
 	restore
 
 	count if _merge == 1
@@ -745,7 +745,7 @@ forv YR = 12/15 {
 	
 	if `YR' <= 14 { 
 	
-		mmerge sncid using "$od\snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid) // r`YR'_hhid) 
+		mmerge sncid using "data-raw/snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid) // r`YR'_hhid) 
 
 		assert _merge != 1 // no snc data ???
 		drop if _merge == 2 // no SE data available
@@ -758,7 +758,7 @@ forv YR = 12/15 {
 	
 	if `YR' == 15 { 
 	
-		mmerge sncid using "$od\SE\SE15_hh_full", t(1:1) ukeep(egid)
+		mmerge sncid using "data-raw/SE/SE15_hh_full", t(1:1) ukeep(egid)
 
 		assert _merge != 1 // no snc data ???
 		drop if _merge == 2 // no SE data available
@@ -774,7 +774,7 @@ forv YR = 12/15 {
 
 	* ELIGIBLE BUILDINGS, BRING COORDINATES
 	ren r`YR'_buildid buildid
-	mmerge buildid using $dd\ORIGINS, t(n:1) ukeep(gisid geox geoy year)
+	mmerge buildid using data/ORIGINS, t(n:1) ukeep(gisid geox geoy year)
 
 	count if _merge == 1
 	texdoc local fbd_`YR' = `r(N)'	
@@ -794,18 +794,18 @@ forv YR = 12/15 {
 	texdoc local end_`YR' = `r(N)'	
 
 	if `YR' == 12 {
-		sa $dd\SE, replace
+		sa data/SE, replace
 	}
 	else {
-		append using $dd\SE
-		sa $dd\SE, replace
+		append using data/SE
+		sa data/SE, replace
 	}
 	
-	rm $dd\SE`YR'_hh_full.dta
-	rm $dd\SE`YR'_pers_full.dta
+	rm data/SE`YR'_hh_full.dta
+	rm data/SE`YR'_pers_full.dta
 }
 
-sa $dd\SE_dupli, replace
+sa data/SE_dupli, replace
 
 sort sncid SE, stable 
 by sncid: keep if _n == _N 
@@ -824,27 +824,27 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa $dd\SE, replace
+sa data/SE, replace
 
 * dataset for missing hh sensitivity analysis
-use $dd\SE12_miss, clear
+use data/SE12_miss, clear
 gen SE = 2012
 la var SE "Survey year"
 order SE, first
 
-sa $dd\SE_miss, replace
+sa data/SE_miss, replace
 		
 forv YR = 13/15 { 
 	
-	use $dd\SE`YR'_miss, clear
+	use data/SE`YR'_miss, clear
 	gen SE = 2000 + `YR'
 	la var SE "Survey year"
 	order SE, first
 
-	append using $dd\SE_miss
-	sa $dd\SE_miss, replace
+	append using data/SE_miss
+	sa data/SE_miss, replace
 
-	rm $dd\SE`YR'_miss.dta
+	rm data/SE`YR'_miss.dta
 }	
 
 sort sncid SE, stable 
@@ -856,7 +856,7 @@ egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
 order age_cat, a(age)
 
 compress 
-sa $dd\SE_miss, replace
+sa data/SE_miss, replace
 
 drop if miss == 2
 
@@ -932,9 +932,9 @@ Note: Additionally older records of persons that participated in more than one S
 
 texdoc s , cmdstrip // nodo
 
-qui u $dd\SE_dupli, replace
+qui u data/SE_dupli, replace
 duplicates report sncid
-qui rm $dd\SE_dupli.dta
+qui rm data/SE_dupli.dta
 
 texdoc s c
 
@@ -947,7 +947,7 @@ Distribution of SE individuals over years:
 
 texdoc s , cmdstrip
 
-u $dd\SE, clear
+u data/SE, clear
 ta SE, m
 
 texdoc s c
@@ -967,15 +967,15 @@ texdoc s c
 
 texdoc s , nolog nodo 
 
-u $dd\SE, clear
+u data/SE, clear
 bysort gisid: keep if _n == 1
 keep gisid geox geoy rent35
 
-export delim using "$sp\DESTINATIONS.csv", delim(",")  replace
+export delim using "$sp/DESTINATIONS.csv", delim(",")  replace
 
 keep if rent35
 
-export delim using "$sp\DESTINATIONS_RENT.csv", delim(",")  replace
+export delim using "$sp/DESTINATIONS_RENT.csv", delim(",")  replace
 
 texdoc s c
 
@@ -1039,12 +1039,12 @@ texdoc s c
 texdoc s , nolog nodo 
 
 * !!! ATTENTION !!! 
-* !!! UNZIP '$od\neighb.zip' TO ORIG DATA FOLDER BEFORE ATTEMPTING THAT !!! 
-* unzipfile $od\neighb.zip, replace
+* !!! UNZIP 'data-raw\neighb.zip' TO ORIG DATA FOLDER BEFORE ATTEMPTING THAT !!! 
+* unzipfile data-raw\neighb.zip, replace
 * (same) backup data stored on SNC drive Y:\SNC\SSEP\2_0_connectivity.zip
 
 forv PART = 1/6 {
-	* import delim using "$od\neighb\SE_101_neighb_20km_`PART'.txt", varn(1) clear 
+	* import delim using "data-raw/neighb/SE_101_neighb_20km_`PART'.txt", varn(1) clear 
 	drop objectid originid destinationid shape_length
 
 	gen gisid_orig = word(name, 1)
@@ -1069,18 +1069,18 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		sa $dd\NEIGHB, replace
+		sa data/NEIGHB, replace
 	}
 	else {
-		append using $dd\NEIGHB
-		sa $dd\NEIGHB, replace
+		append using data/NEIGHB
+		sa data/NEIGHB, replace
 	}
 
 }
 
 * RENT
 forv PART = 1/6 {
-	* import delim using "$od\neighb\SE_101_neighb_rent_20km_`PART'.txt", varn(1) clear 
+	* import delim using "data-raw/neighb/SE_101_neighb_rent_20km_`PART'.txt", varn(1) clear 
 	drop objectid originid destinationid shape_length
 
 	gen gisid_orig = word(name, 1)
@@ -1105,11 +1105,11 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		sa $dd\NEIGHB_RENT, replace
+		sa data/NEIGHB_RENT, replace
 	}
 	else {
-		append using $dd\NEIGHB_RENT
-		sa $dd\NEIGHB_RENT, replace
+		append using data/NEIGHB_RENT
+		sa data/NEIGHB_RENT, replace
 	}
 
 }
@@ -1127,7 +1127,7 @@ Vast majority of the SNC buildings (\texttt{ORIGINS}) have network connections t
 texdoc s , nolog // nodo 
 
 * EXPLORING SMALL NUMBERS
-u $dd\NEIGHB, clear
+u data/NEIGHB, clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
@@ -1179,12 +1179,12 @@ household n'hoods can get smaller than building n'hoods.
 
 texdoc s , nolog  // nodo
 
-u $dd\NEIGHB, clear
+u data/NEIGHB, clear
 ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using $dd\SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
+mmerge gisid_dest using data/SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
 assert _merge == 3
 drop _merge
 
@@ -1227,9 +1227,9 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa $dd\NEIGHB_PREP, replace
+sa data/NEIGHB_PREP, replace
 
-* u $dd\NEIGHB_PREP, clear
+* u data/NEIGHB_PREP, clear
 
 * AGGREGATING
 drop sncid
@@ -1321,7 +1321,7 @@ note: Last changes: $S_DATE $S_TIME
 * drop tot_ocu? mis_ocu*
 
 compress
-sa $dd\NEIGHB_PREP_AGG, replace
+sa data/NEIGHB_PREP_AGG, replace
 
 texdoc s c 
 
@@ -1331,7 +1331,7 @@ Number of buildings (within 20km):
 ***/
 texdoc s , cmdstrip 
 
-u $dd\NEIGHB_PREP_AGG, clear
+u data/NEIGHB_PREP_AGG, clear
 
 univar tot_bb, dec(0)
 * su tot_bb, d
@@ -1367,7 +1367,7 @@ texdoc s c
 
 texdoc s , nolog  nodo 
 
-u $dd\NEIGHB_RENT, clear
+u data/NEIGHB_RENT, clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
@@ -1385,12 +1385,12 @@ As expected, results are slightly worse when we limit network analyses to 3-5 be
 
 texdoc s , nolog // nodo
 
-u $dd\NEIGHB_RENT, clear
+u data\NEIGHB_RENT, clear
 ren destinationrank dest_rank_bb_rnt
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using $dd\SE, ukeep(sncid rent35 rentnet) umatch(gisid) 
+mmerge gisid_dest using data\SE, ukeep(sncid rent35 rentnet) umatch(gisid) 
 assert _merge != 1
 keep if _merge == 3
 drop _merge
@@ -1439,7 +1439,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa $dd\NEIGHB_RENT_PREP, replace
+sa data\NEIGHB_RENT_PREP, replace
 
 * AGGREGATING
 sort gisid_orig // dest_rank_hh_rnt, stable
@@ -1465,7 +1465,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa $dd\NEIGHB_RENT_PREP_AGG, replace
+sa data\NEIGHB_RENT_PREP_AGG, replace
 
 texdoc s c 
 
@@ -1476,7 +1476,7 @@ Number of rented buildings (within 20km):
 
 texdoc s , cmdstrip 
 
-u $dd\NEIGHB_RENT_PREP_AGG, clear
+u data\NEIGHB_RENT_PREP_AGG, clear
 
 univar tot_bb_rnt, dec(0)
 * su tot_bb_rnt, d
@@ -1542,7 +1542,7 @@ texdoc s , nolog // nodo
 
 * 2013 ONLY 
 u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 h13i23 h13i76 h13i50 h13i50 h13i51 using ///
-	"$od\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
+	"data-raw\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
 
 ta filter13, m 
 ta stathh13, m 
@@ -1616,7 +1616,7 @@ univar h13i51
 
 * ********
 * GEOCODES 
-mmerge idhous13 using $dd\SHP_adresses_13_FINAL, t(1:1) ukeep(latitude longitude)
+mmerge idhous13 using data/SHP_adresses_13_FINAL, t(1:1) ukeep(latitude longitude)
 drop if _merge == 2
 recode _merge (1=0) (3=1)
 ren _merge geocoded 
@@ -1628,13 +1628,13 @@ la var geocoded "Geocoding status"
 * ********
 * NEAR of ORIGINS >> FOR SEP LINKAGE 
 preserve
-	import delim using "$od\SHP\SHP_near_ORIGINS_linked.csv", varn(1) clear
+	import delim using "data-raw/SHP/SHP_near_ORIGINS_linked.csv", varn(1) clear
 	keep idhous13 gisid
 	compress
-	sa "$dd\SHP_near_ORIGINS", replace
+	sa "data/SHP_near_ORIGINS", replace
 restore
 
-mmerge idhous13 using $dd\SHP_near_ORIGINS, t(1:1) 
+mmerge idhous13 using data/SHP_near_ORIGINS, t(1:1) 
 assert _merge != 2
 ta _merge geocoded, m 
 drop _merge
@@ -1644,12 +1644,12 @@ note drop _all
 la da "SSEP 2.0 - SHP '13 data for validation"
 note: Last changes: $S_DATE $S_TIME
 compress
-sa $dd\SHP, replace
+sa data/SHP, replace
 
 /*
 keep if geocoded
 keep idhous13 latitude longitude
-export delim using "$sp\SHP_EXTRACT.csv", delim(",")  replace
+export delim using "$sp/SHP_EXTRACT.csv", delim(",")  replace
 */
 
 texdoc s c 
@@ -1662,7 +1662,7 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-u $dd\SHP, clear
+u data/SHP, clear
 drop latitude longitude geocoded gisid
 d
 
@@ -1675,7 +1675,7 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-u $dd\SHP, clear
+u data/SHP, clear
 ta filter13 geocoded, m row col nokey 
 
 texdoc s c 
@@ -1709,7 +1709,7 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 
 texdoc s , nolog // nodo   
 
-u "$od\snc4_90_00_18_full_vs2", clear 
+u "data-raw/snc4_90_00_18_full_vs2", clear 
 
 ren v0_buildid buildid // temp rename to keep
 
@@ -1783,7 +1783,7 @@ drop if mi(buildid)
 * distinct buildid
 
 * EXCLUDE THOSE FROM BUILDINGS WITHOUT SEP
-mmerge buildid using $dd\ORIGINS, t(n:1)
+mmerge buildid using data/ORIGINS, t(n:1)
 keep if _merge == 3
 drop _merge 
 isid sncid 
@@ -1843,13 +1843,13 @@ note civil: 	Missing data excluded
 note lang: 		Rhaeto-romansch to German langreg 
 note: 			Last changes: $S_DATE $S_TIME
 compress
-sa $dd\SNC_ALL, replace
+sa data/SNC_ALL, replace
 
 texdoc s c 
 
 texdoc s , nolog
 
-u $dd\SNC_ALL, clear
+u data/SNC_ALL, clear
 
 texdoc s c 
 
@@ -1872,11 +1872,11 @@ taking into account additionally education and occupation (note the details prov
 
 texdoc s , nolog // nodo   
 
-u $dd\SNC_ALL, clear
+u data/SNC_ALL, clear
 drop recid yod m_civil geox geoy year dupli hec
 
 * LIMIT TO SE DATA
-mmerge sncid using $dd\SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
+mmerge sncid using data/SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
 /*
 ta _merge se11_flag, m 
 ta _merge se12_flag, m 
@@ -1916,14 +1916,14 @@ la da "SSEP 2.0 - SNC 2012-2015 data for mortality analyses - SE overlap"
 note: 			Including people from SE used to calculate index
 note: 			Last changes: $S_DATE $S_TIME
 compress
-sa $dd\SNC_SE, replace
+sa data/SNC_SE, replace
 
 texdoc s c 
 
 
 texdoc s , cmdstrip
 
-u $dd\SNC_SE, clear
+u data/SNC_SE, clear
 
 ta SE, m 
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
@@ -1940,7 +1940,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u "$dd\buclass", clear
+u "data/buclass", clear
 ta org_bu_class, m sort
 
 texdoc s c 
