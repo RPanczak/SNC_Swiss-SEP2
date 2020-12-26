@@ -91,11 +91,11 @@ Report 1.08 - data analysis}}
 
 texdoc s , nolog nodo   
 
-u $dd/NEIGHB, clear
+u "data/NEIGHB", clear
 drop part total_length b_*
 
 * getting buildid back
-mmerge gisid_orig using "data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_orig using "data/ORIGINS", t(n:n) umatch(gisid) ukeep(buildid)
 drop if _merge == 2
 drop _merge
 ren buildid buildid_orig
@@ -110,7 +110,7 @@ drop r18_buildper
 * ta buildper_orig, m
 
 * same procedure on dest side
-mmerge gisid_dest using "data/ORIGINS.dta", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_dest using "data/ORIGINS", t(n:n) umatch(gisid) ukeep(buildid)
 drop if _merge == 2
 drop _merge
 ren buildid buildid_dest
@@ -146,7 +146,7 @@ replace buildper_cat = 0 if buildper_share == 0
 fre buildper_cat
 
 compress
-save $dd/buildper_share, replace
+save data/buildper_share, replace
 
 /*
 br if gisid_orig == 78091
@@ -164,9 +164,9 @@ texdoc s c
 
 texdoc s , nolog // nodo   
 
-u $dd\NEIGHB_PREP_AGG, clear
+u "data\NEIGHB_PREP_AGG", clear
 
-mmerge gisid_orig using $dd\NEIGHB_RENT_PREP_AGG, t(1:1)
+mmerge gisid_orig using "data\NEIGHB_RENT_PREP_AGG", t(1:1)
 assert _merge == 3
 drop _merge 
 
@@ -250,7 +250,7 @@ gr export $td\gr\BA_occu.png, replace width(800) height(600)
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
-mmerge gisid using data/ORIGINS, t(1:n) ukeep(buildid geox geoy)
+mmerge gisid using "data/ORIGINS", t(1:n) ukeep(buildid geox geoy)
 keep if _merge==3
 drop _merge
 order gisid buildid geox geoy, first 
@@ -278,6 +278,7 @@ drop _merge
 mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 
 /*
+* eda of unlinked
 * br if _merge == 1 
 
 gen miss_age = (_merge == 1)
@@ -371,7 +372,7 @@ note buildid: "Unique GWR building ID. Use to link to SNC!"
 /*
 * experimental index replacement depending on share of new buildings
 
-mmerge gisid using $dd/buildper_share, t(n:1) ukeep(buildper_cat)
+mmerge gisid using data/buildper_share, t(n:1) ukeep(buildper_cat)
 drop if _merge == 2
 drop _merge
 
@@ -410,9 +411,7 @@ log close
 
 export delim using "FINAL/CSV/ssep3_user_geo.csv", delim(",") nolab replace
 
-cd ..
 rscript using "data-raw/Swiss-SEP2/Swiss-SEP2.R"
-cd Stata
 
 texdoc s c 
 
@@ -423,7 +422,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u FINAL/DTA/ssep3_user, clear
+u "FINAL/DTA/ssep3_user", clear
 
 /*
 tabstat ssep3, s(min mean max ) by(ssep3_t) f(%9.6fc)
@@ -450,6 +449,16 @@ texdoc s c
 
 /***
 ... are tad 'broken' after replacements:
+***/
+
+texdoc s , cmdstrip
+
+ta ssep3_d, m
+ 
+texdoc s c 
+
+/***
+Some transitions happened:  
 ***/
 
 texdoc s , cmdstrip
@@ -487,9 +496,7 @@ texdoc s c
 \section{Maps}
 ***/
 
-cd ..
-rscript using "R/03_sep-map.R"
-cd Stata
+* rscript using "R/03_sep-map.R"
 
 /***
 \begin{center}
@@ -518,10 +525,10 @@ cd Stata
 
 texdoc s , nolog // nodo   
 
-u data/SHP, clear
+u "data/SHP", clear
 keep if geocoded
 
-mmerge gisid using FINAL/DTA/ssep3_user, t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
+mmerge gisid using "FINAL/DTA/ssep3_user", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
 keep if _merge == 3
 drop _merge
 
