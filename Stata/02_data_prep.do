@@ -384,7 +384,7 @@ texdoc s c
 
 
 * *****
-* SOME CHECKS OF 
+* SOME CHECKS 
 
 texdoc s , nolog  nodo
 
@@ -506,11 +506,11 @@ texdoc s , nolog // nodo
 forv YR = 12/15 { 
 
 	if `YR' <= 14 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using data-raw/SE/SE`YR'_pers_full.dta, clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using "data-raw/SE/SE`YR'_pers_full", clear 
 	}
 
 	if `YR' == 15 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using data-raw/SE/SE`YR'_pers_full.dta, clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using "data-raw/SE/SE`YR'_pers_full", clear 
 		gen urban = .
 	}
 		
@@ -637,7 +637,7 @@ forv YR = 12/15 {
 
 	* ISEI 
 	if `YR' == 12 { 
-		qui do $dod/isco08/iskoisei08.do // only once needed to define
+		qui do "Stata/isco08/iskoisei08.do" // only once needed to define
 	}
 	iskoisei08 num_ocu4, isko(occup_isco) 
 	order num_ocu4 mis_ocu_isco, a(num_ocu3)
@@ -673,7 +673,7 @@ forv YR = 12/15 {
 	*/
 	
 	compress 
-	sa data/SE`YR'_pers_full, replace
+	sa "data/SE`YR'_pers_full", replace
 
 
 	* ***************************************************
@@ -713,18 +713,18 @@ forv YR = 12/15 {
 	* univar ppr
 
 	compress
-	sa data/SE`YR'_hh_full, replace
+	sa "data/SE`YR'_hh_full", replace
 
 
 	* ***************************************************
 	* START FROM PERSONAL
-	u data/SE`YR'_pers_full, clear
+	u "data/SE`YR'_pers_full", clear
 	
 	count 
 	texdoc local start_`YR' = `r(N)'	
 	
 	* ADD HH
-	mmerge sncid using data/SE`YR'_hh_full
+	mmerge sncid using "data/SE`YR'_hh_full"
 	
 	preserve
 		ren _merge miss
@@ -774,7 +774,7 @@ forv YR = 12/15 {
 
 	* ELIGIBLE BUILDINGS, BRING COORDINATES
 	ren r`YR'_buildid buildid
-	mmerge buildid using data/ORIGINS, t(n:1) ukeep(gisid geox geoy year)
+	mmerge buildid using "data/ORIGINS", t(n:1) ukeep(gisid geox geoy year)
 
 	count if _merge == 1
 	texdoc local fbd_`YR' = `r(N)'	
@@ -801,11 +801,11 @@ forv YR = 12/15 {
 		sa data/SE, replace
 	}
 	
-	rm data/SE`YR'_hh_full.dta
-	rm data/SE`YR'_pers_full.dta
+	rm "data/SE`YR'_hh_full.dta"
+	rm "data/SE`YR'_pers_full.dta"
 }
 
-sa data/SE_dupli, replace
+sa "data/SE_dupli", replace
 
 sort sncid SE, stable 
 by sncid: keep if _n == _N 
@@ -824,10 +824,10 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa data/SE, replace
+sa "data/SE", replace
 
 * dataset for missing hh sensitivity analysis
-use data/SE12_miss, clear
+use "data/SE12_miss", clear
 gen SE = 2012
 la var SE "Survey year"
 order SE, first
@@ -841,10 +841,10 @@ forv YR = 13/15 {
 	la var SE "Survey year"
 	order SE, first
 
-	append using data/SE_miss
-	sa data/SE_miss, replace
+	append using "data/SE_miss"
+	sa "data/SE_miss", replace
 
-	rm data/SE`YR'_miss.dta
+	rm "data/SE`YR'_miss.dta"
 }	
 
 sort sncid SE, stable 
@@ -926,15 +926,18 @@ ta age_cat mis_ocu_isco if den_ocu & !sex, m row
 \end{tabular}
 \end{table}
 
-Note: Additionally older records of persons that participated in more than one SE were excluded.
+The explanation of substantial amount of individuals not linked to households came from BfS:  
 
+\emph{The reference person has to fill out a form for all household members. As the FSO “calibrate” the structural survey using the information from STATPOP they decided to not include the information for the additional household members if the household structure (number of hh members, gender information) given on the SE household form didn’t match the household information in STATPOP. This always applies for around 14% of the SE reference persons.}  
+
+Note: Additionally older records of persons that participated in more than one SE were excluded.  
 ***/
 
 texdoc s , cmdstrip // nodo
 
-qui u data/SE_dupli, replace
+qui u "data/SE_dupli", replace
 duplicates report sncid
-qui rm data/SE_dupli.dta
+qui rm "data/SE_dupli.dta"
 
 texdoc s c
 
@@ -947,7 +950,7 @@ Distribution of SE individuals over years:
 
 texdoc s , cmdstrip
 
-u data/SE, clear
+u "data/SE", clear
 ta SE, m
 
 texdoc s c
@@ -967,7 +970,7 @@ texdoc s c
 
 texdoc s , nolog nodo 
 
-u data/SE, clear
+u "data/SE", clear
 bysort gisid: keep if _n == 1
 keep gisid geox geoy rent35
 
@@ -1032,8 +1035,21 @@ texdoc s c
 	
 	\item As in the 1.0 index, separate n'hoods were created using rented, 3-5 bedroom flats as \texttt{DESTINATIONS}. 
 
-	
 \end{enumerate}
+
+Schematic representation of n'hood 'search' comparing the use of all buildings to use of sample buildings could be visualized as follow:'
+
+\begin{center}
+\includegraphics[width=.5\textwidth]{gr-ext/all.png}
+\includegraphics[width=.5\textwidth]{gr-ext/sample.png} 
+\end{center}
+
+Small \textit{ad hoc} corrections of the \textbf{swissTLM3D} dataset were necessary in cases where unconnected segments of the road network were found. This features were then removed: 
+
+\begin{center}
+\includegraphics[width=.5\textwidth]{gr-ext/nw_edits_4.png}
+\end{center}
+
 ***/
 
 texdoc s , nolog nodo 
@@ -1157,8 +1173,13 @@ list if gisid_orig == 94802
 The two cases of buildings with no neighbours are legitimate and really have no neighbours on the (highway restricted) road network: 
 	one of the buildings is located on \href{https://goo.gl/maps/L5sLmrMXZap}{Ufenau Island}, Lake Zurich; 
 	and the other - right next to highway,  \href{https://goo.gl/maps/fxPCBS5TmEQ2}{on the shore of Thunersee}. 
-	These two buildings were excluded from the analyses and have no index. 
-	Similarly, buildings with n'hoods not meeting the 50 households treshold size will be flagged. \\
+	These two buildings were excluded from the analyses and have no index. \\
+	
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr-ext/ufenau.png} 
+\end{center}
+
+Similarly, buildings with n'hoods not meeting the 50 households treshold size will be flagged. \\
 
 Few areas where less than 50 buildings were found in the n'hood (respecting 20km road network distance) were located in sparesly populated areas such as:
 	\href{https://goo.gl/maps/BXbgyCYtuGU2}{Gondo} (close to Simplon Pass) or \href{https://goo.gl/maps/mg15ptJPVTJ2}{Avers} (Grisons) villages. \\
@@ -1179,12 +1200,12 @@ household n'hoods can get smaller than building n'hoods.
 
 texdoc s , nolog  // nodo
 
-u data/NEIGHB, clear
+u "data/NEIGHB", clear
 ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using data/SE, ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
+mmerge gisid_dest using "data/SE", ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
 assert _merge == 3
 drop _merge
 
@@ -1227,9 +1248,9 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa data/NEIGHB_PREP, replace
+sa "data/NEIGHB_PREP", replace
 
-* u data/NEIGHB_PREP, clear
+* u "data/NEIGHB_PREP", clear
 
 * AGGREGATING
 drop sncid
@@ -1321,7 +1342,7 @@ note: Last changes: $S_DATE $S_TIME
 * drop tot_ocu? mis_ocu*
 
 compress
-sa data/NEIGHB_PREP_AGG, replace
+sa "data/NEIGHB_PREP_AGG", replace
 
 texdoc s c 
 
@@ -1331,7 +1352,7 @@ Number of buildings (within 20km):
 ***/
 texdoc s , cmdstrip 
 
-u data/NEIGHB_PREP_AGG, clear
+u "data/NEIGHB_PREP_AGG", clear
 
 univar tot_bb, dec(0)
 * su tot_bb, d
@@ -1367,7 +1388,7 @@ texdoc s c
 
 texdoc s , nolog  nodo 
 
-u data/NEIGHB_RENT, clear
+u "data/NEIGHB_RENT", clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
@@ -1385,7 +1406,7 @@ As expected, results are slightly worse when we limit network analyses to 3-5 be
 
 texdoc s , nolog // nodo
 
-u data\NEIGHB_RENT, clear
+u "data\NEIGHB_RENT", clear
 ren destinationrank dest_rank_bb_rnt
 drop b_totdist b_maxdest part 
 
@@ -1439,7 +1460,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa data\NEIGHB_RENT_PREP, replace
+sa "data\NEIGHB_RENT_PREP", replace
 
 * AGGREGATING
 sort gisid_orig // dest_rank_hh_rnt, stable
@@ -1465,7 +1486,7 @@ note drop _all
 note: Last changes: $S_DATE $S_TIME
 
 compress
-sa data\NEIGHB_RENT_PREP_AGG, replace
+sa "data\NEIGHB_RENT_PREP_AGG", replace
 
 texdoc s c 
 
@@ -1476,7 +1497,7 @@ Number of rented buildings (within 20km):
 
 texdoc s , cmdstrip 
 
-u data\NEIGHB_RENT_PREP_AGG, clear
+u "data\NEIGHB_RENT_PREP_AGG", clear
 
 univar tot_bb_rnt, dec(0)
 * su tot_bb_rnt, d
@@ -1644,7 +1665,7 @@ note drop _all
 la da "SSEP 2.0 - SHP '13 data for validation"
 note: Last changes: $S_DATE $S_TIME
 compress
-sa data/SHP, replace
+sa "data/SHP", replace
 
 /*
 keep if geocoded
@@ -1662,7 +1683,7 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-u data/SHP, clear
+u "data/SHP", clear
 drop latitude longitude geocoded gisid
 d
 
@@ -1675,7 +1696,7 @@ texdoc s c
 
 texdoc s , cmdstrip  
 
-u data/SHP, clear
+u "data/SHP", clear
 ta filter13 geocoded, m row col nokey 
 
 texdoc s c 
@@ -1843,7 +1864,7 @@ note civil: 	Missing data excluded
 note lang: 		Rhaeto-romansch to German langreg 
 note: 			Last changes: $S_DATE $S_TIME
 compress
-sa data/SNC_ALL, replace
+sa "data/SNC_ALL", replace
 
 texdoc s c 
 
@@ -1872,11 +1893,11 @@ taking into account additionally education and occupation (note the details prov
 
 texdoc s , nolog // nodo   
 
-u data/SNC_ALL, clear
+u "data/SNC_ALL", clear
 drop recid yod m_civil geox geoy year dupli hec
 
 * LIMIT TO SE DATA
-mmerge sncid using data/SE, t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
+mmerge sncid using "data/SE", t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
 /*
 ta _merge se11_flag, m 
 ta _merge se12_flag, m 
@@ -1916,14 +1937,14 @@ la da "SSEP 2.0 - SNC 2012-2015 data for mortality analyses - SE overlap"
 note: 			Including people from SE used to calculate index
 note: 			Last changes: $S_DATE $S_TIME
 compress
-sa data/SNC_SE, replace
+sa "data/SNC_SE", replace
 
 texdoc s c 
 
 
 texdoc s , cmdstrip
 
-u data/SNC_SE, clear
+u "data/SNC_SE", clear
 
 ta SE, m 
 * tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
