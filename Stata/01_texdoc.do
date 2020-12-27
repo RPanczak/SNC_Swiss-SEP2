@@ -11,9 +11,9 @@ texdoc do C:\projects\SNC_Swiss-SEP2\analyses\02_data_prep.do
 * RENAME COMPILED FILE WITH TODAY'S DATE
 local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 * di "`date'"
-! COPY $td/report_sep2_prep.pdf $td/report_sep2_prep_`date'.pdf
-! COPY $td/report_sep2_prep.pdf $dd/FINAL/report_sep2_prep_`date'.pdf
-*! RM C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep.*
+! COPY C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep.pdf C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep_`date'.pdf
+! COPY C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep.pdf C:\projects\SNC_Swiss-SEP2\FINAL\report_sep2_prep_`date'.pdf
+! RM C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep.*
 
 /*
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
@@ -30,8 +30,8 @@ texdoc do C:\projects\SNC_Swiss-SEP2\analyses\03_data_analysis.do
 * RENAME COMPILED FILE WITH TODAY'S DATE
 local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 * di "`date'"
-! COPY $td/report_sep2_analysis.pdf $td/report_sep2_analysis_`date'.pdf
-! COPY $td/report_sep2_analysis.pdf $dd/FINAL/report_sep2_analysis_`date'.pdf
+! COPY C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_analysis.pdf C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_analysis_`date'.pdf
+! COPY C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_analysis.pdf C:\projects\SNC_Swiss-SEP2\analyses\FINAL\report_sep2_analysis_`date'.pdf
 *! RM C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_analysis.*
 
 /*
