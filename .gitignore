@@ -20,7 +20,8 @@
 /misc
 /Stata/old
 /Stata/98_geocode.do
-/analyses
+analyses/old
+analyses/log
 bfg*
 *.html
 *.png

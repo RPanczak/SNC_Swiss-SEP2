@@ -14,14 +14,10 @@ global np = "SNC_Swiss-SEP2"
 if "`c(os)'" == "Windows" {
 
 	* PATH TO NEW PROJECT 
-	global pp="C:\projects\SNC_Swiss-SEP2"
-
+	global pp="C:/projects/SNC_Swiss-SEP2"
 
 	* PATH SETTINGS
-	global dd  = "$pp\data"
-	global dod = "$pp\Stata"
-	global od  = "$pp\data-raw"
-	global td  = "$pp\analyses"
+	global td  = "$pp/analyses"
 
 	cd "$pp"
 }

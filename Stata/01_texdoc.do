@@ -13,7 +13,7 @@ local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 * di "`date'"
 ! COPY $td/report_sep2_prep.pdf $td/report_sep2_prep_`date'.pdf
 ! COPY $td/report_sep2_prep.pdf $dd/FINAL/report_sep2_prep_`date'.pdf
-! RM $td/report_sep2_prep.*
+*! RM C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_prep.*
 
 /*
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
@@ -21,7 +21,7 @@ local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
 */
 
 * ANALYSIS
-texdoc do C:\projects\SNC_Swiss-SEP2\Stata\do\03_data_analysis.do
+texdoc do C:\projects\SNC_Swiss-SEP2\analyses\03_data_analysis.do
 
 * COMPILE TEX 
 ! pdflatex -shell-escape -output-directory=$td $td/report_sep2_analysis 
@@ -32,7 +32,7 @@ local date : di %tdCCYY-NN-DD daily("$S_DATE", "DMY")
 * di "`date'"
 ! COPY $td/report_sep2_analysis.pdf $td/report_sep2_analysis_`date'.pdf
 ! COPY $td/report_sep2_analysis.pdf $dd/FINAL/report_sep2_analysis_`date'.pdf
-! RM $td/report_sep2_analysis.*
+*! RM C:\projects\SNC_Swiss-SEP2\analyses\report_sep2_analysis.*
 
 /*
 local acroread = cond(c(os)=="Unix", "acroread", "Acrobat")
