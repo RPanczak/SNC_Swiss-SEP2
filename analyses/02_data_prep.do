@@ -928,7 +928,7 @@ ta age_cat mis_ocu_isco if den_ocu & !sex, m row
 
 The explanation of substantial amount of individuals not linked to households came from BfS:  
 
-\emph{The reference person has to fill out a form for all household members. As the FSO “calibrate” the structural survey using the information from STATPOP they decided to not include the information for the additional household members if the household structure (number of hh members, gender information) given on the SE household form didn’t match the household information in STATPOP. This always applies for around 14% of the SE reference persons.}  
+\emph{The reference person has to fill out a form for all household members. As the FSO "calibrate" the structural survey using the information from STATPOP they decided to not include the information for the additional household members if the household structure (number of hh members, gender information) given on the SE household form didn’t match the household information in STATPOP. This always applies for around 14\% of the SE reference persons.}  
 
 Note: Additionally older records of persons that participated in more than one SE were excluded.  
 ***/
@@ -1040,8 +1040,8 @@ texdoc s c
 Schematic representation of n'hood 'search' comparing the use of all buildings to use of sample buildings could be visualized as follow:'
 
 \begin{center}
-\includegraphics[width=.5\textwidth]{gr-ext/all.png}
-\includegraphics[width=.5\textwidth]{gr-ext/sample.png} 
+\includegraphics[width=.45\textwidth]{gr-ext/all.png}
+\includegraphics[width=.45\textwidth]{gr-ext/sample.png} 
 \end{center}
 
 Small \textit{ad hoc} corrections of the \textbf{swissTLM3D} dataset were necessary in cases where unconnected segments of the road network were found. This features were then removed: 
