@@ -382,6 +382,15 @@ forv buildper = 1(1)6 {
 }
 */
 
+/*
+* experimental - fixing deciles
+
+xtile ssep4_d  = ssep3, nq(10)
+fre ssep3_d
+fre ssep4_d
+ta ssep3_d ssep4_d, m
+*/
+
 compress
 note: Last changes: $S_DATE $S_TIME
 sa "FINAL/DTA/ssep3_full.dta", replace
@@ -550,6 +559,7 @@ preserve
 		scheme(plotplainblind) graphregion(margin(zero))
 
 	gr export $td/gr/shp_income.pdf, replace
+	gr export $td/gr/shp_income.png, replace
 
 restore 
 
@@ -657,93 +667,80 @@ texdoc s c
 Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in original paper!
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{All cause mortality - 2.0 results}
+\subsection{All cause mortality - three SEP indices}
 ***/
 
 texdoc s , nolog // nodo   
 
-u data/SNC_ALL, clear
+u "data/SNC_ALL", clear
 
-* bring sep 2 & 3
-mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep1_d ssep2_d ssep3_d)
+* bring sep 1, 2 & 3
+mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d)
 keep if _merge == 3
 drop _merge
 
-* STSETTING
+* SETTINGS
 est clear
 stset dstop, origin(dob) entry(dstart) failure(d_all) scale(365.25)
-
-* AGE & SEX
 global SET = "nopv base cformat(%5.2f)"
-stcox i.sex b10.ssep2_d, $SET
-est sto sep2u
-* ADJUSTED
 global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-stcox $ADJ b10.ssep2_d, $SET
-est sto sep2a
 
-global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
+est clear
+
+foreach SEP in ssep1_d ssep2_d ssep3_d {
+	* AGE & SEX
+	stcox i.sex b10.`SEP', $SET
+	est sto u_`SEP'
+	* FULLY
+	global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
+	stcox $ADJ b10.`SEP', $SET
+	est sto a_`SEP'
+}
+
+la var ssep3_d ""
+
+* est tab u*, eform
+
 global title 	"size(medsmall) color(black) margin(vsmall)"
-global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
-global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
-global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0", angle(vertical))"
+global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.52)) xlab(1.0(0.1)1.5)"
+global misc 	"xline( 1.00(0.05)1.50, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+global groups 	"groups(*.ssep3_d = "Hybrid" *.ssep2_d = "New" *.ssep1_d = "Old", angle(vertical))"
 global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
-coefplot (sep2u, label(Age & sex)) (sep2a, label(Adjusted*)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
+coefplot u_ssep1_d u_ssep2_d u_ssep3_d, title("Age & sex adjusted", $title) eform $drop $lab $region $misc $legend $groups scheme(plotplainblind) graphregion(margin(zero)) leg(off) saving(U, replace)
 
-gr export $td/gr/d_al.pdf, replace
-gr export $td/gr/d_al.png, replace
+gr export $td/gr/sep3u.pdf, replace
+gr export $td/gr/sep3u.png, replace
 
-texdoc s c 
+coefplot a_ssep1_d a_ssep2_d a_ssep3_d, title("Fully adjusted", $title) eform $drop $lab $region $misc $legend $groups scheme(plotplainblind) graphregion(margin(zero)) leg(off) saving(A, replace)
+
+gr export $td/gr/sep3a.pdf, replace
+gr export $td/gr/sep3a.png, replace
+
+gr combine U.gph A.gph, title("Hazard ratios of all cause mortality across deciles of three versions of the indices", $title) graphregion(margin(zero))
+
+gr export $td/gr/sep3.pdf, replace
+gr export $td/gr/sep3.png, replace
+
+texdoc s c
 
 /***
 \begin{center}
-\includegraphics[width=.6\textwidth]{gr/d_al.pdf} 
+\includegraphics[width=.6\textwidth]{gr/sep3u.pdf}
 \end{center}
-
-Note: 	Results from Cox models. 'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in figure above); 
-		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.
-		Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}, as described in paper!
-		Keep in mind that the latter model does NOT have information adout individual level education or employment!  
-		
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\subsection{All cause mortality - 1.0 vs 2.0 using new data}
-***/
-
-texdoc s , nolog // nodo   
-
-stcox i.sex b10.ssep1_d, $SET
-est sto sep1u
-
-global region 	"graphregion(color(white) fc(white) margin(zero)) plotregion(fc(white) margin(vsmall)) bgcolor(white)"
-global title 	"size(medsmall) color(black) margin(vsmall)"
-global legend 	"legend(cols(1) ring(0) position(11) bmargin(vsmall) region(lcolor(white)))"
-global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.42)) xlab(1.0(0.1)1.4)"
-global misc 	"xline( 1.00(0.05)1.40, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Index 2.0" *.ssep1_d = "Index 1.0", angle(vertical))"
-global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
-
-coefplot (sep1u, label(SSEP1)) (sep2u, label(SSEP2)), title("HRs of all cause mortality", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/d_new_old.pdf, replace
-gr export $td/gr/d_new_old.png, replace
-
-texdoc s c 
-
-/***
 \begin{center}
-\includegraphics[width=.75\textwidth]{gr/d_new_old.pdf} 
+\includegraphics[width=.6\textwidth]{gr/sep3a.pdf} 
 \end{center}
 
-Note: Results from Cox models, adjusted for age (via \texttt{stset}) and sex. 
-
-\textbf{Both calculations} from new SNC data from the \textbf{2012 - 2018 period}!
+Note: 	Results from Cox models.  
+		Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}!  
+		'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in original figure above);  
+		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.  
+		This is not the smae adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{All cause mortality - two indices, stratified by age}
+\subsection{All cause mortality - three indices, stratified by age}
 ***/
 
 texdoc s , nolog // nodo   
@@ -760,7 +757,7 @@ table age_bin, contents(min age max age)
 
 est clear
 
-foreach SEP in ssep1_d ssep2_d {
+foreach SEP in ssep1_d ssep2_d ssep3_d {
 	forv AGE = 0/1 {
 		* AGE & SEX
 		stcox i.sex b10.`SEP' if age_bin == `AGE', $SET
@@ -774,6 +771,7 @@ foreach SEP in ssep1_d ssep2_d {
 
 * est tab  u_*   a_*, eform
 
+global title 	"size(medsmall) color(black) margin(vsmall)"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.92)) xlab(1.0(0.1)1.9)"
 global misc 	"xline( 1.00(0.1)1.90, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
 global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0" *.ssep1_d = "Swiss-SEP index 1.0", angle(vertical))"
@@ -788,60 +786,22 @@ coefplot (u_ssep2_d_age_0, label(Young)) (u_ssep2_d_age_1, label(Old)), title("H
 gr export $td/gr/strat_sep2.pdf, replace
 gr export $td/gr/strat_sep2.png, replace
 
+coefplot (u_ssep3_d_age_0, label(Young)) (u_ssep3_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 3", $title) eform $drop $lab $region $misc $legend $groups
+
+gr export $td/gr/strat_sep3.pdf, replace
+gr export $td/gr/strat_sep3.png, replace
+
 texdoc s c  
 
 /***
 \begin{center}
-\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf} \newline
-\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf} 
+\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf}
 \end{center}
-***/
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\subsection{All cause mortality - combining three SEP indices}
-
-Then 789,759 individuals in 202,015 buildings (14.1\% building stock) had their SEP modified to new one.
-***/
-
-texdoc s , nolog // nodo   
-
-est clear
-
-foreach SEP in ssep1_d ssep2_d ssep3_d {
-	* AGE & SEX
-	stcox i.sex b10.`SEP', $SET
-	est sto u_`SEP'
-	* FULLY
-	global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-	stcox $ADJ b10.`SEP', $SET
-	est sto a_`SEP'
-}
-
-la var ssep3_d ""
-
-global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.52)) xlab(1.0(0.1)1.5)"
-global misc 	"xline( 1.00(0.05)1.50, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep3_d = "Index 3.0" *.ssep2_d = "Index 2.0" *.ssep1_d = "Index 1.0", angle(vertical))"
-global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
-
-coefplot (u_ssep1_d, label("SSEP 1")) (u_ssep2_d, label("SSEP 2")) (u_ssep3_d, label("SSEP 3")), title("Age & sex adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/sep3u.pdf, replace
-gr export $td/gr/sep3u.png, replace
-
-coefplot (a_ssep1_d, label("SSEP 1")) (a_ssep2_d, label("SSEP 2")) (a_ssep3_d, label("SSEP 3")), title("Fully adjusted HRs of all cause mortality SSEP 1-3", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/sep3a.pdf, replace
-gr export $td/gr/sep3a.png, replace
-
-texdoc s c
-
-/***
 \begin{center}
-\includegraphics[width=.6\textwidth]{gr/sep3u.pdf} \newline
-\includegraphics[width=.6\textwidth]{gr/sep3a.pdf} 
+\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf}
+\end{center}
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep3.pdf}
 \end{center}
 ***/
 
@@ -1014,7 +974,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-estout d_lc_3 d_lc_3_a, varl(1.ssep3_d "Lung cancer")		c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep3_d) eform  mlabels("Age & sex" "Adjusted")
+estout d_lc_3 d_lc_3_a, varl(1.ssep3_d "Lung cancer")			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep3_d) eform  mlabels("Age & sex" "Adjusted")
 estout d_bc_3 d_bc_3_a, varl(1.ssep3_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
 estout d_pc_3 d_pc_3_a, varl(1.ssep3_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep3_d) eform  mlabels(, none) collabels(, none)
 
@@ -1044,10 +1004,10 @@ Breast and prostate cancer: for men and women respectively.
 
 texdoc s , nolog // nodo   
 
-u data/SNC_SE, clear
+u "data/SNC_SE", clear
 
 * bring sep 2
-mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep2_d)
+mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) ukeep(ssep2_d)
 * distinct buildid if _merge == 1
 * list buildid if _merge == 1
 keep if _merge == 3
@@ -1198,4 +1158,4 @@ Note: results of traffic accidents have small number of events resulting in larg
 ***/
 
 * clean graphs
-! del C:\projects\EOLC\Stata\*.gph
+! del "C:\projects\EOLC\Stata\*.gph"
