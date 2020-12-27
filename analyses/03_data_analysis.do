@@ -247,6 +247,10 @@ batplot ssep ssepALT, notrend info dp(0)
 gr export $td\gr\BA_occu.png, replace width(800) height(600)
 */
 
+texdoc s c 
+
+texdoc s , nolog // nodo   
+
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
@@ -467,6 +471,7 @@ ta ssep3_d, m
 texdoc s c 
 
 /***
+\begin{landscape}
 Some transitions happened:  
 ***/
 
@@ -477,6 +482,8 @@ ta ssep2_d ssep3_d, m
 texdoc s c 
 
 /***
+\end{landscape}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Bland Altman plots of diffs}
 ***/
