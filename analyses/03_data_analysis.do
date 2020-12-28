@@ -41,7 +41,7 @@ clear
 \usepackage{mathtools, amssymb, bookmark, framed, longtable, booktabs, graphicx, url, multirow, cancel}
  
 \usepackage{hyperref}
-\hypersetup{unicode=true, pdfborder = {0 0 0}, colorlinks, citecolor=blue, filecolor=black, linkcolor=blue, urlcolor=blue, pdftitle={Swiss-SEP 2.0 data management}, pdfauthor={Radoslaw Panczak}}
+\hypersetup{unicode=true, pdfborder = {0 0 0}, colorlinks, citecolor=blue, filecolor=black, linkcolor=blue, urlcolor=blue, pdftitle={Swiss-SEP 2.0 data analysis}, pdfauthor={Radoslaw Panczak}}
 
 \renewcommand{\familydefault}{\sfdefault}
 \usepackage[usenames, dvipsnames]{color}
@@ -567,6 +567,7 @@ preserve
 
 	gr export $td/gr/shp_income.pdf, replace
 	gr export $td/gr/shp_income.png, replace
+	gr export $td/gr/shp_income.eps, replace
 
 restore 
 
@@ -728,6 +729,7 @@ gr combine U.gph A.gph, title("Hazard ratios of all cause mortality across decil
 
 gr export $td/gr/sep3.pdf, replace
 gr export $td/gr/sep3.png, replace
+gr export $td/gr/sep3.eps, replace
 
 texdoc s c
 
