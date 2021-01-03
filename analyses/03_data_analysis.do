@@ -263,20 +263,14 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{Hybrid version of SEP}
+% \newpage
+\section{Building age}
 
-This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear dstance) neighbour. 
-
-Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings build before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
+Construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging 
+buildings constructed on or after 2001.
 ***/
 
 texdoc s , nolog // nodo   
-
-* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
-mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
-assert _merge == 3
-drop _merge
 
 * getting age of the buildings
 mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
@@ -327,6 +321,31 @@ fre buildper2
 distinct buildid 
 distinct buildid if buildper2
 */
+
+texdoc s c 
+
+texdoc s    
+
+ta buildper2, m 
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Hybrid version of SEP}
+
+This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear dstance) neighbour. 
+
+Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings build before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
+***/
+
+texdoc s , nolog // nodo   
+
+* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
+mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
+assert _merge == 3
+drop _merge
 
 gen ssep3 = ssep1
 replace ssep3 = ssep2 if buildper2
