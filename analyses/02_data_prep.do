@@ -1237,6 +1237,7 @@ by gisid_orig: replace tot_bb = tot_bb[_N]
 
 * FURTHEST BUILDING DISTANCE
 by gisid_orig: egen max_dist = max(total_length)
+by gisid_orig: egen mean_dist = mean(total_length)
 ren total_length ind_dist
 
 * br if inlist(gisid_orig, 94802)
