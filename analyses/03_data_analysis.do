@@ -532,7 +532,7 @@ texdoc s c
 \subsection{Income graph - 1.0}
 
 \begin{center}
-\includegraphics[width=.75\textwidth]{gr/orig/orig_income.png} 
+\includegraphics[width=.75\textwidth]{gr-orig/orig_income.png} 
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -583,7 +583,7 @@ texdoc s c
 \subsection{Financial variables table - 1.0}
 
 \begin{center}
-\includegraphics[width=.95\textwidth]{gr/orig/orig_shp_table.png} 
+\includegraphics[width=.95\textwidth]{gr-orig/orig_shp_table.png} 
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -669,7 +669,7 @@ texdoc s c
 \subsection{All cause mortality - 1.0}
 
 \begin{center}
-\includegraphics[width=.50\textwidth, angle = 270]{gr/orig/orig_hr_all.png} 
+\includegraphics[width=.50\textwidth, angle = 270]{gr-orig/orig_hr_all.png} 
 \end{center}
 
 Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in original paper!
@@ -850,7 +850,7 @@ texdoc s c
 \subsection{Cause specific mortality - 1.0}
 
 \begin{center}
-\includegraphics[width=.60\textwidth]{gr/orig/orig_hr_spec.png} 
+\includegraphics[width=.60\textwidth]{gr-orig/orig_hr_spec.png} 
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
