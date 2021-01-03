@@ -21,7 +21,7 @@ clear
 
 /***
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% REPORT FOR SWISS-SEP 2.0 DATA ANALYSIS
+% REPORT FOR SWISS-SEP 3.0 DATA ANALYSIS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LATEX settings
@@ -267,7 +267,7 @@ texdoc s c
 \section{Building age}
 
 Construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging 
-buildings constructed on or after 2001.
+buildings constructed on or after 2001. Buidlings with missing information about age are treated as 'old' ones. 
 ***/
 
 texdoc s , nolog // nodo   
@@ -337,7 +337,7 @@ texdoc s c
 
 This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear dstance) neighbour. 
 
-Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings build before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
+Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings built before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
 ***/
 
 texdoc s , nolog // nodo   
@@ -548,14 +548,14 @@ texdoc s c
 \section{Validation - SHP data}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Income graph - 1.0}
+\subsection{Income graph - original}
 
 \begin{center}
 \includegraphics[width=.75\textwidth]{gr-orig/orig_income.png} 
 \end{center}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Income graph - 2.0}
+\subsection{Income graph - new indices}
 ***/
 
 texdoc s , nolog // nodo   
@@ -566,6 +566,9 @@ keep if geocoded
 mmerge gisid using "FINAL/DTA/ssep3_user", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
 keep if _merge == 3
 drop _merge
+
+* medians for paper
+tabstat i13eqon, s(p50) by(ssep3_d)
 
 preserve 
 
@@ -599,12 +602,50 @@ texdoc s c
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Financial variables table - 1.0}
+\subsection{Financial variables table - original}
 
 \begin{center}
 \includegraphics[width=.95\textwidth]{gr-orig/orig_shp_table.png} 
 \end{center}
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Financial variables table - 1.0}
+***/
+
+texdoc s , cmdstrip
+
+tabstat i13eqon if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
+tabstat h13i51 if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
+
+ta h13i20ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+ta h13i21ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+ta h13i22   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+ta h13i23   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+ta h13i76a  ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+ta h13i50   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+
+texdoc s c 
+
+/***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{Financial variables table - 2.0}
@@ -685,7 +726,7 @@ texdoc s c
 \newpage
 \section{Validation - SNC mortality}
 
-\subsection{All cause mortality - 1.0}
+\subsection{All cause mortality - original}
 
 \begin{center}
 \includegraphics[width=.50\textwidth, angle = 270]{gr-orig/orig_hr_all.png} 
@@ -694,7 +735,7 @@ texdoc s c
 Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as described in original paper!
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{All cause mortality - three SEP indices}
+\subsection{All cause mortality - new indices}
 ***/
 
 texdoc s , nolog // nodo   
@@ -866,11 +907,89 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Cause specific mortality - 1.0}
+\subsection{Cause specific mortality - original}
 
 \begin{center}
 \includegraphics[width=.60\textwidth]{gr-orig/orig_hr_spec.png} 
 \end{center}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - 1.0}
+***/
+
+texdoc s , nolog // nodo   
+
+global SET = "nopv base cformat(%5.2f)"
+global ADJ = "nat_bin b2.civil b2.urban b1.lang"
+
+est clear
+
+foreach EVENT in d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su {
+
+
+	di in red "*************************************************"
+	di in red "Event: `EVENT'" 
+
+	stset dstop, origin(dob) entry(dstart) failure(`EVENT') scale(365.25)
+	
+	* LADIES 
+	if "`EVENT'" == "d_bc" {
+		
+		stcox b10.ssep1_d if sex, $SET 
+		est sto `EVENT'
+		stcox $ADJ b10.ssep1_d if sex, $SET
+		est sto `EVENT'_a		
+	}
+	
+	* GENTS
+	else if "`EVENT'" == "d_pc" {
+
+		stcox b10.ssep1_d if !sex, $SET
+		est sto `EVENT'
+		stcox $ADJ b10.ssep1_d if !sex, $SET
+		est sto `EVENT'_a		
+	}	
+
+	else {
+	
+		stcox i.sex b10.ssep1_d, $SET
+		est sto `EVENT'
+		stcox i.sex $ADJ b10.ssep1_d, $SET
+		est sto `EVENT'_a		
+	}	
+}
+
+/*
+global lab 		"ylab(none) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.78 3.1)) xlab(0.8(0.2)2.4) xline(0.8(0.2)2.6, lcolor(gs14) lwidth(thin))"
+global misc 	"ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
+
+coefplot d_lc d_bc d_pc d_re d_cv d_mi d_st d_ac d_su, title("HRs of mortality", $title) eform $lab $region $misc $legend keep(1.ssep1_d)
+*/
+texdoc s c 
+
+
+* VERY CRUDE WAY OR 'PRINTING' TABLE >> CAN BE TURNED INTO LATEX OUTPUT WITH BIT MORE WORK
+texdoc s , cmdstrip
+
+estout d_lc d_lc_a, varl(1.ssep1_d "Lung cancer")			c( "b(fmt(2) label(HR) ) ci(par( ( ,  ) ) label(95% CI) )" ) keep(1.ssep1_d) eform  mlabels("Age & sex" "Adjusted")
+estout d_bc d_bc_a, varl(1.ssep1_d "Breast cancer")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+estout d_pc d_pc_a, varl(1.ssep1_d "Prostate cancer")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+
+estout d_cv d_cv_a, varl(1.ssep1_d "Cardiovascular")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+estout d_mi d_mi_a, varl(1.ssep1_d "Myocardial infarction")	c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+estout d_st d_st_a, varl(1.ssep1_d "Stroke")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+ 
+estout d_re d_re_a, varl(1.ssep1_d "Respiratory")			c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+
+estout d_ac d_ac_a, varl(1.ssep1_d "Traffic accidents")		c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+estout d_su d_su_a, varl(1.ssep1_d "Suicide")				c( "b(fmt(2)) ci(par( ( ,  ) ) )" ) keep(1.ssep1_d) eform  mlabels(, none) collabels(, none)
+
+texdoc s c 
+
+/***
+Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
+Breast and prostate cancer: for men and women respectively. 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
