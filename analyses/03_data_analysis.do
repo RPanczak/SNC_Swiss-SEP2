@@ -315,6 +315,8 @@ gen buildper2 = (buildper >= 8020)
 * ta buildper buildper2, m
 
 la de buildper2 0 "Before 2000" 1 "After 2000", replace
+la var buildper2 "Building period (binary)"
+
 /*
 fre buildper
 fre buildper2
