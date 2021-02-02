@@ -48,7 +48,7 @@ Oct 2020 release from [cadastre.ch](https://www.cadastre.ch/en/services/service/
 plz_20_10 <- read_rds("data/PLZ/plz_20_10.Rds")
 ```
 
-Dataset consists of `r scales::number(nrow(plz_20_10), big.mark = ",")` PLZs.
+Dataset consists of `r scales::number(length(unique(plz_20_10$PLZ)), big.mark = ",")` PLZs.
 
 ## Swiss-SEP 
 
