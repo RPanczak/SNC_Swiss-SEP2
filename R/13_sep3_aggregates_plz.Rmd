@@ -1,0 +1,333 @@
+---
+title: "Swiss-SEP project"
+description: "Aggregating SEP3 point data to PLZs"
+date: "`r Sys.Date()`"
+author:
+  - name: Radoslaw Panczak 
+    url: https://github.com/RPanczak
+    affiliation: ISPM
+    affiliation_url: https://www.ispm.unibe.ch/
+    orcid_id: 0000-0001-5141-683X
+# bibliography: biblio.bib
+output:
+  distill::distill_article:
+    highlight: pygments
+    toc: true
+    toc_depth: 1
+    number_sections: true
+editor_options: 
+  chunk_output_type: console
+---
+
+<!-- ------------------------------------------------------------ --> 
+<!-- ------------------------------------------------------------ --> 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      # fig.width=8, fig.height=6, 
+                      # out.width="800px", out.height="600px",
+                      dpi=300)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+options(scipen=999)
+set.seed(12345)
+library(pacman) 
+p_load(tidyverse, haven, 
+       sjmisc, sjPlot,
+       sf, tmap)
+
+tmap_mode("view")
+```
+
+# Raw data 
+
+## PLZ
+
+Oct 2020 release from [cadastre.ch](https://www.cadastre.ch/en/services/service/registry/plz.html)
+
+```{r}
+plz_20_10 <- read_rds("data/PLZ/plz_20_10.Rds")
+```
+
+Dataset consists of `r scales::number(length(unique(plz_20_10$PLZ)), big.mark = ",")` PLZs.
+
+## Swiss-SEP 
+
+Using version 3.0. 
+
+```{r echo=FALSE}
+sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>% 
+  select(gisid, ssep3, ssep3_d) %>% 
+  mutate(ssep3_d = factor(ssep3_d,
+                          levels = 1:10,
+                          labels = c("1st - lowest", 
+                                     "2", "3", "4", 
+                                     "5th decile", 
+                                     "6", "7", "8", "9", 
+                                     "10th - highest")))
+```
+
+Dataset consists of `r scales::number(nrow(sep3), big.mark = ",")` n'hoods, each assigned to decile of index.
+
+```{r}
+st_drop_geometry(sep3) %>% 
+  frq(ssep3_d)
+```
+
+## STATPOP
+
+```{r include=FALSE}
+r18_bu_orig <- read_dta("data-raw/statpop/r18_bu_orig.dta")
+# View(r18_bu_orig)
+
+r18_bu <- r18_bu_orig %>% 
+  filter(between(r18_gklas, 1110, 1122)) %>% 
+  filter(!is.na(r18_gklas)) %>% 
+  select(-r18_cant, -r18_cant_sh,
+         -r18_ecoord_h, -r18_ncoord_h, 
+         -r18_plzz,
+         -r18_gklas, -r18_fgkod, -r18_buildper, 
+         -r18_nrfloor, -r18_nrdwell, 
+         -r18_quarter, -r18_comm, -r18_buildcat) %>% 
+  select(-r18_nrpers_main, -r18_nrpers_perm) %>% 
+  # filter(!is.na(r18_ncoord)) %>% 
+  # filter(!is.na(r18_ecoord)) %>% 
+  st_as_sf(coords = c("r18_ecoord", "r18_ncoord"), 
+           crs = 2056,
+           remove = TRUE)
+```
+
+Using data from `STATPOP` **2018**. Excluding `r scales::number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` nonresidential buildings and `r scales::number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
+
+Used dataset consists of `r scales::number(nrow(r18_bu), big.mark = ",")` buildings.
+
+The nearest building with SSEP 3 was found; point dataset was then overlaid with PLZ boundaries and summary measures of population based index were created and population level SEP was aggregated by PLZ. 
+
+`r18_nrpers_total` was used for population - slightly different populations would be obtained with different conceptual models of *residential populations* by using either `r18_nrpers_main` or `r18_nrpers_perm` variables
+
+
+```{r include=FALSE}
+rm(r18_bu_orig)
+gc()
+```
+
+# PLZ averages
+
+## 'nhood based
+
+```{r}
+ssep3_plz_20 <- 
+  st_join(sep3, plz_20_10, join = st_intersects) 
+
+# ssep3_plz_20 %>%  filter(is.na(PLZ))
+
+ssep3_plz_20_neigh <- ssep3_plz_20 %>% 
+  st_drop_geometry() %>% 
+  group_by(PLZ) %>% 
+  summarise(n = n(),
+            ssep3_mean = mean(ssep3),
+            ssep3_median = median(ssep3)) %>% 
+  ungroup() 
+
+breaks1 <- sep3 %>% 
+  st_drop_geometry() %>% 
+  group_by(ssep3_d) %>% 
+  summarize(min = min(ssep3),
+            max = max(ssep3))
+
+# sep3$temp <- cut(sep3$ssep3, breaks = c(breaks1$min, 100),
+#                  include.lowest = TRUE,
+#                  labels = c("1st - lowest", 
+#                             "2", "3", "4", 
+#                             "5th decile", 
+#                             "6", "7", "8", "9", 
+#                             "10th - highest"))
+# 
+# table(sep3$ssep3_d, sep3$temp)
+
+mapdata_neigh <- left_join(plz_20_10, ssep3_plz_20_neigh) %>% 
+  filter(!is.na(ssep3_median)) %>% 
+  mutate(mean_ssep3_samp_d = ntile(ssep3_mean, 10),
+         median_ssep3_samp_d = ntile(ssep3_median, 10)) %>% 
+  mutate(mean_ssep3_samp_d = factor(mean_ssep3_samp_d,
+                                    levels = 1:10,
+                                    labels = c("1st - lowest", 
+                                               "2", "3", "4", 
+                                               "5th decile", 
+                                               "6", "7", "8", "9", 
+                                               "10th - highest"))) %>% 
+  mutate(median_ssep3_samp_d = factor(median_ssep3_samp_d,
+                                      levels = 1:10,
+                                      labels = c("1st - lowest", 
+                                                 "2", "3", "4", 
+                                                 "5th decile", 
+                                                 "6", "7", "8", "9", 
+                                                 "10th - highest")))
+
+mapdata_neigh$mean_ssep3_full_d <- cut(mapdata_neigh$ssep3_mean, 
+                                       breaks = c(breaks1$min, 100),
+                                       include.lowest = TRUE,
+                                       labels = c("1st - lowest", 
+                                                  "2", "3", "4", 
+                                                  "5th decile", 
+                                                  "6", "7", "8", "9", 
+                                                  "10th - highest"))
+
+mapdata_neigh$median_ssep3_full_d <- cut(mapdata_neigh$ssep3_median, 
+                                         breaks = c(breaks1$min, 100),
+                                         include.lowest = TRUE,
+                                         labels = c("1st - lowest", 
+                                                    "2", "3", "4", 
+                                                    "5th decile", 
+                                                    "6", "7", "8", "9", 
+                                                    "10th - highest"))
+
+write_rds(mapdata_neigh, "data/mapdata_neigh.rds")
+
+# mapdata_neigh %>% 
+#   filter(is.na(ssep3_median)) %>% 
+#   tm_shape() +
+#   tm_dots()
+```
+
+Watch out for small n!
+- hospitals: 4031, 1011, 4101, 5017, 3010, 5404, 8208  
+- generally small: 6441, 6068, 7517  
+- no pop? Ried-Brig: 3901, Laura: 6549  
+- Technopark Luzern: 6039  
+- Jungfraujoch: 3801  
+- Genève Aéroport: 1215  
+- remote: 6867, 7710  
+- Kloster Fahr: 8109  
+- uni: 1015  
+
+```{r}
+mapdata_neigh %>% 
+  filter(n < 9) %>% 
+  qtm(borders = "red", fill = "red")
+```
+
+### Final map using median index
+
+Bubbles scaled to number of 'nhoods.
+
+```{r, layout="l-body-outset"}
+mapdata_neigh %>% 
+  tm_shape() +
+  tm_dots(size = "n", col = "ssep3_median", palette = "RdYlGn",
+          scale = .5,  shape = 19)
+```
+
+### Deciles using sample of PLZs vs 'original' deciles
+
+```{r}
+frq(mapdata_neigh$median_ssep3_samp_d)
+frq(mapdata_neigh$median_ssep3_full_d)
+```
+
+```{r, layout="l-page"}
+mapdata_neigh %>% 
+  tm_shape() +
+  tm_fill(col = c("median_ssep3_samp_d", "median_ssep3_full_d"), 
+          palette = "RdYlGn")
+```
+
+## Population based
+
+```{r eval=FALSE, include=FALSE}
+# join to sep3
+r18_bu_sep3 <- 
+  st_join(r18_bu, sep3, join = st_nearest_feature)
+
+# nearest <- st_nearest_feature(r18_bu, sep3)
+# r18_bu_sep3$dist1 <- st_distance(r18_bu_sep3, sep3[nearest, ], by_element = TRUE)
+# rm(nearest)
+
+# View(st_drop_geometry(r18_bu_sep3))
+
+r18_bu_sep3_plz <- 
+  st_join(r18_bu_sep3, plz_20_10, join = st_intersects) 
+
+# View(st_drop_geometry(r18_bu_sep3_plz))
+
+write_rds(r18_bu_sep3_plz, "data/statpop/r18_bu_sep3_plz.rds")
+```
+
+```{r}
+r18_bu_sep3_plz <- read_rds("data/statpop/r18_bu_sep3_plz.rds") 
+```
+
+```{r}
+ssep3_plz_20_pop <- r18_bu_sep3_plz %>% 
+  st_drop_geometry() %>% 
+  select(-r18_gdename, -r18_plz4, -ssep3_d) %>% 
+  uncount(r18_nrpers_total) %>% 
+  group_by(PLZ) %>% 
+  summarise(n = n(),
+            ssep3_mean = mean(ssep3),
+            ssep3_median = median(ssep3)) %>% 
+  ungroup() 
+
+mapdata_pop <- left_join(plz_20_10, ssep3_plz_20_pop) %>% 
+  filter(!is.na(ssep3_median)) %>% 
+  mutate(mean_ssep3_samp_d = ntile(ssep3_mean, 10),
+         median_ssep3_samp_d = ntile(ssep3_median, 10)) %>% 
+  mutate(mean_ssep3_samp_d = factor(mean_ssep3_samp_d,
+                                    levels = 1:10,
+                                    labels = c("1st - lowest", 
+                                               "2", "3", "4", 
+                                               "5th decile", 
+                                               "6", "7", "8", "9", 
+                                               "10th - highest"))) %>% 
+  mutate(median_ssep3_samp_d = factor(median_ssep3_samp_d,
+                                      levels = 1:10,
+                                      labels = c("1st - lowest", 
+                                                 "2", "3", "4", 
+                                                 "5th decile", 
+                                                 "6", "7", "8", "9", 
+                                                 "10th - highest")))
+
+mapdata_pop$mean_ssep3_full_d <- cut(mapdata_pop$ssep3_mean, 
+                                     breaks = c(breaks1$min, 100),
+                                     include.lowest = TRUE,
+                                     labels = c("1st - lowest", 
+                                                "2", "3", "4", 
+                                                "5th decile", 
+                                                "6", "7", "8", "9", 
+                                                "10th - highest"))
+
+mapdata_pop$median_ssep3_full_d <- cut(mapdata_pop$ssep3_median, 
+                                       breaks = c(breaks1$min, 100),
+                                       include.lowest = TRUE,
+                                       labels = c("1st - lowest", 
+                                                  "2", "3", "4", 
+                                                  "5th decile", 
+                                                  "6", "7", "8", "9", 
+                                                  "10th - highest"))
+
+write_rds(mapdata_pop, "data/mapdata_pop.rds")
+```
+
+### Final map using median index
+
+Bubbles scaled to population (2018)
+
+```{r, layout="l-body-outset"}
+mapdata_pop %>% 
+  tm_shape() +
+  tm_dots(size = "n", col = "ssep3_median", palette = "RdYlGn",
+          scale = .5,  shape = 19)
+```
+
+### Deciles using sample of PLZs vs 'original' deciles
+
+```{r}
+frq(mapdata_pop$median_ssep3_samp_d)
+frq(mapdata_pop$median_ssep3_full_d)
+```
+
+```{r, layout="l-page"}
+mapdata_pop %>% 
+  tm_shape() +
+  tm_fill(col = c("median_ssep3_samp_d", "median_ssep3_full_d"), 
+          palette = "RdYlGn")
+```
