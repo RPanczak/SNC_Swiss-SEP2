@@ -7,8 +7,8 @@ library(RColorBrewer)
 # # #################################################
 # # statpop figures needed for carto weights
 # 
-# statpop18 <- read_csv("data-raw/ag-b-00.03-vz2018statpop/STATPOP2018_GMDE.csv") %>% 
-#   select(GDENR, B18BTOT) %>% 
+# statpop18 <- read_csv("data-raw/statpop-open/ag-b-00.03-vz2018statpop/STATPOP2018_GMDE.csv") %>%
+#   select(GDENR, B18BTOT) %>%
 #   rename(GMDNR = GDENR)
 # 
 # str(statpop18)
@@ -21,7 +21,7 @@ library(RColorBrewer)
 # # #################################################
 # # shape files for cartogram input
 # 
-# gem <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV03/shp/g1g18.shp",
+# gem <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1g18.shp",
 #                options = "ENCODING=WINDOWS-1252") %>%
 #   select(GMDNR, GMDNAME ) %>%
 #   left_join(statpop18) %>%
@@ -32,17 +32,21 @@ library(RColorBrewer)
 # 
 # st_write(gem, "data/ag-b-00.03-875-gg18/gem-statpop-18.shp")
 # 
-# lake <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV03/shp/g1s18.shp",
+# lake <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1s18.shp",
 #                 options = "ENCODING=WINDOWS-1252") %>%
 #   select(SEENAME)
 # 
 # st_write(lake, "data/ag-b-00.03-875-gg18/lake.shp")
 # 
-# canton <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV03/shp/g1k20.shp",
-#                   options = "ENCODING=WINDOWS-1252") %>% 
+# canton <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1k20.shp",
+#                   options = "ENCODING=WINDOWS-1252") %>%
 #   select(KTNAME)
 # 
 # st_write(canton, "data/ag-b-00.03-875-gg18/canton.shp")
+
+# #################################################
+# java -Xmx1024m -jar c/projects/ISPM_geo/software/ScapeToad-v11/ScapeToad.jar
+# java -Xmx1024m -jar ScapeToad.jar
 
 # #################################################
 # shape files from scapetoad
@@ -52,10 +56,10 @@ gem_carto <- st_read("data/ag-b-00.03-875-gg18/gem-statpop-18-carto.shp",
   select(-B18BTOTDens, -SizeError)
 
 lake_carto <- st_read("data/ag-b-00.03-875-gg18/lake-carto.shp",
-                options = "ENCODING=WINDOWS-1252")
+                      options = "ENCODING=WINDOWS-1252")
 
 canton_carto <- st_read("data/ag-b-00.03-875-gg18/canton-carto.shp",
-                      options = "ENCODING=WINDOWS-1252")
+                        options = "ENCODING=WINDOWS-1252")
 
 plot(st_geometry(gem_carto))
 plot(st_geometry(lake_carto), add = TRUE, col = "lightblue", border = NA)
@@ -66,25 +70,24 @@ plot(st_geometry(canton_carto), add = TRUE, col = NA, border = "grey40")
 # #################################################
 # getting gem 18 codes to sep data
 
-ssep2_user_geo <- readRDS("data/Swiss-SEP2/ssep2_user_geo.Rds") 
+ssep3_user_geo <- readRDS("FINAL/RDS/ssep3_user_geo.Rds") 
 
-gem18 <- readRDS("data/swissBOUNDARIES3D/gem18.Rds")
+gem18 <- readRDS("../ISPM_geo/data/swissBOUNDARIES3D/gem18.Rds")
 
 # overlay
-ssep2_gem_18_sum <- 
-  st_join(ssep2_user_geo, gem18, join = st_intersects) %>% 
+ssep3_gem_18_sum <- 
+  st_join(ssep3_user_geo, gem18, join = st_intersects) %>% 
   st_drop_geometry() %>% 
   group_by(GMDNR) %>% 
-  summarise(ssep2_mean = mean(ssep2),
-            ssep2_median = median(ssep2)
-            )
+  summarise(ssep3_mean = mean(ssep3),
+            ssep3_median = median(ssep3))
 
-ssep2_gem_18_carto <- gem_carto %>% 
-  left_join(ssep2_gem_18_sum)
+ssep3_gem_18_carto <- gem_carto %>% 
+  left_join(ssep3_gem_18_sum)
 
 ggplot() + 
   geom_sf(data = lake_carto, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
-  geom_sf(data = ssep2_gem_18_carto, aes(fill = ssep2_median), 
+  geom_sf(data = ssep3_gem_18_carto, aes(fill = ssep3_median), 
           colour = "white",
           size = 0.1) +
   geom_sf(data = canton_carto, fill = NA, color = gray(.5), size = 0.1) +
@@ -99,7 +102,7 @@ ggsave("carto/03_cartogram-r-median.png", width = 297, height = 210, units = "mm
 
 ggplot() + 
   geom_sf(data = lake_carto, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
-  geom_sf(data = ssep2_gem_18_carto, aes(fill = ssep2_mean), 
+  geom_sf(data = ssep3_gem_18_carto, aes(fill = ssep3_mean), 
           colour = "white",
           size = 0.1) +
   geom_sf(data = canton_carto, fill = NA, color = gray(.5), size = 0.1) +
