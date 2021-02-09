@@ -31,7 +31,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(tidyverse, haven, 
+p_load(tidyverse, haven, scales,
        sjmisc, sjPlot,
        sf, tmap)
 
@@ -48,7 +48,7 @@ Oct 2020 release from [cadastre.ch](https://www.cadastre.ch/en/services/service/
 plz_20_10 <- read_rds("data/PLZ/plz_20_10.Rds")
 ```
 
-Dataset consists of `r scales::number(length(unique(plz_20_10$PLZ)), big.mark = ",")` PLZs.
+Dataset consists of `r number(length(unique(plz_20_10$PLZ)), big.mark = ",")` PLZs.
 
 ## Swiss-SEP 
 
@@ -64,9 +64,11 @@ sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>%
                                      "5th decile", 
                                      "6", "7", "8", "9", 
                                      "10th - highest")))
+
+# View(st_drop_geometry(sep3))
 ```
 
-Dataset consists of `r scales::number(nrow(sep3), big.mark = ",")` n'hoods, each assigned to decile of index.
+Dataset consists of `r number(nrow(sep3), big.mark = ",")` n'hoods, each assigned to decile of index. 
 
 ```{r}
 st_drop_geometry(sep3) %>% 
@@ -76,7 +78,7 @@ st_drop_geometry(sep3) %>%
 ## STATPOP
 
 ```{r include=FALSE}
-r18_bu_orig <- read_dta("data-raw/statpop/r18_bu_orig.dta")
+r18_bu_orig <- read_dta("../SNC_core/data-raw/statpop/r18_bu_orig.dta")
 # View(r18_bu_orig)
 
 r18_bu <- r18_bu_orig %>% 
@@ -96,9 +98,9 @@ r18_bu <- r18_bu_orig %>%
            remove = TRUE)
 ```
 
-Using data from `STATPOP` **2018**. Excluding `r scales::number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` nonresidential buildings and `r scales::number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
+Using data from `STATPOP` **2018**. Excluding `r number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` nonresidential buildings and `r number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
 
-Used dataset consists of `r scales::number(nrow(r18_bu), big.mark = ",")` buildings.
+Used dataset consists of `r number(nrow(r18_bu), big.mark = ",")` buildings.
 
 The nearest building with SSEP 3 was found; point dataset was then overlaid with PLZ boundaries and summary measures of population based index were created and population level SEP was aggregated by PLZ. 
 
@@ -110,17 +112,16 @@ rm(r18_bu_orig)
 gc()
 ```
 
-# PLZ averages
 
-## 'nhood based
-
-```{r}
+```{r eval=FALSE, include=FALSE}
+# simple solution to average households
 ssep3_plz_20 <- 
   st_join(sep3, plz_20_10, join = st_intersects) 
 
-# ssep3_plz_20 %>%  filter(is.na(PLZ))
+# ssep3_plz_20 %>% filter(is.na(PLZ))
+# View(st_drop_geometry(ssep3_plz_20))
 
-ssep3_plz_20_neigh <- ssep3_plz_20 %>% 
+ssep3_plz_20_10_neigh <- ssep3_plz_20 %>% 
   st_drop_geometry() %>% 
   group_by(PLZ) %>% 
   summarise(n = n(),
@@ -128,119 +129,19 @@ ssep3_plz_20_neigh <- ssep3_plz_20 %>%
             ssep3_median = median(ssep3)) %>% 
   ungroup() 
 
-breaks1 <- sep3 %>% 
-  st_drop_geometry() %>% 
-  group_by(ssep3_d) %>% 
-  summarize(min = min(ssep3),
-            max = max(ssep3))
-
-# sep3$temp <- cut(sep3$ssep3, breaks = c(breaks1$min, 100),
-#                  include.lowest = TRUE,
-#                  labels = c("1st - lowest", 
-#                             "2", "3", "4", 
-#                             "5th decile", 
-#                             "6", "7", "8", "9", 
-#                             "10th - highest"))
-# 
-# table(sep3$ssep3_d, sep3$temp)
-
-mapdata_neigh <- left_join(plz_20_10, ssep3_plz_20_neigh) %>% 
-  filter(!is.na(ssep3_median)) %>% 
-  mutate(mean_ssep3_samp_d = ntile(ssep3_mean, 10),
-         median_ssep3_samp_d = ntile(ssep3_median, 10)) %>% 
-  mutate(mean_ssep3_samp_d = factor(mean_ssep3_samp_d,
-                                    levels = 1:10,
-                                    labels = c("1st - lowest", 
-                                               "2", "3", "4", 
-                                               "5th decile", 
-                                               "6", "7", "8", "9", 
-                                               "10th - highest"))) %>% 
-  mutate(median_ssep3_samp_d = factor(median_ssep3_samp_d,
-                                      levels = 1:10,
-                                      labels = c("1st - lowest", 
-                                                 "2", "3", "4", 
-                                                 "5th decile", 
-                                                 "6", "7", "8", "9", 
-                                                 "10th - highest")))
-
-mapdata_neigh$mean_ssep3_full_d <- cut(mapdata_neigh$ssep3_mean, 
-                                       breaks = c(breaks1$min, 100),
-                                       include.lowest = TRUE,
-                                       labels = c("1st - lowest", 
-                                                  "2", "3", "4", 
-                                                  "5th decile", 
-                                                  "6", "7", "8", "9", 
-                                                  "10th - highest"))
-
-mapdata_neigh$median_ssep3_full_d <- cut(mapdata_neigh$ssep3_median, 
-                                         breaks = c(breaks1$min, 100),
-                                         include.lowest = TRUE,
-                                         labels = c("1st - lowest", 
-                                                    "2", "3", "4", 
-                                                    "5th decile", 
-                                                    "6", "7", "8", "9", 
-                                                    "10th - highest"))
-
-write_rds(mapdata_neigh, "data/mapdata_neigh.rds")
-
-# mapdata_neigh %>% 
-#   filter(is.na(ssep3_median)) %>% 
-#   tm_shape() +
-#   tm_dots()
+plz_n <- left_join(plz_20_10, ssep3_plz_20_10_neigh) 
 ```
 
-Watch out for small n!
-- hospitals: 4031, 1011, 4101, 5017, 3010, 5404, 8208  
-- generally small: 6441, 6068, 7517  
-- no pop? Ried-Brig: 3901, Laura: 6549  
-- Technopark Luzern: 6039  
-- Jungfraujoch: 3801  
-- Genève Aéroport: 1215  
-- remote: 6867, 7710  
-- Kloster Fahr: 8109  
-- uni: 1015  
-
-```{r}
-mapdata_neigh %>% 
-  filter(n < 9) %>% 
-  qtm(borders = "red", fill = "red")
-```
-
-### Final map using median index
-
-Bubbles scaled to number of 'nhoods.
-
-```{r, layout="l-body-outset"}
-mapdata_neigh %>% 
-  tm_shape() +
-  tm_dots(size = "n", col = "ssep3_median", palette = "RdYlGn",
-          scale = .5,  shape = 19)
-```
-
-### Deciles using sample of PLZs vs 'original' deciles
-
-```{r}
-frq(mapdata_neigh$median_ssep3_samp_d)
-frq(mapdata_neigh$median_ssep3_full_d)
-```
-
-```{r, layout="l-page"}
-mapdata_neigh %>% 
-  tm_shape() +
-  tm_fill(col = c("median_ssep3_samp_d", "median_ssep3_full_d"), 
-          palette = "RdYlGn")
-```
-
-## Population based
+# Population based averages
 
 ```{r eval=FALSE, include=FALSE}
 # join to sep3
 r18_bu_sep3 <- 
   st_join(r18_bu, sep3, join = st_nearest_feature)
 
-# nearest <- st_nearest_feature(r18_bu, sep3)
-# r18_bu_sep3$dist1 <- st_distance(r18_bu_sep3, sep3[nearest, ], by_element = TRUE)
-# rm(nearest)
+nearest <- st_nearest_feature(r18_bu, sep3)
+r18_bu_sep3$dist1 <- st_distance(r18_bu_sep3, sep3[nearest, ], by_element = TRUE)
+rm(nearest)
 
 # View(st_drop_geometry(r18_bu_sep3))
 
@@ -257,7 +158,7 @@ r18_bu_sep3_plz <- read_rds("data/statpop/r18_bu_sep3_plz.rds")
 ```
 
 ```{r}
-ssep3_plz_20_pop <- r18_bu_sep3_plz %>% 
+ssep3_plz_20_10_pop <- r18_bu_sep3_plz %>% 
   st_drop_geometry() %>% 
   select(-r18_gdename, -r18_plz4, -ssep3_d) %>% 
   uncount(r18_nrpers_total) %>% 
@@ -267,67 +168,99 @@ ssep3_plz_20_pop <- r18_bu_sep3_plz %>%
             ssep3_median = median(ssep3)) %>% 
   ungroup() 
 
-mapdata_pop <- left_join(plz_20_10, ssep3_plz_20_pop) %>% 
+ssep3_plz_20_10_pop_geo <- left_join(plz_20_10, ssep3_plz_20_10_pop) %>% 
   filter(!is.na(ssep3_median)) %>% 
-  mutate(mean_ssep3_samp_d = ntile(ssep3_mean, 10),
-         median_ssep3_samp_d = ntile(ssep3_median, 10)) %>% 
-  mutate(mean_ssep3_samp_d = factor(mean_ssep3_samp_d,
-                                    levels = 1:10,
-                                    labels = c("1st - lowest", 
-                                               "2", "3", "4", 
-                                               "5th decile", 
-                                               "6", "7", "8", "9", 
-                                               "10th - highest"))) %>% 
-  mutate(median_ssep3_samp_d = factor(median_ssep3_samp_d,
-                                      levels = 1:10,
-                                      labels = c("1st - lowest", 
-                                                 "2", "3", "4", 
-                                                 "5th decile", 
-                                                 "6", "7", "8", "9", 
-                                                 "10th - highest")))
+  mutate(ssep3_mean_d = ntile(ssep3_mean, 10),
+         ssep3_median_d = ntile(ssep3_median, 10)) %>% 
+  mutate(ssep3_mean_d = factor(ssep3_mean_d,
+                               levels = 1:10,
+                               labels = c("1st - lowest", 
+                                          "2", "3", "4", 
+                                          "5th decile", 
+                                          "6", "7", "8", "9", 
+                                          "10th - highest"))) %>% 
+  mutate(ssep3_median_d = factor(ssep3_median_d,
+                                 levels = 1:10,
+                                 labels = c("1st - lowest", 
+                                            "2", "3", "4", 
+                                            "5th decile", 
+                                            "6", "7", "8", "9", 
+                                            "10th - highest")))
 
-mapdata_pop$mean_ssep3_full_d <- cut(mapdata_pop$ssep3_mean, 
-                                     breaks = c(breaks1$min, 100),
-                                     include.lowest = TRUE,
-                                     labels = c("1st - lowest", 
-                                                "2", "3", "4", 
-                                                "5th decile", 
-                                                "6", "7", "8", "9", 
-                                                "10th - highest"))
-
-mapdata_pop$median_ssep3_full_d <- cut(mapdata_pop$ssep3_median, 
-                                       breaks = c(breaks1$min, 100),
-                                       include.lowest = TRUE,
-                                       labels = c("1st - lowest", 
-                                                  "2", "3", "4", 
-                                                  "5th decile", 
-                                                  "6", "7", "8", "9", 
-                                                  "10th - highest"))
-
-write_rds(mapdata_pop, "data/mapdata_pop.rds")
+sf::st_write(ssep3_plz_20_10_pop_geo, "data/ssep3_plz_20_10_pop_geo.shp", delete_layer = TRUE)
+write_rds(ssep3_plz_20_10_pop_geo, "data/ssep3_plz_20_10_pop_geo.rds")
+write_rds(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.rds")
+haven::write_dta(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.dta")
+write_csv(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.csv")
 ```
 
-### Final map using median index
+## Final map using median index deciles
+
+```{r}
+frq(st_drop_geometry(ssep3_plz_20_10_pop_geo), ssep3_median_d)
+# frq(st_drop_geometry(ssep3_plz_20_10_pop_geo), ssep3_mean_d)
+```
 
 Bubbles scaled to population (2018)
 
 ```{r, layout="l-body-outset"}
-mapdata_pop %>% 
+ssep3_plz_20_10_pop_geo %>% 
   tm_shape() +
-  tm_dots(size = "n", col = "ssep3_median", palette = "RdYlGn",
+  tm_dots(size = "n", col = "ssep3_median_d", palette = "RdYlGn",
           scale = .5,  shape = 19)
 ```
 
-### Deciles using sample of PLZs vs 'original' deciles
+## Comparing mean and median
 
 ```{r}
-frq(mapdata_pop$median_ssep3_samp_d)
-frq(mapdata_pop$median_ssep3_full_d)
+table(ssep3_plz_20_10_pop_geo$ssep3_median_d, ssep3_plz_20_10_pop_geo$ssep3_mean_d)
 ```
 
-```{r, layout="l-page"}
-mapdata_pop %>% 
+```{r eval=FALSE, include=FALSE, layout="l-page"}
+ssep3_plz_20_10_pop_geo %>% 
   tm_shape() +
-  tm_fill(col = c("median_ssep3_samp_d", "median_ssep3_full_d"), 
+  tm_fill(col = c("ssep3_median_d", "ssep3_mean_d"), 
           palette = "RdYlGn")
+```
+
+## Small PLZs
+
+- remote? no pop?: 
+  - Poschiavo 7710   
+  - Ried-Brig 3901   
+  - Alp Grüm 7710   
+  - Plaun da Lej 7517  
+  - Kerns 6068  
+  - Rosswald 3913  
+
+- hospital 
+  - Klinik Barmelweid 5017
+  
+- not small but can that be qualified as residential?
+  - Kloster Fahr 8109
+
+```{r}
+# Watch out for unusual PLZs with small or no pops!
+# - hospitals: 4031, 1011, 4101, 5017, 3010, 5404, 8208  
+# - generally small: 6441, 6068, 7517  
+# - no pop? Ried-Brig: 3901, Laura: 6549  
+# - Technopark Luzern: 6039  
+# - Jungfraujoch: 3801  
+# - Genève Aéroport: 1215  
+# - remote: 6867, 7710  
+# - Kloster Fahr: 8109  
+# - uni: 1015 
+
+# ssep3_plz_20_10_pop_geo %>%
+#   st_drop_geometry() %>%
+#   filter(PLZ == 8109)
+
+ssep3_plz_20_10_pop_geo %>%
+  st_drop_geometry() %>%
+  filter(n < 11) %>%
+  arrange(n)
+
+ssep3_plz_20_10_pop_geo %>% 
+  filter(n < 11) %>% 
+  qtm(borders = "red", fill = "red")
 ```
