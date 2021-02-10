@@ -3,19 +3,19 @@
 # http://dx.doi.org/10.18637/jss.v063.i17
 
 library("GWmodel")
+library("RColorBrewer")
 
-# Robust GW summary statistics
-
+# Dublin voter turnout data
 data("DubVoter")
 plot(Dub.voter)
 View(Dub.voter@data)
+
+# Robust GW summary statistics
 
 gw.ss.bx <- gwss(Dub.voter, vars = c("GenEl2004", "LARent", "Unempl"),
                  kernel = "boxcar", adaptive = TRUE, bw = 48, quantile = TRUE)
 gw.ss.bs <- gwss(Dub.voter,vars = c("GenEl2004", "LARent", "Unempl"), 
                  kernel = "bisquare", adaptive = TRUE, bw = 48)
-
-library("RColorBrewer")
 
 map.na = list("SpatialPolygonsRescale", layout.north.arrow(),
               offset = c(329000, 261500), scale = 4000, col = 1)
@@ -142,9 +142,6 @@ spplot(Dub.voter, "win.item.robust", key.space = "right",
 # Published in Geo-spatial Information Science
 
 #  Code for section 3.4
-
-# Dublin voter turnout data
-data(DubVoter)
 
 # GWSS for nearest 15% of data using a bi-square kernel
 gwss.1 <- gwss(Dub.voter,
