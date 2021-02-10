@@ -70,6 +70,10 @@ sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>%
 
 Dataset consists of `r number(nrow(sep3), big.mark = ",")` n'hoods, each assigned to decile of index. 
 
+<aside>
+Decile numbers are not 'exact' due to changes that occur when `SEP2` index is used in place of `SEP1` index in areas with new buildings. See the main paper for more explanations of that.
+</aside>
+
 ```{r}
 st_drop_geometry(sep3) %>% 
   frq(ssep3_d)
@@ -90,7 +94,7 @@ r18_bu <- r18_bu_orig %>%
          -r18_gklas, -r18_fgkod, -r18_buildper, 
          -r18_nrfloor, -r18_nrdwell, 
          -r18_quarter, -r18_comm, -r18_buildcat) %>% 
-  select(-r18_nrpers_main, -r18_nrpers_perm) %>% 
+  select(-r18_nrpers_total, -r18_nrpers_perm) %>% 
   # filter(!is.na(r18_ncoord)) %>% 
   # filter(!is.na(r18_ecoord)) %>% 
   st_as_sf(coords = c("r18_ecoord", "r18_ncoord"), 
@@ -98,14 +102,17 @@ r18_bu <- r18_bu_orig %>%
            remove = TRUE)
 ```
 
-Using data from `STATPOP` **2018**. Excluding `r number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` nonresidential buildings and `r number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
+Using data from `STATPOP` **2018**. Excluding `r number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` non-residential buildings and `r number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
 
 Used dataset consists of `r number(nrow(r18_bu), big.mark = ",")` buildings.
 
 The nearest building with SSEP 3 was found; point dataset was then overlaid with PLZ boundaries and summary measures of population based index were created and population level SEP was aggregated by PLZ. 
 
-`r18_nrpers_total` was used for population - slightly different populations would be obtained with different conceptual models of *residential populations* by using either `r18_nrpers_main` or `r18_nrpers_perm` variables
+`r18_nrpers_main` was used for calculating population. Overall, **total population** after exclusions consists of `r number(sum(r18_bu$r18_nrpers_main), big.mark = ",")`.  
 
+<aside>
+Slightly different populations would be obtained with different conceptual models of *residential populations* by using either `r18_nrpers_total` or `r18_nrpers_perm` variables. See `STATPOP` docs for details. 
+</aside>
 
 ```{r include=FALSE}
 rm(r18_bu_orig)
@@ -161,16 +168,20 @@ r18_bu_sep3_plz <- read_rds("data/statpop/r18_bu_sep3_plz.rds")
 ssep3_plz_20_10_pop <- r18_bu_sep3_plz %>% 
   st_drop_geometry() %>% 
   select(-r18_gdename, -r18_plz4, -ssep3_d) %>% 
-  uncount(r18_nrpers_total) %>% 
+  uncount(r18_nrpers_main) %>% 
   group_by(PLZ) %>% 
   summarise(n = n(),
             ssep3_mean = mean(ssep3),
             ssep3_median = median(ssep3)) %>% 
-  ungroup() 
+  ungroup() %>% 
+  filter(n > 10) %>% 
+  filter(! PLZ %in% c(5017, 8109))
 
 ssep3_plz_20_10_pop_geo <- left_join(plz_20_10, ssep3_plz_20_10_pop) %>% 
   filter(!is.na(ssep3_median)) %>% 
-  mutate(ssep3_mean_d = ntile(ssep3_mean, 10),
+  mutate(ssep3_mean_q = ntile(ssep3_mean, 5),
+         ssep3_median_q = ntile(ssep3_median, 5),
+         ssep3_mean_d = ntile(ssep3_mean, 10),
          ssep3_median_d = ntile(ssep3_median, 10)) %>% 
   mutate(ssep3_mean_d = factor(ssep3_mean_d,
                                levels = 1:10,
@@ -185,10 +196,27 @@ ssep3_plz_20_10_pop_geo <- left_join(plz_20_10, ssep3_plz_20_10_pop) %>%
                                             "2", "3", "4", 
                                             "5th decile", 
                                             "6", "7", "8", "9", 
-                                            "10th - highest")))
+                                            "10th - highest"))) %>% 
+  mutate(ssep3_mean_q = factor(ssep3_mean_q,
+                               levels = 1:5,
+                               labels = c("1st - lowest", 
+                                          "2",  
+                                          "3rd decile", 
+                                          "4", 
+                                          "5th - highest"))) %>% 
+  mutate(ssep3_median_q = factor(ssep3_median_q,
+                                 levels = 1:5,
+                                 labels = c("1st - lowest", 
+                                            "2",  
+                                            "3rd decile", 
+                                            "4", 
+                                            "5th - highest")))
 
-sf::st_write(ssep3_plz_20_10_pop_geo, "data/ssep3_plz_20_10_pop_geo.shp", delete_layer = TRUE)
-write_rds(ssep3_plz_20_10_pop_geo, "data/ssep3_plz_20_10_pop_geo.rds")
+# has to add up!
+stopifnot(nrow(ssep3_plz_20_10_pop) == length(unique(ssep3_plz_20_10_pop_geo$PLZ)))
+
+sf::st_write(ssep3_plz_20_10_pop_geo, "PLZ/ssep3_plz_20_10_pop_geo.shp", delete_layer = TRUE)
+write_rds(ssep3_plz_20_10_pop_geo, "PLZ/ssep3_plz_20_10_pop_geo.rds")
 write_rds(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.rds")
 haven::write_dta(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.dta")
 write_csv(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.csv")
@@ -197,11 +225,11 @@ write_csv(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.cs
 ## Final map using median index deciles
 
 ```{r}
-frq(st_drop_geometry(ssep3_plz_20_10_pop_geo), ssep3_median_d)
-# frq(st_drop_geometry(ssep3_plz_20_10_pop_geo), ssep3_mean_d)
+frq(ssep3_plz_20_10_pop_geo$ssep3_median_d)
+# frq(ssep3_plz_20_10_pop_geo$ssep3_mean_d)
 ```
 
-Bubbles scaled to population (2018)
+Index deciles, bubbles scaled to population (2018)
 
 ```{r, layout="l-body-outset"}
 ssep3_plz_20_10_pop_geo %>% 
@@ -225,19 +253,34 @@ ssep3_plz_20_10_pop_geo %>%
 
 ## Small PLZs
 
-- remote? no pop?: 
-  - Poschiavo 7710   
-  - Ried-Brig 3901   
-  - Alp Grüm 7710   
-  - Plaun da Lej 7517  
-  - Kerns 6068  
-  - Rosswald 3913  
+```{r}
+small <- r18_bu_sep3_plz %>% 
+  st_drop_geometry() %>% 
+  select(-r18_gdename, -r18_plz4, -ssep3_d) %>% 
+  uncount(r18_nrpers_main) %>% 
+  group_by(PLZ) %>% 
+  summarise(n = n(),
+            ssep3_mean = mean(ssep3),
+            ssep3_median = median(ssep3)) %>% 
+  ungroup() %>% 
+  filter(n < 11 | PLZ %in% c(5017, 8109))
+```
+
+`r number(length(unique(small$PLZ)), big.mark = ",")` PLZs with population below 10 or classified as non-residential were excluded from the calculations above. 
+
+- remote? no / small pop?: 
+    - Poschiavo 7710   
+    - Ried-Brig 3901   
+    - Lumnezia 7110
+    - Kerns 6068  
+    - Termen 3913 
+    - Engadin/Segl 7517
 
 - hospital 
-  - Klinik Barmelweid 5017
-  
+    - Klinik Barmelweid 5017
+
 - not small but can that be qualified as residential?
-  - Kloster Fahr 8109
+    - Kloster Fahr 8109
 
 ```{r}
 # Watch out for unusual PLZs with small or no pops!
@@ -251,16 +294,15 @@ ssep3_plz_20_10_pop_geo %>%
 # - Kloster Fahr: 8109  
 # - uni: 1015 
 
-# ssep3_plz_20_10_pop_geo %>%
-#   st_drop_geometry() %>%
+# small %>%
 #   filter(PLZ == 8109)
 
-ssep3_plz_20_10_pop_geo %>%
-  st_drop_geometry() %>%
-  filter(n < 11) %>%
+small %>%
   arrange(n)
 
-ssep3_plz_20_10_pop_geo %>% 
+small_geo <- right_join(plz_20_10, small) 
+
+small_geo %>% 
   filter(n < 11) %>% 
   qtm(borders = "red", fill = "red")
 ```
