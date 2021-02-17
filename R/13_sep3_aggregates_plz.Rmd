@@ -23,7 +23,7 @@ editor_options:
 <!-- ------------------------------------------------------------ --> 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
                       # fig.width=8, fig.height=6, 
                       # out.width="800px", out.height="600px",
                       dpi=300)
@@ -44,8 +44,15 @@ tmap_mode("view")
 
 Oct 2020 release from [cadastre.ch](https://www.cadastre.ch/en/services/service/registry/plz.html)
 
-```{r}
+```{r warning=FALSE}
 plz_20_10 <- read_rds("data/PLZ/plz_20_10.Rds")
+
+plz_20_10_mp <- plz_20_10 %>% 
+  group_by(PLZ) %>% 
+  summarise(PLZ = first(PLZ)) %>%
+  st_cast("MULTIPOLYGON") 
+
+plz_20_10_centr <- st_centroid(plz_20_10_mp)
 ```
 
 Dataset consists of `r number(length(unique(plz_20_10$PLZ)), big.mark = ",")` PLZs.
@@ -121,9 +128,12 @@ gc()
 
 
 ```{r eval=FALSE, include=FALSE}
-# simple solution to average households
-ssep3_plz_20 <- 
-  st_join(sep3, plz_20_10, join = st_intersects) 
+# simple solution to average n'hoods
+ssep3_plz_20 <- st_join(sep3, plz_20_10, join = st_intersects) 
+
+# # does not matter here if multipart feature is used
+# temp <- st_join(sep3, plz_20_10_mp, join = st_intersects) 
+# table(all.equal(st_drop_geometry(ssep3_plz_20), st_drop_geometry(temp)))
 
 # ssep3_plz_20 %>% filter(is.na(PLZ))
 # View(st_drop_geometry(ssep3_plz_20))
@@ -177,7 +187,7 @@ ssep3_plz_20_10_pop <- r18_bu_sep3_plz %>%
   filter(n > 10) %>% 
   filter(! PLZ %in% c(5017, 8109))
 
-ssep3_plz_20_10_pop_geo <- left_join(plz_20_10, ssep3_plz_20_10_pop) %>% 
+ssep3_plz_20_10_pop_geo <- right_join(plz_20_10_mp, ssep3_plz_20_10_pop) %>% 
   filter(!is.na(ssep3_median)) %>% 
   mutate(ssep3_mean_q = ntile(ssep3_mean, 5),
          ssep3_median_q = ntile(ssep3_median, 5),
@@ -214,7 +224,10 @@ ssep3_plz_20_10_pop_geo <- left_join(plz_20_10, ssep3_plz_20_10_pop) %>%
 
 # has to add up!
 stopifnot(nrow(ssep3_plz_20_10_pop) == length(unique(ssep3_plz_20_10_pop_geo$PLZ)))
+```
 
+
+```{r include=FALSE}
 sf::st_write(ssep3_plz_20_10_pop_geo, "PLZ/ssep3_plz_20_10_pop_geo.shp", delete_layer = TRUE)
 write_rds(ssep3_plz_20_10_pop_geo, "PLZ/ssep3_plz_20_10_pop_geo.rds")
 write_rds(st_drop_geometry(ssep3_plz_20_10_pop_geo), "PLZ/ssep3_plz_20_10_pop.rds")
@@ -263,7 +276,8 @@ small <- r18_bu_sep3_plz %>%
             ssep3_mean = mean(ssep3),
             ssep3_median = median(ssep3)) %>% 
   ungroup() %>% 
-  filter(n < 11 | PLZ %in% c(5017, 8109))
+  filter(n < 11 | PLZ %in% c(5017, 8109)) %>% 
+  arrange(n)
 ```
 
 `r number(length(unique(small$PLZ)), big.mark = ",")` PLZs with population below 10 or classified as non-residential were excluded from the calculations above. 
@@ -297,10 +311,7 @@ small <- r18_bu_sep3_plz %>%
 # small %>%
 #   filter(PLZ == 8109)
 
-small %>%
-  arrange(n)
-
-small_geo <- right_join(plz_20_10, small) 
+small_geo <- right_join(plz_20_10_mp, small) 
 
 small_geo %>% 
   filter(n < 11) %>% 
