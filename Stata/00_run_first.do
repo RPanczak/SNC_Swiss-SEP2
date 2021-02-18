@@ -18,6 +18,9 @@ if "`c(os)'" == "Windows" {
 
 	* PATH SETTINGS
 	global td  = "$pp/analyses"
+	
+	* CORE files
+	global co  = "C:/projects/SNC_core"
 
 	cd "$pp"
 }
