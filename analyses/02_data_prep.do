@@ -137,7 +137,7 @@ compress
 sa "data/buclass" , replace 
 
 /* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
-u "data-raw/snc2_std_pers_90_00_14_all_207_full.dta", clear 
+u "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 keep if r14_pe_flag == 1
 
@@ -180,7 +180,7 @@ list if org_bu_class == 1220
 forv year = 10/14 {
 	
 	u r`year'_buildid r`year'_geox r`year'_geoy  ///
-		using "data-raw/snc2_std_pers_90_00_14_all_207_full.dta", clear 
+		using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 	ren (r`year'_buildid r`year'_geox r`year'_geoy) (buildid geox geoy)
 	
@@ -388,7 +388,7 @@ texdoc s c
 
 texdoc s , nolog  nodo
 
-u "data-raw/snc2_std_pers_90_00_14_all_207_full", clear 
+u "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", clear 
 drop v9* v0*
 
 keep if r10_pe_flag == 1
@@ -414,7 +414,7 @@ fre _merge
 
 * CHECKING COVERAGE <> VICE VERSA
 u data/ORIGINS, clear
-mmerge buildid using "data-raw/snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
+mmerge buildid using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
 fre _merge
 
 texdoc s c 
@@ -506,11 +506,11 @@ texdoc s , nolog // nodo
 forv YR = 12/15 { 
 
 	if `YR' <= 14 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using "data-raw/SE/SE`YR'_pers_full", clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using "$co/data-raw/SE/SE`YR'_pers_full", clear 
 	}
 
 	if `YR' == 15 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using "data-raw/SE/SE`YR'_pers_full", clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using "$co/data-raw/SE/SE`YR'_pers_full", clear 
 		gen urban = .
 	}
 		
@@ -682,7 +682,7 @@ forv YR = 12/15 {
 	* AREA AND RENT
 	* flatarea NOT AVAILABLE IN 10 & 11 !!! :/
 	
-	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "data-raw/SE/SE`YR'_hh_full.dta", clear
+	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "$co/data-raw/SE/SE`YR'_hh_full.dta", clear
 
 	sort hhyid
 	order hhyid, a(sncid)
@@ -745,7 +745,7 @@ forv YR = 12/15 {
 	
 	if `YR' <= 14 { 
 	
-		mmerge sncid using "data-raw/snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid) // r`YR'_hhid) 
+		mmerge sncid using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid) // r`YR'_hhid) 
 
 		assert _merge != 1 // no snc data ???
 		drop if _merge == 2 // no SE data available
@@ -758,7 +758,7 @@ forv YR = 12/15 {
 	
 	if `YR' == 15 { 
 	
-		mmerge sncid using "data-raw/SE/SE15_hh_full", t(1:1) ukeep(egid)
+		mmerge sncid using "$co/data-raw/SE/SE15_hh_full", t(1:1) ukeep(egid)
 
 		assert _merge != 1 // no snc data ???
 		drop if _merge == 2 // no SE data available
@@ -1731,7 +1731,7 @@ Firstly, association of Swiss-SEP with mortality will be assessed using two mode
 
 texdoc s , nolog // nodo   
 
-u "data-raw/snc4_90_00_18_full_vs2", clear 
+u "$co/data-raw/SNC/snc4_90_00_18_full_vs2", clear 
 
 ren v0_buildid buildid // temp rename to keep
 
