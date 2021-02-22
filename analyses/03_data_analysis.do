@@ -101,11 +101,11 @@ drop _merge
 ren buildid buildid_orig
 
 * getting age of the buildings
-mmerge buildid_orig using "data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_orig using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
 drop if _merge == 2
 drop _merge
 
-gen buildper_orig = (r18_buildper >= 8020)
+gen buildper_orig = (r18_buildper >= 8020 & !mi(r18_buildper))
 drop r18_buildper
 * ta buildper_orig, m
 
@@ -115,7 +115,7 @@ drop if _merge == 2
 drop _merge
 ren buildid buildid_dest
 
-mmerge buildid_dest using "data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_dest using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
 drop if _merge == 2
 drop _merge
 
@@ -273,7 +273,7 @@ buildings constructed on or after 2001. Buidlings with missing information about
 texdoc s , nolog // nodo   
 
 * getting age of the buildings
-mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid using "$co/data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 
 /*
 * eda of unlinked
@@ -1168,7 +1168,7 @@ la var ssep1_d ""
 la var ssep2_d ""
 
 * bring sep 3
-mmerge buildid using "data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid using "$co/data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
 keep if _merge == 3
 drop _merge
 
