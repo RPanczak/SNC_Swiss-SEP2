@@ -50,28 +50,19 @@ sep1 <- read_rds("data/Swiss-SEP1/ssep_user_geo.Rds") %>%
          ssep1_t = ssep_t, 
          ssep1_q = ssep_q, 
          ssep1_d = ssep_d) %>% 
-  mutate(ssep1_d = factor(ssep1_d,
-                          levels = 1:10,
-                          labels = c("1st - lowest", 
-                                     "2", "3", "4", 
-                                     "5th decile", 
-                                     "6", "7", "8", "9", 
-                                     "10th - highest")))
+  st_transform(2056)
 
 sep2 <- read_rds("data/Swiss-SEP2/ssep2_user_geo.Rds") %>% 
-  select(gisid, ssep2, ssep2_t, ssep2_q, ssep2_d) %>% 
-  mutate(ssep2_d = factor(ssep2_d,
-                          levels = 1:10,
-                          labels = c("1st - lowest", 
-                                     "2", "3", "4", 
-                                     "5th decile", 
-                                     "6", "7", "8", "9", 
-                                     "10th - highest")))
+  select(gisid, ssep2, ssep2_t, ssep2_q, ssep2_d) 
 ```
 
 Using `r number(nrow(sep1), big.mark = ",")` n'hoods from version 1.0 and `r number(nrow(sep2), big.mark = ",")` from version 2.0.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
+sep1 %>% 
+  slice(1:5) %>% 
+  knitr::kable(digits = c(0, 1, 0),
+               caption = 'An example of Swiss-SEP 2.0 data.')
 sep2 %>% 
   slice(1:5) %>% 
   knitr::kable(digits = c(0, 1, 0),
@@ -80,14 +71,11 @@ sep2 %>%
 
 ## Spatial join & distance
 
-Calculations done with `sf` package funcion `st_join` (with `st_nearest_feature` option) and `st_distance` (of the nearest feature)
+Calculations done with `sf` package function `st_join` (with `st_nearest_feature` option) and `st_distance` (of the nearest feature)
 
 ```{r eval=FALSE, include=FALSE}
 # results with coordinates of 'sep2' features
-# takes some time to compute distance
-
-sep2_sep1_join <- st_join(sep2, sep1,
-                          join = st_nearest_feature)
+sep2_sep1_join <- st_join(sep2, sep1, join = st_nearest_feature)
 
 # adding distance
 # solution from @Spacedman
@@ -141,7 +129,7 @@ bas_data <- sep2_sep1_join %>%
   mutate(ssep1 = as.integer(ssep1),
          ssep2 = as.integer(ssep2))
 
-blandr.output.text (bas_data$ssep1, bas_data$ssep2, sig.level=0.95 )
+blandr.output.text(bas_data$ssep1, bas_data$ssep2, sig.level=0.95)
 p_unload(blandr)
 ```
 
@@ -354,8 +342,3 @@ tm_shape(diff_minus) +
 #                            zcol = "ssep1")
 #                      )))
 ```
-
-
-
-
-

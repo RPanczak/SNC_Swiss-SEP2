@@ -28,6 +28,8 @@ length(unique(gem18$GMDNR))
 gem18 <-  
   left_join(gem18, raum_18) # %>% filter(is.na(langreg))
 
+# qtm(gem18, fill = "langreg")
+
 gem18 %>% 
   st_drop_geometry() %>% 
   distinct(GMDNR, langreg) %>% 

@@ -102,6 +102,7 @@ ren buildid buildid_orig
 
 * getting age of the buildings
 mmerge buildid_orig using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+* distinct buildid_orig if _merge == 1 
 drop if _merge == 2
 drop _merge
 
@@ -111,6 +112,7 @@ drop r18_buildper
 
 * same procedure on dest side
 mmerge gisid_dest using "data/ORIGINS", t(n:n) umatch(gisid) ukeep(buildid)
+* distinct buildid_orig if _merge == 1 
 drop if _merge == 2
 drop _merge
 ren buildid buildid_dest
@@ -119,7 +121,7 @@ mmerge buildid_dest using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_
 drop if _merge == 2
 drop _merge
 
-gen buildper_dest = (r18_buildper >= 8020)
+gen buildper_dest = (r18_buildper >= 8020 & !mi(r18_buildper))
 drop r18_buildper
 * ta buildper_dest, m
 
@@ -254,10 +256,21 @@ texdoc s , nolog // nodo
 * BRING COORDINATES
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
+
 mmerge gisid using "data/ORIGINS", t(1:n) ukeep(buildid geox geoy)
+order gisid buildid geox geoy, first 
 keep if _merge==3
 drop _merge
-order gisid buildid geox geoy, first 
+
+* save intermediate dataset for spatial link, keeping on record per gisid!
+preserve
+	keep gisid geox geoy ssep2 ssep2_t ssep2_q ssep2_d
+	bysort gisid: keep if _n == 1
+	save "$pp/data-raw/Swiss-SEP2/ssep2_user", replace
+restore
+
+* run Swiss-SEP2.R now to transform to Rds & geo
+rscript using "R/02_Swiss-SEP2.R"
 
 texdoc s c 
 
@@ -312,6 +325,7 @@ Periode nach 2015				8023
 */
 
 gen buildper2 = (buildper >= 8020)
+replace buildper2 = 0 if mi(buildper)
 * ta buildper buildper2, m
 
 la de buildper2 0 "Before 2000" 1 "After 2000", replace
@@ -344,7 +358,7 @@ Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018
 
 texdoc s , nolog // nodo   
 
-* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
+* bring sep 1 >> spatial join done in 03_sep-diff.Rmd
 mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
@@ -393,6 +407,7 @@ la var ssep3_d 		"Swiss-SEP 3.0 - deciles"
 note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
 
 note buildid: "Unique GWR building ID. Use to link to SNC!"
+note buildper2: "Buildings with missing period treated as old ones"
 
 /*
 * experimental index replacement depending on share of new buildings
@@ -444,8 +459,6 @@ notes
 log close
 
 export delim using "FINAL/CSV/ssep3_user_geo.csv", delim(",") nolab replace
-
-rscript using "data-raw/Swiss-SEP2/Swiss-SEP2.R"
 
 texdoc s c 
 
