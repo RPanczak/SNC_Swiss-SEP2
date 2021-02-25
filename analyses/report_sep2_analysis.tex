@@ -176,3 +176,76 @@ Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{All cause mortality - new indices}
+\begin{center}
+\includegraphics[width=\textwidth]{gr/sep3.pdf}
+\end{center}
+
+Note: 	Results from Cox models. Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}!  
+		'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in original figure above);  
+		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.  
+		This is not the smae adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{All cause mortality - three indices, stratified by age}
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf}
+\end{center}
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf}
+\end{center}
+\begin{center}
+\includegraphics[width=.6\textwidth]{gr/strat_sep3.pdf}
+\end{center}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\newpage
+%\subsection{All cause mortality - exploring  different building age structures of SEP 3}
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - original}
+
+\begin{center}
+\includegraphics[width=.60\textwidth]{gr-orig/orig_hr_spec.png} 
+\end{center}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - 1.0}
+\begin{stlog}\input{log/ol_27.log.tex}\end{stlog}
+Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
+Breast and prostate cancer: for men and women respectively. 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - 2.0 results}
+\begin{stlog}\input{log/ol_29.log.tex}\end{stlog}
+Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
+Breast and prostate cancer: for men and women respectively. 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - 3.0 results}
+\begin{stlog}\input{log/ol_31.log.tex}\end{stlog}
+Note for both tables: HRs for the 10th (lowest SEP) decile compared to 1st (highest SEP). 
+Breast and prostate cancer: for men and women respectively. 
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Validation - SNC SE mortality}
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{All cause mortality - 3.0}
+\begin{center}
+\includegraphics[width=.75\textwidth]{gr/d_al_adj3.pdf} 
+\end{center}
+
+Note: See notes from previous section. 
+'Adjusted 2' - additionally adjusted for education and occupation.
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\subsection{Cause specific mortality - 3.0}
+\begin{stlog}\input{log/ol_34.log.tex}\end{stlog}
+Note: results of traffic accidents have small number of events resulting in large CI (n=91)
+\end{document}
