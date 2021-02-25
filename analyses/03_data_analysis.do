@@ -269,7 +269,7 @@ preserve
 	save "$pp/data-raw/Swiss-SEP2/ssep2_user", replace
 restore
 
-* run Swiss-SEP2.R now to transform to Rds & geo
+* run 02_Swiss-SEP2.R now to transform to Rds & geo
 rscript using "R/02_Swiss-SEP2.R"
 
 texdoc s c 
@@ -369,10 +369,12 @@ replace ssep3 = ssep2 if buildper2
 gen ssep3_t = ssep1_t
 gen ssep3_q = ssep1_q
 gen ssep3_d = ssep1_d
+
 replace ssep3_t = ssep2_t if buildper2
 replace ssep3_q = ssep2_q if buildper2
 replace ssep3_d = ssep2_d if buildper2
 
+la val ssep1_d ssep1_d
 la val ssep2_d ssep1_d
 la val ssep3_d ssep1_d
 
@@ -780,8 +782,11 @@ foreach SEP in ssep1_d ssep2_d ssep3_d {
 	est sto a_`SEP'
 }
 
+* drop labels to save space on graph
+la var ssep1_d ""
+la var ssep2_d ""
 la var ssep3_d ""
-
+la val ssep1_d ssep1_d
 * est tab u*, eform
 
 global title 	"size(medsmall) color(black) margin(vsmall)"
@@ -1171,7 +1176,7 @@ mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
-* bring sep 1 >> spatial join done in 04_sep-diff.Rmd
+* bring sep 1 >> spatial join done in 03_sep-diff.Rmd
 mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
 assert _merge != 1
 keep if _merge == 3
