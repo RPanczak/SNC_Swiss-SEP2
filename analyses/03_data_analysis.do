@@ -270,7 +270,7 @@ preserve
 restore
 
 * run 02_Swiss-SEP2.R now to transform to Rds & geo
-rscript using "R/02_Swiss-SEP2.R"
+rscript using "R/01_Swiss-SEP2.R"
 
 texdoc s c 
 
@@ -358,7 +358,8 @@ Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018
 
 texdoc s , nolog // nodo   
 
-* bring sep 1 >> spatial join done in 03_sep-diff.Rmd
+* bring sep 1 >> sep 2 spatial join done in 02_sep-diff.Rmd
+* rscript  R/02_sep-diff.Rmd
 mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
@@ -1322,3 +1323,6 @@ Note: results of traffic accidents have small number of events resulting in larg
 
 * clean graphs
 ! del "C:\projects\EOLC\Stata\*.gph"
+
+* run Swiss-SEP3.R for data conversions to Rds & shp
+rscript using "R/04_Swiss-SEP3.R"
