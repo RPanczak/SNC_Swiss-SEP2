@@ -1,10 +1,41 @@
+* **************************************
 u "data/gwr_extract_210225/gwr_extract_210225", clear
+
+sort egid, stable
+by egid: gen pops = _N
+by egid: keep if _n == 1
+
 ta gkat, m
 ta gklas, m
+
+gen excluded = (inrange(gklas, 1130, 1278)) 
+ta excluded, m
+
+keep if excluded
+keep egid gklas
+rename egid buildid 
+
+compress
+sa "data/gwr_extract_210225/gwr_exclude", replace
+
+* **************************************
+u "data/gwr_extract_210225/gwr_extract_210225", clear
+
+sort egid, stable
+by egid: gen pops = _N
+by egid: keep if _n == 1
+
 ta gbaup, m
 
 gen excluded = (inrange(gklas, 1130, 1278)) 
 ta excluded, m
+
+keep if !excluded
+keep egid gbaup
+rename egid buildid 
+
+compress
+sa "data/gwr_extract_210225/gwr_gbaup", replace
 
 * **************************************
 * BUILDING TYPE
@@ -51,7 +82,8 @@ ta new_class if _merge == 3, m
 keep if new_class == 1 & _merge == 3
 drop _merge 
 
-* sa "data/gwr_extract_210225/...", replace
+compress 
+sa "data/gwr_extract_210225/SE_gklas_errors", replace
 
 * **************************************
 * COORDS
