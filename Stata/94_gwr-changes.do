@@ -12,7 +12,7 @@ gen excluded = (inrange(gklas, 1130, 1278))
 ta excluded, m
 
 keep if excluded
-keep egid // gklas
+keep egid gklas
 rename egid buildid 
 
 compress
