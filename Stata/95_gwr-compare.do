@@ -49,7 +49,7 @@ ta other, m
 ta other
 
 /* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
-u "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full.dta", clear 
+u r14_pe_flag r14_buildid v0_hhtyp3 using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full.dta", clear 
 
 keep if r14_pe_flag == 1
 
