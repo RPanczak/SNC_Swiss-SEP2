@@ -269,7 +269,7 @@ preserve
 	save "$pp/data-raw/Swiss-SEP2/ssep2_user", replace
 restore
 
-* run 02_Swiss-SEP2.R now to transform to Rds & geo
+* run 01_Swiss-SEP2.R now to transform to Rds & geo
 rscript using "R/01_Swiss-SEP2.R"
 
 texdoc s c 
@@ -463,6 +463,7 @@ log close
 
 export delim using "FINAL/CSV/ssep3_user_geo.csv", delim(",") nolab replace
 
+* run 03_Swiss-SEP3.R for data conversions to Rds & shp
 * rscript  R/03_Swiss-SEP3.R
 
 texdoc s c 
@@ -551,7 +552,7 @@ texdoc s c
 \section{Maps}
 ***/
 
-* rscript using "R/03_sep-map.R"
+* rscript using "R/04_sep-map.R"
 
 /***
 \begin{center}
@@ -1325,6 +1326,3 @@ Note: results of traffic accidents have small number of events resulting in larg
 
 * clean graphs
 ! del "C:\projects\EOLC\Stata\*.gph"
-
-* run 03_Swiss-SEP3.R for data conversions to Rds & shp
-rscript using "R/03_Swiss-SEP3.R"
