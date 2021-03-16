@@ -8,7 +8,7 @@
 Data preparation file
 
 Version 01:~Created. 
-Version 02:~New SNC dataset 207. SE processing in loop.
+Version 02:~New SNC dataset 208. SE processing in loop.
 Version 03:~Network connectivity processing.
 Version 04:~Dropping data from SE 10 & 11 >> no chance for flatarea.
 				Using ISCO instead of SOPC >> BfS warns about poor quality; and sopc is missing.
@@ -20,6 +20,8 @@ Version 05:~Prelim report:
 Version 06:~ReRun of analyses:
 				Fixing directories & renaming files a bit
 Version 07:~Change to SNC 4.0				
+Version 08:~New GWR data for better building class &  		
+				construction period				
 */
 
 * ***************************************************
@@ -88,7 +90,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.07 - data prep}}
+Report 1.08 - data prep}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -109,7 +111,7 @@ Report 1.07 - data prep}}
 ***/
 
 * ***************************************************
-* DATA PREP  // TAKES A BIT OF TIME !!!
+* DATA PREP 
 texdoc s , nolog // nodo 
 
 * *****
@@ -134,45 +136,7 @@ drop ewid floor org_floor
 ta org_bu_class, m sort
 
 compress
-sa "data/buclass" , replace 
-
-/* CHECKING AGAINST FULL SNC WITH 2014 AS TEST
-u "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full.dta", clear 
-
-keep if r14_pe_flag == 1
-
-mmerge r14_buildid using "data/buclass" , t(n:1) umatch(egid)
-
-ta org_bu_class, m sort
-
-keep if _merge == 3
-
-sort r14_buildid
-by r14_buildid: gen pop = _N
-by r14_buildid: keep if _n == 1
-
-keep r14_buildid r14_geo? org_bu_class pop 
-
-ta org_bu_class, m sort
-
-list if org_bu_class == 1273
-* r14_buildid 899170556 >> Château de Rolle https://goo.gl/maps/pUK1QCa33KL2
-
-list if org_bu_class == 1262
-* r14_buildid 899909336 >> Old windmill Brüngger Wyla https://goo.gl/maps/SRxGAKyF5982
-
-list if org_bu_class == 1272
-* r14_buildid 898986979 >> Eglise Saint Boniface https://goo.gl/maps/k23r9ZEspXr 
-
-list if org_bu_class == 1212
-* r14_buildid 709548512 >> Camping Arolla https://goo.gl/maps/7obNv6U2ZHm6aAhy5 
-
-list if org_bu_class == 1274
-* r14_buildid 899544547 >> Gefängnis Bässlergut https://goo.gl/maps/nu3ydKtJENK2
-
-list if org_bu_class == 1220
-* r14_buildid 890985601 >> César Ritz hotel school https://goo.gl/maps/G4squepw5pQ2
-*/
+sa "data/buclassfloor/gwrgws_buclassfloor_excluded" , replace 
 
 * *****
 * COLLECT ALL YEARS 
@@ -244,7 +208,7 @@ isid buildid
 
 * *****
 * BUILDING TYPE
-mmerge buildid using "data/buclass" , t(n:1) umatch(egid) ukeep(org_bu_class)
+mmerge buildid using "data/buclassfloor/gwrgws_buclassfloor_excluded", t(1:1) umatch(egid) ukeep(org_bu_class)
 drop if _merge == 2
 
 * ta org_bu_class _merge, m row
@@ -1962,7 +1926,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u "data/buclass", clear
+u "data/buclassfloor/gwrgws_buclassfloor_excluded", clear
 ta org_bu_class, m sort
 
 texdoc s c 
