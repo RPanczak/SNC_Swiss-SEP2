@@ -463,6 +463,8 @@ log close
 
 export delim using "FINAL/CSV/ssep3_user_geo.csv", delim(",") nolab replace
 
+* rscript  R/03_Swiss-SEP3.R
+
 texdoc s c 
 
 /***
@@ -1177,7 +1179,7 @@ mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) ukeep(ssep2_d)
 keep if _merge == 3
 drop _merge
 
-* bring sep 1 >> spatial join done in 03_sep-diff.Rmd
+* bring sep 1 >> spatial join done in 02_sep-diff.Rmd
 mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1_d)
 assert _merge != 1
 keep if _merge == 3
@@ -1324,5 +1326,5 @@ Note: results of traffic accidents have small number of events resulting in larg
 * clean graphs
 ! del "C:\projects\EOLC\Stata\*.gph"
 
-* run Swiss-SEP3.R for data conversions to Rds & shp
-rscript using "R/04_Swiss-SEP3.R"
+* run 03_Swiss-SEP3.R for data conversions to Rds & shp
+rscript using "R/03_Swiss-SEP3.R"
