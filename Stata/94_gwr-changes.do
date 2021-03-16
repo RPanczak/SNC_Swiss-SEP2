@@ -1,10 +1,23 @@
 u "data/gwr_extract_210225/gwr_extract_210225", clear
+
+sort egid, stable
+by egid: gen pops = _N
+by egid: keep if _n == 1
+
 ta gkat, m
 ta gklas, m
 ta gbaup, m
 
 gen excluded = (inrange(gklas, 1130, 1278)) 
 ta excluded, m
+
+keep if excluded
+keep egid
+rename egid buildid 
+
+compress
+sa "data/gwr_extract_210225/gwr_exclude", replace
+
 
 * **************************************
 * BUILDING TYPE
