@@ -116,7 +116,7 @@ texdoc s , nolog // nodo
 
 * *****
 * BU_CLASS >> DATA FROM KS
-u "data-raw/buclassfloor/gwrgws_buclassfloor_prep" , clear 
+u "data/buclassfloor/gwrgws_buclassfloor_prep" , clear 
 
 ta org_bu_class, m
 keep if !inrange(org_bu_class, 1110, 1122) & !mi(org_bu_class)
