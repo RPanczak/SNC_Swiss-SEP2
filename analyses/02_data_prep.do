@@ -268,7 +268,7 @@ note gisid: "Separate ID for all buildings sharing the same coordinates; removes
 note hec: "Hectar coordinates defined analytically, ie. both end with 00 - it might be still legit pair of coordinates!"
 note: Last changes: $S_DATE $S_TIME
 compress
-sa data/ORIGINS, replace
+sa "data/ORIGINS", replace
 
 distinct buildid gisid
 mdesc buildid gisid
@@ -331,7 +331,7 @@ Distribution of years from which coordinates of a building are taken:
 
 texdoc s , cmdstrip
 
-u data/ORIGINS, clear
+u "data/ORIGINS", clear
 ta year, m
 
 texdoc s c 
@@ -377,7 +377,7 @@ mmerge r10_buildid using data/ORIGINS, t(n:1) umatch(buildid)
 fre _merge
 
 * CHECKING COVERAGE <> VICE VERSA
-u data/ORIGINS, clear
+u "data/ORIGINS", clear
 mmerge buildid using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", t(1:n) umatch(r10_buildid) uif(r10_pe_flag == 1)
 fre _merge
 
@@ -1107,7 +1107,7 @@ Vast majority of the SNC buildings (\texttt{ORIGINS}) have network connections t
 texdoc s , nolog // nodo 
 
 * EXPLORING SMALL NUMBERS
-u data/NEIGHB, clear
+u "data/NEIGHB", clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
