@@ -31,7 +31,7 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(readr, dplyr, ggplot2, scales, sf, tmap, tmaptools)
+p_load(readr, dplyr, ggplot2, scales, haven, sf, tmap, tmaptools)
 tmap_mode("view") # makes map interactive
 ```
 
@@ -40,6 +40,31 @@ tmap_mode("view") # makes map interactive
 # Data
 
 ## Input 
+
+SEP1 is from original publication.
+
+SEP2 prepared in Stata `03_data_analysis.do` and converted in R
+
+
+```{r sep2, eval=FALSE, include=FALSE}
+ssep2_user <- read_dta("data-raw/Swiss-SEP2/ssep2_user.dta") 
+# View(ssep2_user)
+
+write_rds(ssep2_user, "data/Swiss-SEP2/ssep2_user.Rds")
+# write_dta(ssep2_user, "data/Swiss-SEP2/ssep2_user.dta")
+
+ssep2_user_geo <- ssep2_user %>% 
+  # distinct(.keep_all = TRUE) %>% 
+  st_as_sf(coords = c("geox", "geoy"), 
+           crs = 2056,
+           remove = FALSE)
+
+# plot(st_geometry(ssep2_user_geo))
+# View(st_drop_geometry(ssep2_user_geo))
+
+write_rds(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.Rds") 
+# st_write(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.shp", delete_dsn = TRUE)
+```
 
 ```{r load, include=FALSE}
 # important to work with planar coords!
