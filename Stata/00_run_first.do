@@ -6,7 +6,7 @@
 */
 
 * rscript 
-global RSCRIPT_PATH "C:/Program Files/R/R-4.0.3/bin/Rscript.exe"
+global RSCRIPT_PATH "C:/Program Files/R/R-4.0.4/bin/Rscript.exe"
 
 * NAME OF PROJECT
 global np = "SNC_Swiss-SEP2"
