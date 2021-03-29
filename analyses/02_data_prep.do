@@ -116,6 +116,7 @@ texdoc s , nolog // nodo
 
 * *****
 * BU_CLASS >> DATA FROM KS
+* do "Stata/02_gwrgws-buclassfloor.do"
 u "data/buclassfloor/gwrgws_buclassfloor_prep" , clear 
 
 ta org_bu_class, m
