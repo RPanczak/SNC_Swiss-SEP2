@@ -28,6 +28,7 @@
 /Stata/98_geocode.do
 analyses/old
 analyses/log
+Python/old
 bfg*
 *.html
 *.png
