@@ -50,5 +50,5 @@ ggplot() +
                                override.aes = list(alpha = 1, shape = 16, size = 3)))
 
 
-ggsave("carto/01_sep-dots-r.png", width = 297, height = 210, units = "mm", dpi = 300)
+ggsave("carto/01_sep-dots.png", width = 297, height = 210, units = "mm", dpi = 300)
 
