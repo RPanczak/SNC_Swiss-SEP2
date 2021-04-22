@@ -20,7 +20,6 @@ editor_options:
 ---
 
 <!-- ------------------------------------------------------------ --> 
-<!-- ------------------------------------------------------------ --> 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
@@ -153,6 +152,8 @@ The nearest building with SSEP 1 was found; point dataset was then overlaid with
 rm(r18_bu_orig)
 gc()
 ```
+
+<!-- ------------------------------------------------------------ --> 
 
 # Community averages
 
@@ -371,4 +372,105 @@ ssep1_gem_21_pop_geo %>%
   tm_shape() +
   tm_fill(col = c("median_ssep1_samp_d", "median_ssep1_full_d"), 
           palette = "RdYlGn")
+```
+
+<!-- ------------------------------------------------------------ --> 
+
+# Maps
+
+## All CH gem
+
+```{r}
+logo <- magick::image_read("carto/snc.png")
+magick::image_info(logo)
+
+st_bbox(canton)$xmax
+st_bbox(lake)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = lake, color = NA,  fill = rgb(176, 229, 255, max = 255)) + 
+  geom_sf(data = ssep1_gem_21_pop_geo,
+          aes(fill = median_ssep1_samp_d),
+          color = "white", size = 0.2, alpha = 0.85) +
+  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.5) +
+  scale_fill_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  theme(legend.position = c(.05, .95), 
+        legend.justification = c("left", "top"),
+        legend.direction = 'vertical') +
+  guides(colour = guide_legend(title = "Swiss-SEP",
+                               override.aes = list(alpha = 1, shape = 16, size = 3))) +
+  labs(fill = "Index decile") +
+  annotation_custom(grid::rasterGrob(logo), 
+                    xmin = st_bbox(canton)$xmax - 23400*2, 
+                    xmax = st_bbox(canton)$xmax, 
+                    ymin = st_bbox(lake)$ymin, 
+                    ymax = st_bbox(lake)$ymin + 11000*2) 
+
+ggsave("carto/tamedia/sep-gem21.png", width = 297, height = 210, 
+       units = "mm", dpi = 300)
+```
+
+## All CH point
+
+```{r}
+# for experiments
+sep1_samp <- sep1 %>% 
+  sample_frac(0.01)
+
+# display.brewer.pal(n = 10, name = "RdYlGn") 
+
+# # sf plotting
+plot(st_geometry(canton),
+     col = NA, border = "gray50", lwd = 0.1,
+     reset = FALSE)
+plot(st_geometry(lake),
+     # col = rgb(0, 135, 208, max = 255), border = NA,
+     # col = rgb(156, 213, 248, max = 255), border = NA,
+     col = rgb(176, 229, 255, max = 255), border = NA,
+     add = TRUE)
+plot(ssep1_samp["ssep1_d"],
+     pal = RColorBrewer::brewer.pal(n = 10, name = "RdYlGn"),
+     cex = 0.1, pch = 16,
+     add = TRUE)
+```
+
+
+```{r}
+# gg version
+ggplot() + 
+  geom_sf(data = lake, color = NA,  fill = rgb(176, 229, 255, max = 255)) + 
+  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.25) +
+  # geom_sf(data = sep1_samp, aes(colour = ssep1_d), 
+  #         alpha = 0.66, shape=".", size = 0.1) +
+  geom_sf(data = sep1, aes(colour = ssep1_d),
+          alpha = 0.66, shape=".", size = 0.1) +
+  scale_colour_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  theme(legend.position = c(.05, .95), 
+        legend.justification = c("left", "top"),
+        legend.direction = 'vertical') +
+  guides(colour = guide_legend(title = "Swiss-SEP",
+                               override.aes = list(alpha = 1, shape = 16, size = 3))) +
+  annotation_custom(grid::rasterGrob(logo), 
+                    xmin = st_bbox(canton)$xmax - 23400*2, 
+                    xmax = st_bbox(canton)$xmax, 
+                    ymin = st_bbox(lake)$ymin, 
+                    ymax = st_bbox(lake)$ymin + 11000*2) 
+
+ggsave("carto/tamedia/sep-dots.png", width = 297, height = 210, 
+       units = "mm", dpi = 300)
+```
+
+```{r}
+ssep1_gem_21_pop_geo %>% 
+  select(GMDNR, GMDNAME, ssep1_median, median_ssep1_samp_d) %>% 
+  st_write("carto/tamedia/ssep1_gem_21_pop_geo.shp", delete_dsn = TRUE)
+
+ssep1_gem_21_pop_geo %>% 
+  st_drop_geometry() %>% 
+  select(GMDNR, GMDNAME, ssep1_median, median_ssep1_samp_d) %>% 
+  write_csv("carto/tamedia/ssep1_gem_21_pop_geo.csv")
 ```
