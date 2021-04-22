@@ -46,13 +46,17 @@ swissBOUNDARIES3D **2021** from [swisstopo](https://shop.swisstopo.admin.ch/en/p
 Generalisierte Gemeindegrenzen **2021** from [BfS](https://www.bfs.admin.ch/bfs/de/home/dienstleistungen/geostat/geodaten-bundesstatistik/administrative-grenzen/generalisierte-gemeindegrenzen.html)
 
 ```{r include=FALSE}
-gem_st <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_21.Rds")  %>% 
+gem_st <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_21.Rds") %>% 
   st_transform(crs = 2056) 
 
-gem_bfs <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/gem_21.Rds") 
+gem_bfs <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/gem_21.Rds") %>% 
+  st_transform(crs = 2056) 
 
-lake <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/lake_21.Rds")
-canton <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/canton_21.Rds")
+lake <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/lake_21.Rds") %>% 
+  st_transform(crs = 2056) 
+
+canton <- read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21/canton_21.Rds") %>% 
+  st_transform(crs = 2056) 
 
 # plot(st_geometry(gem_bfs))
 ```
@@ -439,14 +443,13 @@ plot(ssep1_samp["ssep1_d"],
 
 
 ```{r}
-# gg version
 ggplot() + 
-  geom_sf(data = lake, color = NA,  fill = rgb(176, 229, 255, max = 255)) + 
+  geom_sf(data = lake, color = NA, fill = rgb(176, 229, 255, max = 255)) + 
   geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.25) +
   # geom_sf(data = sep1_samp, aes(colour = ssep1_d), 
-  #         alpha = 0.66, shape=".", size = 0.1) +
+  #         alpha = 0.66, shape = ".", size = 0.1) +
   geom_sf(data = sep1, aes(colour = ssep1_d),
-          alpha = 0.66, shape=".", size = 0.1) +
+          alpha = 0.66, shape = ".", size = 0.1) +
   scale_colour_brewer(palette = "RdYlGn") +
   theme_void() + 
   theme(legend.position = c(.05, .95), 
@@ -473,4 +476,110 @@ ssep1_gem_21_pop_geo %>%
   st_drop_geometry() %>% 
   select(GMDNR, GMDNAME, ssep1_median, median_ssep1_samp_d) %>% 
   write_csv("carto/tamedia/ssep1_gem_21_pop_geo.csv")
+```
+
+## Lausanne agglo point
+
+```{r}
+agglo_21 <- read_rds("../ISPM_geo/data/Raumgliederungen/agglo_21.Rds") %>% 
+  filter(agglomerationen_2012 == 5586) %>% 
+  select(bfs_gde_nummer)
+
+lausanne_agglo <- gem_bfs %>% 
+  filter(GMDNR %in% agglo_21$bfs_gde_nummer)
+
+plot(st_geometry(lausanne_agglo))
+
+st_crs(lausanne_agglo) == st_crs(lake) 
+
+plot(st_geometry(st_union(lausanne_agglo)))
+
+plot(st_geometry(st_crop(canton, st_bbox(lausanne_agglo))))
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = st_crop(lake, st_bbox(lausanne_agglo)), 
+          color = NA, fill = rgb(176, 229, 255, max = 255)) + 
+  geom_sf(data = lausanne_agglo, 
+          fill = NA, color = gray(.5), size = 0.25) +
+  geom_sf(data = st_crop(canton, st_bbox(lausanne_agglo)), 
+          fill = NA, color = gray(.5), size = 0.95) +
+  # geom_sf(data = st_crop(sep1_samp, st_bbox(lausanne_agglo)), 
+  #         aes(colour = ssep1_d),
+  #         alpha = 0.66, shape = ".", size = 0.1) +
+  geom_sf(data = st_crop(sep1, st_bbox(lausanne_agglo)),
+          aes(colour = ssep1_d),
+          alpha = 0.66, shape = ".", size = 0.1) +
+  scale_colour_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  theme(legend.position = c(.05, .95), 
+        legend.justification = c("left", "top"),
+        legend.direction = 'vertical',
+        legend.background = element_rect(fill = "white", 
+                                         size = 0.5, linetype = "solid")) +
+  guides(colour = guide_legend(title = "Swiss-SEP",
+                               override.aes = list(alpha = 1, shape = 16, size = 3))) +
+  annotation_custom(grid::rasterGrob(logo), 
+                    xmin = st_bbox(st_crop(canton, st_bbox(lausanne_agglo)))$xmax - 2340*2, 
+                    xmax = st_bbox(st_crop(canton, st_bbox(lausanne_agglo)))$xmax - 5, 
+                    ymin = st_bbox(st_crop(lake, st_bbox(lausanne_agglo)))$ymin + 5, 
+                    ymax = (st_bbox(st_crop(lake, st_bbox(lausanne_agglo)))$ymin + 1100*2)
+  ) 
+
+ggsave("carto/tamedia/sep-dots-lausanne_agglo.png", width = 297, height = 210, 
+       units = "mm", dpi = 300)
+```
+
+
+
+
+
+
+
+
+## Lausanne agglo point
+
+```{r}
+lausanne <- gem_bfs %>% 
+  filter(GMDNR == 5586) 
+  
+lausanne_buff <- st_buffer(lausanne, dist = 500)
+
+plot(st_geometry(lausanne_buff))
+plot(st_geometry(lausanne), add = TRUE)
+```
+
+```{r}
+ggplot() + 
+  geom_sf(data = st_crop(lake, st_bbox(lausanne_buff)), 
+          color = NA, fill = rgb(176, 229, 255, max = 255)) + 
+  geom_sf(data = lausanne, 
+          fill = NA, color = gray(.5), size = 0.5) +
+  geom_sf(data = st_crop(canton, st_bbox(lausanne_buff)), 
+          fill = NA, color = gray(.5), size = 0.95) +
+  # geom_sf(data = st_crop(sep1_samp, st_bbox(lausanne_buff)),
+  #         aes(colour = ssep1_d),
+  #         alpha = 0.66, shape = 20, size = 0.7) +
+  geom_sf(data = st_crop(sep1, st_bbox(lausanne_buff)),
+          aes(colour = ssep1_d),
+          alpha = 0.66, shape = 20, size = 0.7) +
+  scale_colour_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  theme(legend.position = c(.05, .95), 
+        legend.justification = c("left", "top"),
+        legend.direction = 'horizontal',
+        legend.background = element_rect(fill = "white", 
+                                         size = 0.5, linetype = "solid")) +
+  guides(colour = guide_legend(title = "Swiss-SEP",
+                               override.aes = list(alpha = 1, shape = 16, size = 3))) +
+  annotation_custom(grid::rasterGrob(logo), 
+                    xmin = st_bbox(st_crop(canton, st_bbox(lausanne_buff)))$xmax - 234*5, 
+                    xmax = st_bbox(st_crop(canton, st_bbox(lausanne_buff)))$xmax - 25, 
+                    ymin = st_bbox(st_crop(lake, st_bbox(lausanne_buff)))$ymin + 25, 
+                    ymax = st_bbox(st_crop(lake, st_bbox(lausanne_buff)))$ymin + 110*5
+  ) 
+
+ggsave("carto/tamedia/sep-dots-lausanne.png", width = 297, height = 210, 
+       units = "mm", dpi = 300)
 ```
