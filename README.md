@@ -1,6 +1,8 @@
 # Swiss-SEP2
 
-Development and validation of second release of Swiss-SEP index. 
+Development and validation of second release of Swiss-SEP index.  
+
+OSF [project](https://osf.io/r8hz7/) and current [preprint](https://osf.io/py9tz/).  
 
 Based on:
 
