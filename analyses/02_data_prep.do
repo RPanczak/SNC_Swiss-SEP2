@@ -161,11 +161,11 @@ forv year = 10/14 {
 	gen year = `year'
 	
 	if `year' == 10 {	
-		sa data/ORIGINS, replace
+		sa "data/ORIGINS", replace
 	}
 	else {
-		append using data/ORIGINS
-		sa data/ORIGINS, replace
+		append using "data/ORIGINS"
+		sa "data/ORIGINS", replace
 	}
 }
 
@@ -183,10 +183,10 @@ ta dupli, m
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
-bysort buildid geox geoy (year): gen n = _n
-bysort buildid geox geoy (year): gen N = _N
+sort buildid geox geoy year, stable
+by buildid geox geoy (year): gen n = _n
+by buildid geox geoy (year): gen N = _N
 
-* sort buildid year, stable 
 drop if dupli > 0 & n < N
 drop dupli n N
 
@@ -197,8 +197,9 @@ ta dupli, m
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
-bysort buildid (year): gen n = _n
-bysort buildid (year): gen N = _N
+sort buildid year, stable
+by buildid (year): gen n = _n
+by buildid (year): gen N = _N
 
 * sort buildid year, stable 
 drop if dupli > 0 & n < N
@@ -759,11 +760,11 @@ forv YR = 12/15 {
 	texdoc local end_`YR' = `r(N)'	
 
 	if `YR' == 12 {
-		sa data/SE, replace
+		sa "data/SE", replace
 	}
 	else {
-		append using data/SE
-		sa data/SE, replace
+		append using "data/SE"
+		sa "data/SE", replace
 	}
 	
 	rm "data/SE`YR'_hh_full.dta"
@@ -797,7 +798,7 @@ gen SE = 2012
 la var SE "Survey year"
 order SE, first
 
-sa data/SE_miss, replace
+sa "data/SE_miss", replace
 		
 forv YR = 13/15 { 
 	
@@ -821,7 +822,7 @@ egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
 order age_cat, a(age)
 
 compress 
-sa data/SE_miss, replace
+sa" data/SE_miss", replace
 
 drop if miss == 2
 
@@ -1050,11 +1051,11 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		sa data/NEIGHB, replace
+		sa "data/NEIGHB", replace
 	}
 	else {
-		append using data/NEIGHB
-		sa data/NEIGHB, replace
+		append using "data/NEIGHB"
+		sa "data/NEIGHB", replace
 	}
 
 }
@@ -1086,11 +1087,11 @@ forv PART = 1/6 {
 	compress
 	
 	if `PART' == 1 {
-		sa data/NEIGHB_RENT, replace
+		sa "data/NEIGHB_RENT", replace
 	}
 	else {
-		append using data/NEIGHB_RENT
-		sa data/NEIGHB_RENT, replace
+		append using "data/NEIGHB_RENT"
+		sa "data/NEIGHB_RENT", replace
 	}
 
 }
@@ -1836,7 +1837,7 @@ texdoc s c
 
 texdoc s , nolog
 
-u data/SNC_ALL, clear
+u "data/SNC_ALL", clear
 
 texdoc s c 
 
