@@ -40,10 +40,10 @@ count if mi(org_floor)  // 8285
 ta org_floor, m
 /*
 Parterre inkl. Hochparterre 3100
-1. – 49. Stock (Maximum) 3101 – 3149
-1. – 9. Untergeschoss (Maximum) 3201 – 3209
+1. â€“ 49. Stock (Maximum) 3101 â€“ 3149
+1. â€“ 9. Untergeschoss (Maximum) 3201 â€“ 3209
 Maisonnette, Parterre mehrgeschossig 3300
-Maisonnette, 1 - 49. Stock (Max.) mehrgeschossig 3301 – 3349
+Maisonnette, 1 - 49. Stock (Max.) mehrgeschossig 3301 â€“ 3349
 
 ->
 
