@@ -11,7 +11,7 @@ Data analysis file
 
 * ***************************************************
 
-qui do C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do
+qui do "C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do"
 
 qui version 15
 
@@ -582,24 +582,33 @@ texdoc s c
 texdoc s , nolog // nodo   
 
 u "data/SHP", clear
+ta geocoded, m
 keep if geocoded
+drop geocoded
 
 mmerge gisid using "FINAL/DTA/ssep3_user", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
+assert _merge != 1
 keep if _merge == 3
 drop _merge
 
+* survey setup
+svyset, clear
+svyset _n [pweight = wh13ts]
+
 * medians for paper
-tabstat i13eqon, s(p50) by(ssep3_d)
+* tabstat i13eqon, s(p50) by(ssep3_d)
+table ssep3_d [pweight = wh13ts] , c(med i13eqon) row f(%9.0fc)
 
 preserve 
 
-	keep idhous13 i13eqon ssep?_d
+	keep idhous13 i13eqon wh13ts ssep?_d
 
 	drop if mi(i13eqon)
 
 	reshape long ssep, i(idhous13 i13eqon) j(sep_version) string
 
-	graph box i13eqon, ///
+	graph box i13eqon ///
+	[pweight = wh13ts], ///
 		over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
 		over(ssep) asyvars nooutsides ///
 		ytitle(Household income [CHF]) ylabel(0(50000)180000, format(%9,0gc)) ymtick(##2, grid) ///
@@ -636,11 +645,17 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-tabstat i13eqon if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
-tabstat h13i51 if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
+* tabstat i13eqon if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
+table ssep1_d if inlist(ssep1_d, 1, 5, 10) [pweight = wh13ts], c(m i13eqon) row f(%9.0fc)
 
-ta h13i20ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
-ta h13i21ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+* tabstat h13i51 if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
+table ssep1_d if inlist(ssep1_d, 1, 5, 10) [pweight = wh13ts], c(m h13i51) row f(%9.0fc)
+
+* ta h13i20ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i20ac ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc 
+
+* ta h13i21ac ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i21ac ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc
 
 texdoc s c 
 
@@ -651,7 +666,10 @@ texdoc s c
 texdoc s , cmdstrip
 
 ta h13i22   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i22   ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc
+
 ta h13i23   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i23   ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc
 
 texdoc s c 
 
@@ -661,8 +679,11 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-ta h13i76a  ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
-ta h13i50   ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+* ta h13i76a ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i76a ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc 
+
+* ta h13i50 ssep1_d if inlist(ssep1_d, 1, 5, 10), m col nokey 
+svy: ta h13i50 ssep1_d if inlist(ssep1_d, 1, 5, 10), col count perc 
 
 texdoc s c 
 
@@ -674,22 +695,17 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-tabstat i13eqon if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
-tabstat h13i51 if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
+* tabstat i13eqon if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
+table ssep2_d if inlist(ssep2_d, 1, 5, 10) [pweight = wh13ts], c(m i13eqon) row f(%9.0fc)
 
-ta h13i20ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
-ta h13i21ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+* tabstat h13i51 if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
+table ssep2_d if inlist(ssep2_d, 1, 5, 10) [pweight = wh13ts], c(m h13i51) row f(%9.0fc)
 
-texdoc s c 
+* ta h13i20ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i20ac ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
 
-/***
-\newpage
-***/
-
-texdoc s , cmdstrip
-
-ta h13i22   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
-ta h13i23   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+* ta h13i21ac ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i21ac ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
 
 texdoc s c 
 
@@ -699,8 +715,25 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-ta h13i76a  ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
-ta h13i50   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+* ta h13i22   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i22 ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
+
+* ta h13i23   ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i23 ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+* ta h13i76a ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i76a ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
+
+* ta h13i50 ssep2_d if inlist(ssep2_d, 1, 5, 10), m col nokey 
+svy: ta h13i50 ssep2_d if inlist(ssep2_d, 1, 5, 10), col count perc 
 
 texdoc s c 
 
@@ -712,22 +745,17 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-tabstat i13eqon if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
-tabstat h13i51 if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
+* tabstat i13eqon if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
+table ssep3_d if inlist(ssep3_d, 1, 5, 10) [pweight = wh13ts], c(m i13eqon) row f(%9.0fc)
 
-ta h13i20ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
-ta h13i21ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+* tabstat h13i51 if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
+table ssep3_d if inlist(ssep3_d, 1, 5, 10) [pweight = wh13ts], c(m h13i51) row f(%9.0fc)
 
-texdoc s c 
+* ta h13i20ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i20ac ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
 
-/***
-\newpage
-***/
-
-texdoc s , cmdstrip
-
-ta h13i22   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
-ta h13i23   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+* ta h13i21ac ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i21ac ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
 
 texdoc s c 
 
@@ -737,8 +765,25 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-ta h13i76a  ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
-ta h13i50   ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+* ta h13i22 ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i22 ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
+
+* ta h13i23 ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i23 ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
+
+texdoc s c 
+
+/***
+\newpage
+***/
+
+texdoc s , cmdstrip
+
+* ta h13i76a ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i76a ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
+
+* ta h13i50 ssep3_d if inlist(ssep3_d, 1, 5, 10), m col nokey 
+svy: ta h13i50 ssep3_d if inlist(ssep3_d, 1, 5, 10), col count perc 
 
 texdoc s c 
 
