@@ -36,3 +36,5 @@ bfg*
 *.qgz
 *.pgw
 /carto/tamedia
+/admin
+/paper
