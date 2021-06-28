@@ -1529,8 +1529,9 @@ Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were use
 texdoc s , nolog // nodo
 
 * 2013 ONLY 
-u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 h13i23 h13i76 h13i50 h13i50 h13i51 using ///
-	"data-raw\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
+u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 	h13i23 h13i76 h13i50 h13i50 h13i51 ///
+	wh13ts ///
+	using "data-raw\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
 
 ta filter13, m 
 ta stathh13, m 
