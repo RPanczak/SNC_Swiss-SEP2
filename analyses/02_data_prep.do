@@ -21,7 +21,8 @@ Version 06:~ReRun of analyses:
 				Fixing directories & renaming files a bit
 Version 07:~Change to SNC 4.0				
 Version 08:~New GWR data for better building class &  		
-				construction period				
+				construction period		
+Version 09:~Excluding SNC-SE experimentals	
 */
 
 * ***************************************************
@@ -71,7 +72,7 @@ clear
 \makeatother
 
 \setlength{\parindent}{0pt} % no indent for ne paras
-\graphicspath{ {d:/Data_RP/data/projects/EOLC/stata/graphres/} }
+\graphicspath{ {C:/projects/SNC_Swiss-SEP2/analyses/gr} }
 \setcounter{tocdepth}{2}
 
 \usepackage{array}
@@ -90,7 +91,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.08 - data prep}}
+Report 1.09 - data preparation}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -106,8 +107,7 @@ Report 1.08 - data prep}}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Data sources}
-\subsection{SNC - buildings}
+\section{SNC - buildings}
 ***/
 
 * ***************************************************
@@ -288,7 +288,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Eligible buildings}
+\subsection{Eligible buildings}
 
 \textbf{Origin} buildings are defined as all buildings for which index 
 is going to be calculated. These buildings need to:
@@ -326,7 +326,7 @@ These coordinates become \textbf{n'hood centres} for network analysis and constr
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Results}
+\subsection{Results}
 
 Distribution of years from which coordinates of a building are taken: 
 ***/
@@ -390,7 +390,8 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{SE}
+\section{SE}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Eligible persons \& households}
 
@@ -822,7 +823,7 @@ egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
 order age_cat, a(age)
 
 compress 
-sa" data/SE_miss", replace
+sa "data/SE_miss", replace
 
 drop if miss == 2
 
@@ -869,7 +870,9 @@ ta age_cat mis_ocu_isco if den_ocu & !sex, m row
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsubsection{Exclusions}
+\subsection{Exclusions}
+
+\subsubsection{Eligibility criteria}
 
 \begin{table}[!htbp]
 \centering
@@ -892,11 +895,13 @@ ta age_cat mis_ocu_isco if den_ocu & !sex, m row
 \end{tabular}
 \end{table}
 
-The explanation of substantial amount of individuals not linked to households came from BfS:  
+The explanation of substantial amount of individuals not linked to households came from BfS: \\
 
-\emph{The reference person has to fill out a form for all household members. As the FSO "calibrate" the structural survey using the information from STATPOP they decided to not include the information for the additional household members if the household structure (number of hh members, gender information) given on the SE household form didn’t match the household information in STATPOP. This always applies for around 14\% of the SE reference persons.}  
+\emph{The reference person has to fill out a form for all household members. As the FSO "calibrate" the structural survey using the information from STATPOP they decided to not include the information for the additional household members if the household structure (number of hh members, gender information) given on the SE household form didn’t match the household information in STATPOP. This always applies for around 14\% of the SE reference persons.} \\ 
 
-Note: Additionally older records of persons that participated in more than one SE were excluded.  
+\subsubsection{Multiple SE}
+
+In cases when one person participated in more than one SE only newer records were kept.  
 ***/
 
 texdoc s , cmdstrip // nodo
@@ -910,7 +915,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Results}
+\subsection{Results}
 Distribution of SE individuals over years:
 ***/
 
@@ -950,7 +955,8 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Limitations}
+\subsection{Limitations}
+
 \begin{enumerate}
 
 	\item Major limitation is that, compared to SEP 1.0, there is no way to define \textbf{head of the household} - 
@@ -980,10 +986,11 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Road network}
+\section{Road network}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Setup}
+\subsection{Setup}
+
 \begin{enumerate}
 
 	\item Network analyses were done using updated version of \textbf{swissTLM3D} data 
@@ -1100,7 +1107,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Results - buildings}
+\subsection{Results - buildings}
 
 Vast majority of the SNC buildings (\texttt{ORIGINS}) have network connections to 50 SE buildings (\texttt{DESTINATIONS})
 \footnote{Keep in mind this results will get even better when we move from buildings to households}: 
@@ -1155,7 +1162,7 @@ Building with the biggest (89!) number of SE households is located in \href{http
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Results - households}
+\subsection{Results - households}
 
 The n'hood structure of connectivity between SNC buildings \& SE households changes (for better! ;)
 when we move from buildings to households. 
@@ -1366,7 +1373,8 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Results - households, rent}
+\subsection{Results - households, rent}
+
 As expected, results are slightly worse when we limit network analyses to 3-5 bedroom rented flats only. \\
 \\
 ***/
@@ -1502,9 +1510,10 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{Swiss Household Panel}
+\section{Swiss Household Panel}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Setup}
+\subsection{Setup}
 
 Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were used to validate the index
 
@@ -1646,7 +1655,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Variables}
+\subsection{Variables}
 ***/
 
 texdoc s , cmdstrip  
@@ -1659,7 +1668,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Surveys \& geocoding status}
+\subsection{Surveys \& geocoding status}
 ***/
 
 texdoc s , cmdstrip  
@@ -1674,11 +1683,12 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\subsection{SNC - mortality}
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Dataset - SNC complete}
+\section{SNC - mortality}
 
-Firstly, association of Swiss-SEP with mortality will be assessed using two models based on complete SNC: 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Setup}
+
+Association of Swiss-SEP with mortality will be assessed using two models based on complete SNC: 
 'age \& sex' and 'semi adjusted'  
 (additionally taking into account: nationality, civil status, language region \& level of urbanization). Setup for the analyses in this scenario: 
 \begin{enumerate}
@@ -1836,94 +1846,62 @@ sa "data/SNC_ALL", replace
 
 texdoc s c 
 
-texdoc s , nolog
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Individuals \& deaths included}
+***/
+
+texdoc s , cmdstrip  
 
 u "data/SNC_ALL", clear
 
+distinct mortid gisid
+
+* tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
+
 texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Causes of deaths}
+***/
+
+texdoc s , cmdstrip  
+
+tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Variables}
+***/
+
+texdoc s , cmdstrip  
+
+d
+
+texdoc s c 
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Last census seen}
+***/
 
 texdoc s , cmdstrip
 
 fre last_census_seen
-* tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
-distinct mortid gisid
 
 texdoc s c 
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Dataset - SNC SE}
-
-Secondly, only individuals who participated in one of the SE surveys (2012-15) will be used in order to develop 'fully adjusted' model 
-taking into account additionally education and occupation (note the details provided in the SE section!).
-
-***/
-
-texdoc s , nolog // nodo   
-
-u "data/SNC_ALL", clear
-drop recid yod m_civil geox geoy year dupli hec
-
-* LIMIT TO SE DATA
-mmerge sncid using "data/SE", t(1:1) ukeep(educ_agg educ_curr occup_isco den_ocu? SE)
-/*
-ta _merge se11_flag, m 
-ta _merge se12_flag, m 
-ta _merge se13_flag, m 
-ta _merge se14_flag, m 
-ta _merge se15_flag, m 
-ta _merge se16_flag, m 
-ta _merge SE, m 
-*/
-keep if _merge == 3
-drop _merge 
-
-* EDUCATION >> USE CURRENT IF HIGHER
-gen educ = educ_agg
-replace educ = educ_curr if educ_curr > educ_agg
-la val educ educ_agg_enl
-drop educ_*
-
-gen ocu = .
-replace ocu = 1 if inrange(occup_isco, 1000, 2999)
-replace ocu = 2 if inrange(occup_isco, 3000, 5999)
-replace ocu = 3 if inrange(occup_isco, 6000, 9999)
-replace ocu = 1 if inrange(occup_isco, 100, 110)
-replace ocu = 2 if inrange(occup_isco, 200, 210)
-replace ocu = 3 if inrange(occup_isco, 300, 310)
-replace ocu = 5 if mi(occup_isco)
-replace ocu = 4 if den_ocu1 == 0 
-drop occup_isco den_ocu?
-
-la de ocu 1 "High occup" 2 "Medium occup" 3 "Low occup " 4 "Not in paid employ" 5 "Missing", modify 
-
-* UPDATE TO LATEST SURVEY ???
-replace dstart = mdy(1, 1, SE) if dstart < mdy(1, 1, SE)
-
-la da "SSEP 2.0 - SNC 2012-2015 data for mortality analyses - SE overlap"
-
-note: 			Including people from SE used to calculate index
-note: 			Last changes: $S_DATE $S_TIME
-compress
-sa "data/SNC_SE", replace
-
-texdoc s c 
-
-
-texdoc s , cmdstrip
-
-u "data/SNC_SE", clear
-
-ta SE, m 
-* tabstat d_*, statistics( sum ) labelwidth(8) varwidth(18) columns(statistics) longstub format(%9.0fc)
-
-texdoc s c 
-
-/***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Appendix}
+
 \subsection{Non-residential buildings}
+
 'Non-residential' buildings that were excluded from calculation of the index.
 ***/
 

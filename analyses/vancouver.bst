@@ -11,7 +11,7 @@
 %%-------------------------------------------------------------------
 %%
 %% Author: Folkert van der Beek <folkertvanderbeek@gmail.com>
-%% Version: 0.8
+%% Version: 1.0
 %% URL: https://gitlab.com/fvdbeek/vancouver.bst
 %%
 %% This work may be distributed and/or modified under the
@@ -95,7 +95,7 @@ FUNCTION {init.config.constants}
   "http://dx.doi.org/" 'doiurl := % prefix to make URL from DOI
   "doi:" 'doiprefix := % text prefix printed before DOI ref
   #0 'addeprints := % 0=no eprints; 1=include eprints
-  #1 'adddoiresolver := % 0=no DOI resolver; 1=include it
+  #0 'adddoiresolver := % 0=no DOI resolver; 1=include it
   #0 'hrefform := % 0=no crossrefs; 1=hypertex xrefs; 2=hyperref refs
 }
 INTEGERS {
@@ -927,23 +927,15 @@ FUNCTION {output.bibitem}
   before.all 'output.state :=
 }
 
-FUNCTION {n.dashify}
-{
-  't :=
+FUNCTION {hyphenate}
+{ 't :=
   ""
     { t empty$ not }
     { t #1 #1 substring$ "-" =
-        { t #1 #2 substring$ "--" = not
-            { "--" *
-              t #2 global.max$ substring$ 't :=
-            }
-            {   { t #1 #1 substring$ "-" = }
-                { "-" *
-                  t #2 global.max$ substring$ 't :=
-                }
-              while$
-            }
-          if$
+        { "-" *
+            { t #1 #1 substring$ "-" = }
+            { t #2 global.max$ substring$ 't := }
+          while$
         }
         { t #1 #1 substring$ *
           t #2 global.max$ substring$ 't :=
@@ -1148,12 +1140,136 @@ FUNCTION {multi.page.check}
   multiresult
 }
 
+FUNCTION {is.letter}
+{ duplicate$ empty$
+    { pop$ #0 }
+    { chr.to.int$
+      duplicate$ "A" chr.to.int$ <
+        { pop$ #0 }
+        { duplicate$ "Z" chr.to.int$ >
+            { duplicate$ "a" chr.to.int$ <
+                { pop$ #0 }
+                { duplicate$ "z" chr.to.int$ >
+                    { pop$ #0 }
+                    { pop$ #1 }
+                  if$
+                }
+              if$
+            }
+            { pop$ #1 }
+          if$
+        }
+      if$
+    }
+  if$
+}
+
+FUNCTION {is.digit}
+{ duplicate$ empty$
+    { pop$ #0 }
+    { chr.to.int$
+      duplicate$ "0" chr.to.int$ <
+        { pop$ #0 }
+        { "9" chr.to.int$ >
+            { #0 }
+            { #1 }
+          if$
+        }
+      if$
+    }
+  if$
+}
+
+FUNCTION {is.letter.digit}
+{ duplicate$ is.letter
+  swap$ is.digit or
+}
+
+INTEGERS { charptr len }
+
+STRINGS { start.number end.number range.separator }
+
+FUNCTION {abbreviate.range.numbers}
+{ end.number end.number text.length$ #1 substring$ is.letter
+    { start.number range.separator * end.number * }
+    { end.number text.length$ 'len :=
+      start.number text.length$ len <
+        'skip$
+        { start.number text.length$ len - #1 + 'charptr :=
+            { end.number text.length$ #1 >
+              start.number charptr #1 substring$
+              end.number #1 #1 substring$ = and
+            }
+            { charptr #1 + 'charptr :=
+              end.number #2 global.max$ substring$ 'end.number :=
+            }
+          while$
+        }
+      if$
+      start.number range.separator * end.number *
+    }
+  if$
+}
+
+% This a helper function for use in format.page.numbers
+FUNCTION {append.pages.part}
+{ duplicate$ duplicate$ text.length$ #1 substring$ "," =
+    { " " * }
+    'skip$
+  if$
+  end.number empty$
+    { start.number empty$
+        'skip$
+        { start.number * }
+      if$
+    }
+    { abbreviate.range.numbers * }
+  if$
+  "" 'start.number :=
+  "" 'end.number :=
+  "" 'range.separator :=
+}
+
+FUNCTION {format.page.numbers}
+{ 's :=
+  "" 't :=
+  "" 'start.number :=
+  "" 'end.number :=
+  "" 'range.separator :=
+  ""
+    { s empty$ not }
+    { s #1 #1 substring$ 't :=
+      t is.letter.digit
+        { range.separator empty$
+            { start.number t * 'start.number := }
+            { end.number t * 'end.number := }
+          if$
+        }
+        { s #1 #2 substring$ "--" =
+            { "--" 'range.separator := }
+            { t "-" =
+                { "-" 'range.separator := }
+                { append.pages.part
+                  t *
+                }
+              if$
+            }
+          if$
+        }
+      if$
+      s #2 global.max$ substring$ 's :=
+    }
+  while$
+  append.pages.part
+}
+
 FUNCTION {format.pages}
 { pages duplicate$ empty$ 'skip$
     { duplicate$ multi.page.check
         {
+          format.page.numbers
           bbl.pages swap$
-          n.dashify
+          hyphenate
         }
         {
           bbl.page swap$
@@ -1172,7 +1288,8 @@ FUNCTION {format.journal.pages}
   if$
   pages duplicate$ empty$ 'pop$
   {
-    n.dashify
+    format.page.numbers
+    hyphenate
     "pages" bibinfo.check
     *
   }
@@ -1341,6 +1458,10 @@ FUNCTION {format.organization.address}
 
 FUNCTION {format.institution.address}
 { institution "institution" bibinfo.check format.org.or.pub
+}
+
+FUNCTION {format.school.address}
+{ school "school" bibinfo.check format.org.or.pub
 }
 
 
@@ -1715,8 +1836,7 @@ FUNCTION {phdthesis}
   "title" output.check
   format.type "type" output.check
   new.block
-  school "school" bibinfo.warn output
-  address "address" bibinfo.check output
+  format.school.address output
   format.date "year" output.check
   new.block
   format.note output

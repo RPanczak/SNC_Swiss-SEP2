@@ -51,4 +51,3 @@ ggplot() +
 
 
 ggsave("carto/01_sep-dots.png", width = 297, height = 210, units = "mm", dpi = 300)
-

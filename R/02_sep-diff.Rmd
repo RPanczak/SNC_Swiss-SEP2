@@ -56,13 +56,18 @@ sep2 <- read_rds("data/Swiss-SEP2/ssep2_user_geo.Rds") %>%
   select(gisid, ssep2, ssep2_t, ssep2_q, ssep2_d) 
 ```
 
-Using `r number(nrow(sep1), big.mark = ",")` n'hoods from version 1.0 and `r number(nrow(sep2), big.mark = ",")` from version 2.0.
+Using `r number(nrow(sep1), big.mark = ",")` n'hoods from version 1.0:
 
-```{r eval=FALSE, include=FALSE}
+```{r echo=FALSE}
 sep1 %>% 
   slice(1:5) %>% 
   knitr::kable(digits = c(0, 1, 0),
-               caption = 'An example of Swiss-SEP 2.0 data.')
+               caption = 'An example of Swiss-SEP 1.0 data.')
+```
+
+... and `r number(nrow(sep2), big.mark = ",")` from version 2.0.
+
+```{r echo=FALSE}
 sep2 %>% 
   slice(1:5) %>% 
   knitr::kable(digits = c(0, 1, 0),
@@ -121,7 +126,7 @@ tm_shape(top20_dist) +
 # Exact values discrepancies
 
 ```{r}
-p_load(blandr, BlandAltmanLeh)
+p_load(blandr)
 
 bas_data <- sep2_sep1_join %>% 
   st_drop_geometry() %>% 
@@ -134,6 +139,8 @@ p_unload(blandr)
 ```
 
 ```{r echo=FALSE}
+p_load(BlandAltmanLeh)
+
 bas_list <- bland.altman.stats(bas_data$ssep1, bas_data$ssep2)
 bas <- tibble(means = bas_list$means, diffs = bas_list$diffs)
 
@@ -201,7 +208,6 @@ sep2_sep1_join %>%
   nrow() -> disagreement
 ```
 
-
 Out of `r number(start, big.mark = ",")` n'hoods of SSEP 2.0 `r number(agreement, big.mark = ",")` or `r percent(agreement/start)` has been assigned to the same decile as **the closest** SSEP 1.0. 
 
 If we relax this assumption and alow variation +/- 1 decile then `r percent(partial/start)` of n'hoods are matching.
@@ -229,12 +235,11 @@ prop.table(sep_dif_xtab) %>% # cell percentages
 ```
 
 ```{r eval=FALSE, include=FALSE}
-mosaicplot(sep_dif_xtab, shade=TRUE, legend=TRUE)
+mosaicplot(sep_dif_xtab, shade = TRUE)
 
-spineplot(sep2_sep1_join$ssep1_d, sep2_sep1_join$ssep2_d)
+spineplot(factor(sep2_sep1_join$ssep1_d), factor(sep2_sep1_join$ssep2_d))
 
-library(vcd)
-agreementplot(sep_dif_xtab)
+vcd::agreementplot(sep_dif_xtab)
 ```
 
 Visually 
