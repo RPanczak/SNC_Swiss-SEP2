@@ -527,8 +527,6 @@ texdoc s c
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Bland Altman plots of diffs}
-
-
 ***/
 
 texdoc s , nolog 
@@ -608,6 +606,7 @@ svyset _n [pweight = wh13ts]
 * tabstat i13eqon, s(p50) by(ssep3_d)
 table ssep3_d [pweight = wh13ts] , c(med i13eqon) row f(%9.0fc)
 
+* share figures with tiles
 preserve 
 
 	keep idhous13 i13eqon wh13ts ssep?_d
@@ -628,7 +627,28 @@ preserve
 
 	gr export $td/gr/shp_income.pdf, replace
 	gr export $td/gr/shp_income.png, replace
-	gr export $td/gr/shp_income.eps, replace
+
+restore 
+
+* journal figures with no tiles
+preserve 
+
+	keep idhous13 i13eqon wh13ts ssep?_d
+
+	drop if mi(i13eqon)
+
+	reshape long ssep, i(idhous13 i13eqon) j(sep_version) string
+
+	graph box i13eqon ///
+	[pweight = wh13ts], ///
+		over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
+		over(ssep) asyvars nooutsides ///
+		ytitle(Household income [CHF]) ylabel(0(50000)180000, format(%9,0gc)) ymtick(##2, grid) ///
+		note("") legend(title("Index version")) ///
+		scheme(plotplainblind) graphregion(margin(zero))
+
+	gr export $td/Figure_1.pdf, replace
+	gr export $td/Figure_1.png, replace
 
 restore 
 
@@ -847,6 +867,7 @@ la var ssep3_d ""
 la val ssep1_d ssep1_d
 * est tab u*, eform
 
+* figure with tiles 
 global title 	"size(medsmall) color(black) margin(vsmall)"
 global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.52)) xlab(1.0(0.1)1.5)"
 global misc 	"xline( 1.00(0.05)1.50, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
@@ -855,19 +876,27 @@ global drop 	"drop(*.sex nat_bin *.civil *.urban *.lang)"
 
 coefplot u_ssep1_d u_ssep2_d u_ssep3_d, title("Age & sex adjusted", $title) eform $drop $lab $region $misc $legend $groups scheme(plotplainblind) graphregion(margin(zero)) leg(off) saving(U, replace)
 
-gr export $td/gr/sep3u.pdf, replace
-gr export $td/gr/sep3u.png, replace
+*gr export $td/gr/sep3u.pdf, replace
+*gr export $td/gr/sep3u.png, replace
 
 coefplot a_ssep1_d a_ssep2_d a_ssep3_d, title("Fully adjusted", $title) eform $drop $lab $region $misc $legend $groups scheme(plotplainblind) graphregion(margin(zero)) leg(off) saving(A, replace)
 
-gr export $td/gr/sep3a.pdf, replace
-gr export $td/gr/sep3a.png, replace
+*gr export $td/gr/sep3a.pdf, replace
+*gr export $td/gr/sep3a.png, replace
 
 gr combine U.gph A.gph, title("Hazard ratios of all cause mortality across deciles of three versions of the indices", $title) graphregion(margin(zero))
 
 gr export $td/gr/sep3.pdf, replace
 gr export $td/gr/sep3.png, replace
-gr export $td/gr/sep3.eps, replace
+
+* figure without tiles for journal sub
+gr combine U.gph A.gph, graphregion(margin(zero))
+
+gr export $td/Figure_2.pdf, replace
+gr export $td/Figure_2.png, replace
+
+cap rm A.gph
+cap rm U.gph
 
 texdoc s c
 
@@ -879,7 +908,7 @@ texdoc s c
 Note: 	Results from Cox models. Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}!  
 		'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in original figure above);  
 		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.  
-		This is not the smae adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
+		This is not the same adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
