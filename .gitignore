@@ -35,6 +35,6 @@ bfg*
 *.zip
 *.qgz
 *.pgw
+*.docx
 /carto/tamedia
 /admin
-/paper
