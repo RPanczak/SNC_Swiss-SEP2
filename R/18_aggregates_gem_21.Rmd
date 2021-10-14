@@ -144,6 +144,22 @@ r18_bu <- r18_bu_orig %>%
            remove = TRUE)
 ```
 
+```{r eval=FALSE, include=FALSE}
+r18_bu_excl <- r18_bu_orig %>% 
+  filter(!between(r18_gklas, 1110, 1122) | is.na(r18_gklas)) %>% 
+  st_as_sf(coords = c("r18_ecoord", "r18_ncoord"), 
+           crs = 2056,
+           remove = TRUE)
+
+sum(r18_bu_excl$r18_nrpers_main)
+
+r18_bu_excl %>% 
+  filter(!is.na(r18_gklas)) %>% 
+  select(-r18_gdename) %>% 
+  sample_frac(0.01) %>% 
+  qtm()
+```
+
 Using data from `STATPOP` **2018**. Excluding `r scales::number(nrow(filter(r18_bu_orig, !between(r18_gklas, 1110, 1122))), big.mark = ",")` nonresidential buildings and `r scales::number(nrow(filter(r18_bu_orig, is.na(r18_gklas))), big.mark = ",")` buildings missing information on classifications. 
 
 Used dataset consists of `r scales::number(nrow(r18_bu), big.mark = ",")` buildings.
@@ -543,7 +559,7 @@ ggsave("carto/tamedia/sep-dots-lausanne_agglo.png", width = 297, height = 210,
 ```{r}
 lausanne <- gem_bfs %>% 
   filter(GMDNR == 5586) 
-  
+
 lausanne_buff <- st_buffer(lausanne, dist = 500)
 
 plot(st_geometry(lausanne_buff))
