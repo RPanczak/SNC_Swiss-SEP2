@@ -1,0 +1,344 @@
+---
+title: "Swiss-SEP project"
+description: "Covid-19 law & municipality level SEP"
+date: "`r Sys.Date()`"
+author:
+  - name: Radoslaw Panczak 
+    url: https://github.com/RPanczak
+    affiliation: ISPM
+    affiliation_url: https://www.ispm.unibe.ch/
+    orcid_id: 0000-0001-5141-683X
+# bibliography: biblio.bib
+output:
+  distill::distill_article:
+    highlight: pygments
+    toc: true
+    toc_depth: 1
+    number_sections: true
+editor_options: 
+  chunk_output_type: console
+---
+
+<!-- ------------------------------------------------------------ --> 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      # fig.width=8, fig.height=6, 
+                      # out.width="800px", out.height="600px",
+                      dpi=300)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+options(scipen=999)
+set.seed(12345)
+library(pacman) 
+p_load(tidyverse, haven, readxl, magrittr,
+       sjmisc, weights, ggridges, hrbrthemes, DT,
+       sf, tmap)
+
+tmap_mode("view")
+```
+
+# Data 
+
+## Covid-19-Gesetz
+
+Data from Political Atlas of [BfS](https://www.atlas.bfs.admin.ch/maps/12/de/16394_15864_15863_259/25577.html#)
+
+```{r warning=FALSE}
+covid <- read_xlsx("data-raw/Covid-19-Gesetz/25577_131.xlsx", 
+                   skip = 3) %>% 
+  rename(GMDNR = `Regions-ID`,
+         GMDNAME = Regionsname,
+         vote_yes = ...3) %>% 
+  filter(!is.na(GMDNR),
+         !is.na(GMDNAME)) %>% 
+  mutate(GMDNR = as.numeric(GMDNR))
+```
+
+Excluding cantonal votes from abroad:  
+
+```{r}
+covid %>% 
+  filter(str_detect(GMDNAME, fixed("Ausland")))
+```
+
+```{r}
+covid %<>% 
+  filter(! str_detect(GMDNAME, fixed("Ausland")))
+```
+
+Dataset consists of `r scales::number(length(unique(covid$GMDNR)), big.mark = ",")` communities.
+
+## Communities
+
+swissBOUNDARIES3D **2021** from [swisstopo](https://shop.swisstopo.admin.ch/en/products/landscape/boundaries3D).  
+
+```{r include=FALSE}
+gem_st <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_21.Rds") %>% 
+  st_transform(crs = 2056) %>% 
+  filter(! GMDNR %in% c(2391, 5391, 5394))
+```
+
+swisstopo dataset consists of `r scales::number(length(unique(gem_st$GMDNR)), big.mark = ",")` communities.
+
+```{r eval=FALSE, include=FALSE}
+length(unique(gem_st$GMDNR))
+
+st_drop_geometry(gem_st) %>% 
+  anti_join(covid)
+
+covid %>% 
+  anti_join(st_drop_geometry(gem_st))
+```
+
+## Link
+
+Using `GMDNR` for deterministic linkage.  
+
+```{r}
+gem_st %<>% 
+  left_join(covid)
+```
+
+There are few communities that do not exist in the voting dataset:  
+
+```{r echo=FALSE}
+gem_st %>% 
+  st_drop_geometry() %>% 
+  filter(is.na(vote_yes)) %>% 
+  select(GMDNR) %>% 
+  left_join(st_drop_geometry(read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21-new/gem_21.Rds")))
+```
+
+## Swiss-SEP 
+
+Using version 3.0. 
+
+```{r echo=FALSE}
+sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>% 
+  select(gisid, ssep3, ssep3_d) %>% 
+  mutate(ssep3_d = factor(ssep3_d,
+                          levels = 1:10,
+                          labels = c("1st - lowest", 
+                                     "2", "3", "4", 
+                                     "5th decile", 
+                                     "6", "7", "8", "9", 
+                                     "10th - highest")))
+```
+
+Dataset consists of `r scales::number(nrow(sep3), big.mark = ",")` n'hoods, each assigned to decile of index.
+
+```{r}
+st_drop_geometry(sep3) %>% 
+  frq(ssep3_d)
+```
+
+## STATPOP
+
+Using 2019 STATPOP population file.  
+
+```{r include=FALSE}
+r19_bu <- read_dta("../SNC_core/data-raw/statpop/r19_bu_orig.dta") %>% 
+  select(r19_egid_snc, 
+         r19_ecoord, r19_ncoord,
+         r19_gdename, r19_nrpers_main) %>% 
+  # select(r19_nrpers_total, r19_nrpers_perm) %>% 
+  # filter(!is.na(r19_ncoord)) %>% 
+  # filter(!is.na(r19_ecoord)) %>% 
+  filter(r19_nrpers_main > 0) %>% 
+  st_as_sf(coords = c("r19_ecoord", "r19_ncoord"), 
+           crs = 2056,
+           remove = TRUE)
+```
+
+Dataset consists of `r scales::number(nrow(r19_bu), big.mark = ",")` buildings with at least one resident.
+
+The nearest building with SSEP 3 was found; point dataset was then overlaid with municipality boundaries and summary measures of population based index were created and population level SEP was aggregated by municipality. `r19_nrpers_main` was used as population weight.^[Slightly different populations would be obtained with different conceptual models of *residential populations* by using either `r19_nrpers_total` or `r19_nrpers_perm` variables!]
+
+## Population based community averages of SEP
+
+```{r eval=FALSE, include=TRUE}
+r19_bu_sep <- st_join(r19_bu, sep3, join = st_nearest_feature)
+
+nearest <- st_nearest_feature(r19_bu, sep3)
+r19_bu_sep$dist <- st_distance(r19_bu_sep, sep3[nearest, ], 
+                               by_element = TRUE)
+rm(nearest); gc()
+
+summary(r19_bu_sep$dist)
+
+# View(st_drop_geometry(r19_bu_sep))
+
+r19_bu_sep_gem21 <- 
+  st_join(r19_bu_sep, gem_st, join = st_intersects)
+
+# r19_bu_sep_gem21 %>%
+#   filter(is.na(GMDNR))
+
+# tm_shape(gem_bfs) +
+#   tm_polygons() +
+#   tm_shape(r19_bu_sep_gem21 %>% filter(is.na(GMDNR)) %>% select(-r19_gdename)) +
+#   tm_dots()
+
+r19_bu_sep_gem21 <- r19_bu_sep_gem21 %>% 
+  st_drop_geometry() %>% 
+  relocate(GMDNR, .after = r19_egid_snc)  
+
+# View(r19_bu_sep_gem21)
+
+write_rds(r19_bu_sep_gem21, "data/statpop/r19_bu_sep_gem21.rds")
+```
+
+```{r include=FALSE}
+r19_bu_sep_gem21 <- read_rds("data/statpop/r19_bu_sep_gem21.rds") 
+```
+
+```{r}
+temp <- r19_bu_sep_gem21 %>% 
+  select(GMDNR, ssep3, r19_nrpers_main) %>% 
+  uncount(r19_nrpers_main) %>% 
+  group_by(GMDNR) %>% 
+  summarise(pop = n(),
+            # ssep3_mean = mean(ssep3),
+            ssep3_median = median(ssep3)) %>% 
+  ungroup() 
+
+ssep3_gem_21_pop <- left_join(gem_st, temp) %>% 
+  mutate(median_ssep3_pop_d = ntile(ssep3_median, 10)) %>% 
+  mutate(median_ssep3_pop_d = factor(median_ssep3_pop_d,
+                                     levels = 1:10,
+                                     labels = c("1st - lowest", 
+                                                "2", "3", "4", 
+                                                "5th decile", 
+                                                "6", "7", "8", "9", 
+                                                "10th - highest")))
+
+frq(ssep3_gem_21_pop$median_ssep3_pop_d)
+```
+
+```{r include=FALSE}
+rm(temp); gc()
+write_rds(ssep3_gem_21_pop, "data/ssep3_gem_21_pop.rds")
+```
+
+Final map using median index; bubbles scaled to number of people (2019)  
+
+```{r, layout="l-body-outset"}
+ssep3_gem_21_pop %>% 
+  tm_shape() +
+  tm_dots(size = "pop", col = "median_ssep3_pop_d", 
+          palette = "RdYlGn",
+          scale = .5,  shape = 19)
+```
+
+<!-- ------------------------------------------------------------ --> 
+
+# Associations
+
+## Scatter
+
+### Unweighted
+
+```{r echo=FALSE, warning=FALSE}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = ssep3_median, y = vote_yes)) + 
+  geom_smooth(method = "lm") +
+  geom_point(alpha = 0.25) + 
+  theme_ipsum_rc() +
+  xlab("Swiss-SEP index") + ylab("% vote yes")
+```
+
+### Weighted
+
+```{r echo=FALSE, warning=FALSE}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = ssep3_median, y = vote_yes, size = pop)) + 
+  geom_smooth(aes(weight = pop), method = "lm") +
+  geom_point(alpha = 0.25) + 
+  theme_ipsum_rc() +
+  theme(legend.position = "none") +
+  xlab("Swiss-SEP index") + ylab("% vote yes")
+```
+
+## Box plot
+
+```{r echo=FALSE}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = median_ssep3_pop_d, y = vote_yes)) + 
+  geom_boxplot() +
+  theme_ipsum_rc() +
+  xlab("Swiss-SEP index") + ylab("% vote yes")
+```
+
+## Histograms
+
+```{r echo=FALSE}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  ggplot(aes(x = vote_yes, 
+             y = median_ssep3_pop_d, 
+             fill = stat(x))) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.01) +
+  scale_fill_viridis_c(name = "% vote yes") +
+  theme_ipsum_rc() +
+  ylab("Swiss-SEP index decile") + xlab("% vote yes")
+```
+
+## Correlations
+
+### Unweighted
+
+```{r}
+cor.test(ssep3_gem_21_pop$ssep3_median, 
+         ssep3_gem_21_pop$vote_yes, 
+         method = "pearson")
+```
+
+### Weighted
+
+```{r}
+wtd.cor(ssep3_gem_21_pop$ssep3_median, 
+        ssep3_gem_21_pop$vote_yes, 
+        weight = ssep3_gem_21_pop$pop)
+```
+
+## Outliers
+
+### Lowest % yes
+
+```{r}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  select(-ssep3_median) %>% 
+  mutate(vote_yes = scales::number(vote_yes, accuracy = 0.1)) %>% 
+  filter(vote_yes < 30) %>% 
+  datatable()
+```
+
+### Low SEP, high % yes
+
+```{r}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  select(-ssep3_median) %>% 
+  mutate(vote_yes = scales::number(vote_yes, accuracy = 0.1)) %>% 
+  filter(vote_yes > 60 & 
+           as.numeric(median_ssep3_pop_d) <= 2) %>% 
+  arrange(desc(vote_yes)) %>% 
+  datatable()
+```
+
+### High SEP, low % yes
+
+```{r}
+ssep3_gem_21_pop %>% 
+  st_drop_geometry() %>% 
+  select(-ssep3_median) %>% 
+  mutate(vote_yes = scales::number(vote_yes, accuracy = 0.1)) %>% 
+  filter(vote_yes < 50 & 
+           as.numeric(median_ssep3_pop_d) >= 8) %>% 
+  arrange(desc(vote_yes)) %>% 
+  datatable()
+```
