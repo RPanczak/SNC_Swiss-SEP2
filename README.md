@@ -10,4 +10,7 @@ Based on:
 
 Updated using [Structural Survey](https://www.bfs.admin.ch/bfs/en/home/statistics/population/surveys/se.html) data linked to [Federal Register of Buildings and Dwellings](https://www.bfs.admin.ch/bfs/en/home/registers/federal-register-buildings-dwellings.html) and updated definitions of n'hoods. 
 
-(CC BY-NC-SA 4.0)
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
