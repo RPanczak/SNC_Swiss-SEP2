@@ -4,61 +4,61 @@ library(sf)
 library(ggplot2)
 library(RColorBrewer)
 
-# # #################################################
-# # statpop figures needed for carto weights
-# 
-# statpop18 <- read_csv("data-raw/statpop-open/ag-b-00.03-vz2018statpop/STATPOP2018_GMDE.csv") %>%
-#   select(GDENR, B18BTOT) %>%
-#   rename(GMDNR = GDENR)
-# 
-# str(statpop18)
-# View(statpop18)
-# 
-# # Staatswald Galm
-# # C'za Cadenazzo/Monteceneri
-# # C'za Capriasca/Lugano
+# #################################################
+# statpop figures needed for carto weights
 
-# # #################################################
-# # shape files for cartogram input
-# 
-# gem <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1g18.shp",
-#                options = "ENCODING=WINDOWS-1252") %>%
-#   select(GMDNR, GMDNAME ) %>%
-#   left_join(statpop18) %>%
-#   filter(!is.na(B18BTOT))
-# 
-# str(gem)
-# View(st_drop_geometry(gem))
-# 
-# st_write(gem, "data/ag-b-00.03-875-gg18/gem-statpop-18.shp")
-# 
-# lake <- st_read("data-raw/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1s18.shp",
-#                 options = "ENCODING=WINDOWS-1252") %>%
-#   select(SEENAME)
-# 
-# st_write(lake, "data/ag-b-00.03-875-gg18/lake.shp")
-# 
-# canton <- st_read("data-raw/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1k20.shp",
-#                   options = "ENCODING=WINDOWS-1252") %>%
-#   select(KTNAME)
-# 
-# st_write(canton, "data/ag-b-00.03-875-gg18/canton.shp")
+statpop18 <- read_csv("data-raw/BfS/ag-b-00.03-vz2018statpop/STATPOP2018_GMDE.csv") %>%
+  select(GDENR, B18BTOT) %>%
+  rename(GMDNR = GDENR)
+
+str(statpop18)
+View(statpop18)
+
+# Staatswald Galm
+# C'za Cadenazzo/Monteceneri
+# C'za Capriasca/Lugano
 
 # #################################################
-# java -Xmx1024m -jar c/projects/ISPM_geo/software/ScapeToad-v11/ScapeToad.jar
+# shape files for cartogram input
+
+gem <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1g18.shp",
+               options = "ENCODING=WINDOWS-1252") %>%
+  select(GMDNR, GMDNAME ) %>%
+  left_join(statpop18) %>%
+  filter(!is.na(B18BTOT))
+
+str(gem)
+View(st_drop_geometry(gem))
+
+st_write(gem, "data/BfS/ag-b-00.03-875-gg18/gem-statpop-18.shp")
+
+lake <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg18/ggg_2018-LV95/shp/g1s18.shp",
+                options = "ENCODING=WINDOWS-1252") %>%
+  select(SEENAME)
+
+st_write(lake, "data/BfS/ag-b-00.03-875-gg18/lake.shp")
+
+canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1k20.shp",
+                  options = "ENCODING=WINDOWS-1252") %>%
+  select(KTNAME)
+
+st_write(canton, "data/BfS/ag-b-00.03-875-gg18/canton.shp")
+
+# #################################################
+# java -Xmx1024m -jar ../ISPM_geo/software/ScapeToad-v11/ScapeToad.jar
 # java -Xmx1024m -jar ScapeToad.jar
 
 # #################################################
 # shape files from scapetoad
 
-gem_carto <- st_read("data/ag-b-00.03-875-gg18/gem-statpop-18-carto.shp",
+gem_carto <- st_read("data/BfS/ag-b-00.03-875-gg18/gem-statpop-18-carto.shp",
                      options = "ENCODING=WINDOWS-1252") %>% 
   select(-B18BTOTDens, -SizeError)
 
-lake_carto <- st_read("data/ag-b-00.03-875-gg18/lake-carto.shp",
+lake_carto <- st_read("data/BfS/ag-b-00.03-875-gg18/lake-carto.shp",
                       options = "ENCODING=WINDOWS-1252")
 
-canton_carto <- st_read("data/ag-b-00.03-875-gg18/canton-carto.shp",
+canton_carto <- st_read("data/BfS/ag-b-00.03-875-gg18/canton-carto.shp",
                         options = "ENCODING=WINDOWS-1252")
 
 plot(st_geometry(gem_carto))
@@ -72,7 +72,8 @@ plot(st_geometry(canton_carto), add = TRUE, col = NA, border = "grey40")
 
 ssep3_user_geo <- readRDS("FINAL/RDS/ssep3_user_geo.Rds") 
 
-gem18 <- readRDS("../ISPM_geo/data/swissBOUNDARIES3D/gem18.Rds")
+gem18 <- readRDS("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem18.Rds") %>% 
+  st_transform(2056)
 
 # overlay
 ssep3_gem_18_sum <- 
@@ -80,7 +81,8 @@ ssep3_gem_18_sum <-
   st_drop_geometry() %>% 
   group_by(GMDNR) %>% 
   summarise(ssep3_mean = mean(ssep3),
-            ssep3_median = median(ssep3))
+            ssep3_median = median(ssep3)) %>% 
+  mutate(decile = ntile(ssep3_median, 10))
 
 ssep3_gem_18_carto <- gem_carto %>% 
   left_join(ssep3_gem_18_sum)
@@ -97,7 +99,8 @@ ggplot() +
                                override.aes = list(alpha = 1, shape = 16, size = 3)))
 
 
-ggsave("carto/03_cartogram-r-median.png", width = 297, height = 210, units = "mm", dpi = 300)
+ggsave("carto/03_cartogram-r-median.png", 
+       width = 297, height = 210, units = "mm", dpi = 300)
 
 
 ggplot() + 
@@ -112,4 +115,19 @@ ggplot() +
                                override.aes = list(alpha = 1, shape = 16, size = 3)))
 
 
-ggsave("carto/03_cartogram-r-mean.png", width = 297, height = 210, units = "mm", dpi = 300)
+ggsave("carto/03_cartogram-r-mean.png", 
+       width = 297, height = 210, units = "mm", dpi = 300)
+
+# for hex on website
+ggplot() + 
+  geom_sf(data = lake_carto, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
+  geom_sf(data = ssep3_gem_18_carto, aes(fill = factor(decile)), 
+          colour = NA,
+          size = 0.1) +
+  geom_sf(data = canton_carto, fill = NA, color = "white", size = 0.1) +
+  scale_fill_brewer(palette = "PuOr", direction = 1) +
+  theme_void() + theme(legend.position = "none") 
+
+ggsave("../../external/website/content/project/swisssep/carto.png", 
+       width = 297, height = 210, units = "mm", dpi = 300)
+
