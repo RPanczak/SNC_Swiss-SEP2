@@ -8,6 +8,7 @@ library(haven)
 library(dplyr)
 library(sf)
 
+# sep results
 ssep2_user <- read_dta("data-raw/Swiss-SEP2/ssep2_user.dta") 
 # View(ssep2_user)
 
@@ -25,3 +26,23 @@ ssep2_user_geo <- ssep2_user %>%
 write_rds(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.Rds") 
 
 # st_write(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.shp", delete_dsn = TRUE)
+
+# sep components
+ssep2_components <- read_dta("data-raw/Swiss-SEP2/ssep2_components.dta")
+
+# View(ssep2_components)
+
+write_rds(ssep2_components, "data/Swiss-SEP2/ssep2_components.Rds") 
+
+ssep2_components_geo <- ssep2_components %>% 
+  # distinct(.keep_all = TRUE) %>% 
+  st_as_sf(coords = c("geox", "geoy"), 
+           crs = 2056,
+           remove = FALSE)
+
+# plot(st_geometry(ssep2_components_geo))
+# View(st_drop_geometry(ssep2_components_geo))
+
+write_rds(ssep2_components_geo, "data/Swiss-SEP2/ssep2_components_geo.Rds") 
+
+# st_write(ssep2_components_geo, "data/Swiss-SEP2/ssep2_components_geo.shp", delete_dsn = TRUE)

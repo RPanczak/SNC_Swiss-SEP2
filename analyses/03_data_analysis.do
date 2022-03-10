@@ -161,7 +161,7 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{PCA on n'hood aghgregated characteristics}
+\section{PCA on n'hood aggregated characteristics}
 ***/
 
 texdoc s , nolog // nodo   
@@ -172,7 +172,25 @@ mmerge gisid_orig using "data\NEIGHB_RENT_PREP_AGG", t(1:1)
 assert _merge == 3
 drop _merge 
 
+* saving index 'components'
+preserve 
+
+	keep gisid_orig ocu1p edu1p ppr1 rent
+
+	ren gisid_orig gisid
+
+	mmerge gisid using "data/ORIGINS", t(1:n) ukeep(buildid geox geoy)
+	order gisid buildid geox geoy, first 
+	keep if _merge==3
+	drop _merge
+
+	bysort gisid: keep if _n == 1
+	save "$pp/data-raw/Swiss-SEP2/ssep2_components", replace
+	
+restore
+
 texdoc s c 
+
 
 * INDEX AS PCA >> USING BROADEST VERSION OF 'LOW' OCCUPATIONS
 texdoc s  // , nodo   
@@ -266,6 +284,7 @@ drop _merge
 preserve
 	keep gisid geox geoy ssep2 ssep2_t ssep2_q ssep2_d
 	bysort gisid: keep if _n == 1
+	compress
 	save "$pp/data-raw/Swiss-SEP2/ssep2_user", replace
 restore
 
