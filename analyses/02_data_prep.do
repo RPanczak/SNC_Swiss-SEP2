@@ -473,12 +473,11 @@ texdoc s , nolog // nodo
 forv YR = 12/15 { 
 
 	if `YR' <= 14 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin using "$co/data-raw/SE/SE`YR'_pers_full", clear 
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat urban nat_bin sopc_agg langmain1 migratstat using "$co/data-raw/SE/SE`YR'_pers_full", clear 
 	}
 
 	if `YR' == 15 { 
-		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin using "$co/data-raw/SE/SE`YR'_pers_full", clear 
-		gen urban = .
+		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin sopc_agg langmain1 migratstat using "$co/data-raw/SE/SE`YR'_pers_full", clear 
 	}
 		
 	order hhyid, a(sncid)
@@ -639,6 +638,27 @@ forv YR = 12/15 {
 	ta num_edu educ_curr , m 
 	*/
 	
+	* extra vars for table 1
+	if `YR' != 15 { 
+
+		order sopc_agg langmain1 migratstat urban, last
+		replace urban = 2 if urban == 3
+		replace urban = 3 if urban == 4
+		la de urban_enl 3 "Rural" 4 "", modify
+	}
+	
+	if `YR' == 15 { 
+		order sopc_agg langmain1 migratstat, last
+	}
+	
+	replace langmain1 = 14 if langmain1 >= 4 & langmain1 <= 13
+	fre langmain1
+	
+	replace migratstat = 6 if migratstat >= 3 & migratstat <= 5
+	
+	la de migratstat2_enl 1 "Swiss without migrant background" 2 "Swiss with migrant background" 6 "Foreigner of 1st-3rd generation", replace
+	fre migratstat
+	
 	compress 
 	sa "data/SE`YR'_pers_full", replace
 
@@ -654,10 +674,7 @@ forv YR = 12/15 {
 	sort hhyid
 	order hhyid, a(sncid)
 	
-	* ACHTUNG THIS WAS ONLY SPOTTED AND ADDED AFTER ALL CALCULATIONS WERE ALMOST DONE
-	* SMALL MISTAKE AFFECTING 0.15% OF RENTED 3-5 HOUSEHOLDS WHICH ARE PART OR RENT N'HOODS BUT SHOULDN'T HAVE BEEN
-	* CORRECT AT NEXT STAGE? SORRY! 
-	* gen rent35 = ( inrange(flatrooms, 3, 5) & !mi(rentnet) ) // OLD >> INCORRECT!!!
+	* RENI in 3-5 bed (ninmissing rent & area!)
 	gen rent35 = ( inrange(flatrooms, 3, 5) & !mi(rentnet) & !mi(flatarea) )
 	
 	* univar rentnet if rent35, dec(0)
@@ -725,17 +742,17 @@ forv YR = 12/15 {
 	
 	if `YR' == 15 { 
 	
-		mmerge sncid using "$co/data-raw/SE/SE15_hh_full", t(1:1) ukeep(egid)
+		mmerge sncid using "data/SE15_egid", t(1:1) ukeep(buildid)
 
-		assert _merge != 1 // no snc data ???
-		drop if _merge == 2 // no SE data available
+		assert _merge != 2 
+		
+		count if  _merge == 1
+		texdoc local fbd_`YR' = `r(N)'	
+	
+		drop if _merge == 1
 		drop _merge
 		
-		ren egid r`YR'_buildid
-
-		count if mi(r`YR'_buildid) | r`YR'_buildid == -9 // no building ID
-		texdoc local mhi_`YR' = `r(N)'	
-		drop if mi(r`YR'_buildid) | r`YR'_buildid == -9
+		ren buildid r15_buildid
 	}
 	
 
@@ -743,12 +760,25 @@ forv YR = 12/15 {
 	ren r`YR'_buildid buildid
 	mmerge buildid using "data/ORIGINS", t(n:1) ukeep(gisid geox geoy year)
 
-	count if _merge == 1
-	texdoc local fbd_`YR' = `r(N)'	
+	if `YR' <= 14 { 
 
-	drop if _merge == 1  // no coords or funky building
-	drop if _merge == 2 // no SE data available
+		count if _merge == 1
+		texdoc local fbd_`YR' = `r(N)'	
+	}
+
+	drop if _merge ==  1  // no coords or funky building
+	drop if _merge ==  2 // no SE data available
 	drop _merge
+
+	* BRING URBAN MISSING IN 15
+	
+	if `YR' == 15 { 
+
+		mmerge buildid using "data/SE15_urban.dta", t(n:1) umatch(r15_buildid) 
+		drop if _merge == 2
+		drop _merge
+		rename r15_urban urban
+	}
 
 	order buildid gisid geox geoy year, a(hhyid)
 	gen SE = 2000 + `YR'
@@ -813,6 +843,8 @@ forv YR = 13/15 {
 
 	rm "data/SE`YR'_miss.dta"
 }	
+
+rm "data/SE12_miss.dta"
 
 sort sncid SE, stable 
 * by sncid: gen n = _N 
@@ -1100,7 +1132,7 @@ forv PART = 1/6 {
 		append using "data/NEIGHB_RENT"
 		sa "data/NEIGHB_RENT", replace
 	}
-
+	
 }
 
 texdoc s c 
