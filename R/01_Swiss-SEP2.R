@@ -9,10 +9,11 @@ library(dplyr)
 library(sf)
 
 # sep results
-ssep2_user <- read_dta("data-raw/Swiss-SEP2/ssep2_user.dta") 
+ssep2_user <- read_dta("data-raw/Swiss-SEP2/ssep2_user.dta")%>% 
+  zap_label()
 # View(ssep2_user)
 
-# write_rds(ssep2_user, "data/Swiss-SEP2/ssep2_user.Rds") 
+write_rds(ssep2_user, "data/Swiss-SEP2/ssep2_user.Rds")
 
 ssep2_user_geo <- ssep2_user %>% 
   # distinct(.keep_all = TRUE) %>% 
@@ -28,7 +29,8 @@ write_rds(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.Rds")
 # st_write(ssep2_user_geo, "data/Swiss-SEP2/ssep2_user_geo.shp", delete_dsn = TRUE)
 
 # sep components
-ssep2_components <- read_dta("data-raw/Swiss-SEP2/ssep2_components.dta")
+ssep2_components <- read_dta("data-raw/Swiss-SEP2/ssep2_components.dta") %>% 
+  zap_label()
 
 # View(ssep2_components)
 
