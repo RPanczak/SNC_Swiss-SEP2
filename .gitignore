@@ -36,6 +36,7 @@ bfg*
 *.qgz
 *.pgw
 *.docx
+/carto/*.gpkg
 /carto/tamedia
 /admin
 /VS
