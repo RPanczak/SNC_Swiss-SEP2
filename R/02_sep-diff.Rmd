@@ -125,6 +125,8 @@ tm_shape(top20_dist) +
 
 # Exact values discrepancies
 
+## Bland-Altman 1
+
 ```{r}
 p_load(blandr)
 
@@ -138,7 +140,9 @@ blandr.output.text(bas_data$ssep1, bas_data$ssep2, sig.level=0.95)
 p_unload(blandr)
 ```
 
-```{r echo=FALSE}
+## Bland-Altman 2
+
+```{r}
 p_load(BlandAltmanLeh)
 
 bas_list <- bland.altman.stats(bas_data$ssep1, bas_data$ssep2)
@@ -321,7 +325,7 @@ tm_shape(diff_plus) +
 #                      )))
 ```
 
-Example of [redeveloped area](https://goo.gl/maps/VLQShvxNNjmCpPam9) that migh experienced a bump.
+Example of [redeveloped area](https://goo.gl/maps/VLQShvxNNjmCpPam9) that might have experienced a bump.
 
 ## SSEP 2.0 lower
 
