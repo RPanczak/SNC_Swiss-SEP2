@@ -27,9 +27,9 @@ Version 09:~Excluding SNC-SE experimentals
 
 * ***************************************************
 
-qui do "C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do"
-
 qui version 15
+
+qui do "C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do"
 
 texdoc init $td/report_sep2_prep.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
@@ -808,7 +808,7 @@ sort sncid SE, stable
 by sncid: keep if _n == _N 
 
 * age cat
-egen age_cat = cut(age), at(19, 30, 40, 50, 65, 110) label
+egen age_cat = cut(age), at(18, 35, 50, 65, 110) label
 order age_cat, a(age)
 
 /*
