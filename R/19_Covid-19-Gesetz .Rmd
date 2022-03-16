@@ -32,14 +32,13 @@ set.seed(12345)
 library(pacman) 
 p_load(tidyverse, haven, readxl, magrittr,
        sjmisc, weights, ggridges, hrbrthemes, DT,
-       sf, tmap)
+       sf, tmap,
+       swissdd)
 
 tmap_mode("view")
 
 # removed from cran?
 # devtools::install_github("politanch/swissdd")
-
-p_load(swissdd)
 ```
 
 # Data 
@@ -47,12 +46,12 @@ p_load(swissdd)
 
 ## Communities
 
-swissBOUNDARIES3D **2021** from [swisstopo](https://shop.swisstopo.admin.ch/en/products/landscape/boundaries3D).  
+swissBOUNDARIES3D **Jan 2022** from [swisstopo](https://shop.swisstopo.admin.ch/en/products/landscape/boundaries3D).  
 
 ```{r include=FALSE}
-gem_st <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_21.Rds") %>% 
+gem_st <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_22.Rds") %>% 
   st_transform(crs = 2056) %>% 
-  filter(! GMDNR %in% c(2391, 5391, 5394))
+  rename(mun_id = GMDNR)
 ```
 
 swisstopo dataset consists of `r scales::number(length(unique(gem_st$GMDNR)), big.mark = ",")` communities.
@@ -60,53 +59,59 @@ swisstopo dataset consists of `r scales::number(length(unique(gem_st$GMDNR)), bi
 
 ## June vote
 
-> Bundesgesetz vom 25.09.2020 über die gesetzlichen Grundlagen für Verordnungen des Bundesrates zur Bewältigung der Covid-19-Epidemie (Covid-19-Gesetz)
+Data from `swissdd` [package](https://github.com/politanch/swissdd)  
 
-Data `swissdd` [package](https://github.com/politanch/swissdd)  
+### Data 
+
+> Bundesgesetz vom 25.09.2020 über die gesetzlichen Grundlagen für Verordnungen des Bundesrates zur Bewältigung der Covid-19-Epidemie (Covid-19-Gesetz)
 
 ```{r}
 covid_jun <- get_nationalvotes(votedates = "2021-06-13", 
                                geolevel = "municipality") %>% 
   filter(name == "Bundesgesetz über die gesetzlichen Grundlagen für Verordnungen des Bundesrates zur Bewältigung der Covid-19-Epidemie (Covid-19-Gesetz)") %>% 
   select(-name)
+```
 
+### Results preview
+
+```{r echo=FALSE}
 plot_nationalvotes(votedate = "2021-06-13", 
                    vote_id = 6430, geolevel = "municipality")
 ```
 
-Excluding cantonal votes from abroad:  
+### Votes from abroad  
+
+Are excluded
 
 ```{r}
 covid_jun %>% 
-  filter(str_detect(mun_name, fixed("Ausland")) | str_detect(mun_name, fixed("l'étranger")))
+  filter(str_detect(mun_name, fixed("Ausland")) | str_detect(mun_name, fixed("l'étranger"))) %>% 
+  select(mun_name, jaStimmenAbsolut, jaStimmenInProzent)
 ```
 
 ```{r}
 covid_jun %<>% 
   filter(! str_detect(mun_name, fixed("Ausland"))) %>% 
-  filter(! str_detect(mun_name, fixed("l'étranger")))
+  filter(! str_detect(mun_name, fixed("l'étranger"))) %>% 
+  mutate(mun_id = as.numeric(mun_id))
 ```
 
 Dataset consists of `r scales::number(length(unique(covid_jun$GMDNR)), big.mark = ",")` communities.
 
-## Link
+## Link to municipalities
 
 Using `GMDNR` for deterministic linkage.  
 
 ```{r}
-gem_st %<>% 
-  rename(mun_id = GMDNR) %>% 
-  left_join(covid_jun %<>% mutate(mun_id = as.numeric(mun_id)))
+covid_jun_gem <- gem_st %>%  
+  left_join(covid_jun)
 ```
 
-There are few communities that exist in the voting dataset but not on the map:  
+<!-- There are few communities that exist in the voting dataset but not on the map:   -->
 
-```{r eval=FALSE, include=FALSE}
-length(unique(gem_st$mun_id))
-
+```{r eval=FALSE}
 covid_jun %>% 
   select(mun_id, mun_name) %>%
-  mutate(GMDNR = as.numeric(mun_id)) %>% 
   anti_join(st_drop_geometry(gem_st)) %>% 
   arrange(mun_name)
 ```
@@ -114,13 +119,10 @@ covid_jun %>%
 There are few communities that exist on the map but do not exist in the voting dataset:   
 
 ```{r echo=FALSE}
-gem_st %>% 
+covid_jun_gem %>% 
   st_drop_geometry() %>% 
   filter(is.na(jaStimmenInProzent)) %>% 
-  select(mun_id) %>% 
-  rename(GMDNR = mun_id) %>% 
-  left_join(st_drop_geometry(read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21-new/gem_21.Rds"))) %>% 
-  arrange(GMDNAME)
+  select(mun_id, NAME) %>% View()
 ```
 
 
@@ -128,29 +130,37 @@ gem_st %>%
 
 > Änderung des Bundesgesetzes über die gesetzlichen Grundlagen für Verordnungen des Bundesrates zur Bewältigung der Covid-19-Epidemie (Covid-19-Gesetz) (Härtefälle, Arbeitslosenversicherung, familienergänzende Kinderbetreuung, Kulturschaffende, Veranstaltungen)  
 
-Data `swissdd` [package](https://github.com/politanch/swissdd)  
+### Data 
 
 ```{r}
 covid_nov <- get_nationalvotes(votedates = "2021-11-28", 
                                geolevel = "municipality") %>% 
   filter(name == "Änderung des Bundesgesetzes über die gesetzlichen Grundlagen für Verordnungen des Bundesrates zur Bewältigung der Covid-19-Epidemie (Covid-19-Gesetz) (Härtefälle, Arbeitslosenversicherung, familienergänzende Kinderbetreuung, Kulturschaffende, Veranstaltungen)") %>% 
   select(-name)
+```
 
+### Results preview
+
+```{r echo=FALSE}
 plot_nationalvotes(votedate = "2021-11-28", 
                    vote_id = 6500, geolevel = "municipality")
 ```
 
-Excluding cantonal votes from abroad:  
+### Votes from abroad  
+
+Are excluded
 
 ```{r}
 covid_nov %>% 
-  filter(str_detect(mun_name, fixed("Ausland")) | str_detect(mun_name, fixed("l'étranger")))
+  filter(str_detect(mun_name, fixed("Ausland")) | str_detect(mun_name, fixed("l'étranger"))) %>% 
+  select(mun_name, jaStimmenAbsolut, jaStimmenInProzent)
 ```
 
-```{r}
+```{r include=FALSE}
 covid_nov %<>% 
   filter(! str_detect(mun_name, fixed("Ausland"))) %>% 
-  filter(! str_detect(mun_name, fixed("l'étranger")))
+  filter(! str_detect(mun_name, fixed("l'étranger"))) %>% 
+  mutate(mun_id = as.numeric(mun_id))
 ```
 
 Dataset consists of `r scales::number(length(unique(covid_nov$GMDNR)), big.mark = ",")` communities.
@@ -160,19 +170,15 @@ Dataset consists of `r scales::number(length(unique(covid_nov$GMDNR)), big.mark 
 Using `GMDNR` for deterministic linkage.  
 
 ```{r}
-gem_st %<>% 
-  rename(mun_id = GMDNR) %>% 
-  left_join(covid_nov %<>% mutate(mun_id = as.numeric(mun_id)))
+covid_nov_gem <- gem_st %>%  
+  left_join(covid_nov)
 ```
 
-There are few communities that exist in the voting dataset but not on the map:  
+<!-- There are few communities that exist in the voting dataset but not on the map:   -->
 
-```{r eval=FALSE, include=FALSE}
-length(unique(gem_st$mun_id))
-
+```{r eval=FALSE}
 covid_nov %>% 
   select(mun_id, mun_name) %>%
-  mutate(GMDNR = as.numeric(mun_id)) %>% 
   anti_join(st_drop_geometry(gem_st)) %>% 
   arrange(mun_name)
 ```
@@ -180,20 +186,11 @@ covid_nov %>%
 There are few communities that exist on the map but do not exist in the voting dataset:  
 
 ```{r echo=FALSE}
-gem_st %>% 
+covid_nov_gem %>% 
   st_drop_geometry() %>% 
   filter(is.na(jaStimmenInProzent)) %>% 
-  select(mun_id) %>% 
-  rename(GMDNR = mun_id) %>% 
-  left_join(st_drop_geometry(read_rds("../ISPM_geo/data/ag-b-00.03-875-gg21-new/gem_21.Rds"))) %>% 
-  arrange(GMDNAME)
+  select(mun_id, NAME)
 ```
-
-
-
-
-
-
 
 
 ## Swiss-SEP 
