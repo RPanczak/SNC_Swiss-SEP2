@@ -13,7 +13,7 @@ output:
   distill::distill_article:
     highlight: pygments
     toc: true
-    toc_depth: 1
+    toc_depth: 2
     number_sections: true
 editor_options: 
   chunk_output_type: console
@@ -55,7 +55,7 @@ mu <- Hmisc::markupSpecs$html
 
 # Data 
 
-## Communities
+## Municipalities
 
 swissBOUNDARIES3D **Jan 2022** from [swisstopo](https://shop.swisstopo.admin.ch/en/products/landscape/boundaries3D).  
 
@@ -65,11 +65,11 @@ gem_22 <- read_rds("../ISPM_geo/data/swisstopo/swissBOUNDARIES3D/gem_22.Rds") %>
   rename(mun_id = GMDNR)
 ```
 
-swisstopo dataset consists of `r scales::number(length(unique(gem_22$GMDNR)), big.mark = ",")` communities.
+swisstopo dataset consists of `r scales::number(length(unique(gem_22$mun_id)), big.mark = ",")` municipalities.  
 
 ## June vote
 
-Data from `swissdd` [package](https://github.com/politanch/swissdd)  
+Data from `swissdd` [package](https://github.com/politanch/swissdd).    
 
 ### Data 
 
@@ -320,7 +320,7 @@ write_rds(ssep3_gem_22_pop, "data/ssep3_gem_22_pop.rds")
 
 Final map using median index; bubbles scaled to number of people (2019)  
 
-```{r, layout="l-body-outset"}
+```{r echo=FALSE, layout="l-body-outset"}
 ssep3_gem_22_pop %>% 
   tm_shape() +
   tm_dots(size = "pop", col = "median_ssep3_pop_d", 
