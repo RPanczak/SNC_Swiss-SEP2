@@ -11,9 +11,9 @@ Data analysis file
 
 * ***************************************************
 
-qui do "C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do"
-
 qui version 15
+
+qui do "C:\projects\SNC_Swiss-SEP2\Stata\00_run_first.do"
 
 texdoc init $td\report_sep2_analysis.tex, replace logdir(log) grdir(gr) prefix("ol_") cmdstrip lbstrip gtstrip linesize(120)
 	
