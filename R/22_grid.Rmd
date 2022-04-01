@@ -1,0 +1,172 @@
+---
+title: "Swiss-SEP project"
+description: "Aggregating point data to grid"
+date: "`r Sys.Date()`"
+author:
+  - name: Radoslaw Panczak 
+    url: https://github.com/RPanczak
+    affiliation: ISPM
+    affiliation_url: https://www.ispm.unibe.ch/
+    orcid_id: 0000-0001-5141-683X
+output:
+  distill::distill_article:
+    highlight: pygments
+    toc: true
+    toc_depth: 1
+    number_sections: true
+editor_options: 
+  chunk_output_type: console
+---
+
+<!-- ------------------------------------------------------------ --> 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
+                      # fig.width=8, fig.height=6, 
+                      # out.width="800px", out.height="600px",
+                      dpi=300)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+options(scipen=999)
+set.seed(12345)
+library(pacman) 
+p_load(tidyverse, 
+       sf, tmap)
+
+tmap_mode("view")
+import::from("sjmisc", "frq")
+```
+
+# Ancillary data
+
+```{r}
+canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1k20.shp") %>% 
+  st_transform(crs = 2056) %>% 
+  select(KTNR, KTNAME)
+
+lakes <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp") %>% 
+  st_transform(crs = 2056)
+rivers <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp") %>% 
+  st_transform(crs = 2056)
+```
+
+# SEP
+
+```{r}
+sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>% 
+  select(gisid, ssep3, ssep3_d)
+```
+
+# STATPOP offset
+
+Used to define `offset` for `st_make_grid`
+
+```{r eval=FALSE}
+offset_bfs <- read_delim("data-raw/BfS/ag-b-00.03-vz2020statpop/STATPOP2020.zip", 
+                         delim = ";", escape_double = FALSE, trim_ws = TRUE)[] %>% 
+  mutate_all(as.integer) %>%  
+  summarise(min_x = min(X_KOORD),
+            min_y = min(Y_KOORD)) %>% 
+  st_as_sf(coords = c("min_x", "min_y"), 
+           crs = 21781,
+           remove = FALSE)
+
+write_rds(offset_bfs, "data/grid/offset_bfs.Rds")
+```
+
+```{r}
+offset_bfs <- read_rds("data/grid/offset_bfs.Rds")
+```
+
+# Generate grid
+
+100m grid, with lower left corner defined using offset from above.  
+
+Also, adding ID for each cell (based on row number).   
+
+```{r eval=FALSE}
+gc()
+
+country <- canton %>% 
+  st_make_grid(cellsize = 500, 
+               offset = c(offset_bfs$min_x, offset_bfs$min_y),
+               square = FALSE) %>% 
+  st_sf() %>%
+  st_cast("POLYGON") %>% 
+  st_filter(canton, join = st_covers) %>%
+  mutate(ID1 = row_number()) %>% 
+  relocate(ID1)
+
+write_rds(country, "data/grid/country.Rds")
+```
+
+```{r include=FALSE}
+rm(offset_bfs)
+country <- read_rds("data/grid/country.Rds")
+```
+
+# Summarize per cell
+
+```{r}
+gc()
+
+sep3_grid <- 
+  st_join(sep3, country, join = st_intersects) %>% 
+  st_drop_geometry() %>% 
+  group_by(ID1) %>% 
+  summarise(n = n(),
+            median_d = median(ssep3_d), 
+            median = median(ssep3)) %>% 
+  ungroup() %>% 
+  mutate(median_d = factor(round(median_d),
+                           levels = 1:10,
+                           labels = c("1st - lowest",
+                                      "2", "3", "4",
+                                      "5th decile",
+                                      "6", "7", "8", "9",
+                                      "10th - highest")))
+
+# frq(sep3_grid$median_d)
+
+sep3_grid_sf <- country %>% 
+  inner_join(sep3_grid)
+
+# plot(sep3_grid_sf[, 3])
+
+sep3_grid_clip_sf <- sep3_grid_sf %>% 
+  st_intersection(st_union(canton)) %>% 
+  st_collection_extract("POLYGON") %>% 
+  st_difference(st_union(lakes)) %>% 
+  st_collection_extract("POLYGON")
+
+rm(country, sep3_grid); gc()
+```
+
+# Plot
+
+```{r}
+ggplot() + 
+  geom_sf(data = sep3_grid_clip_sf, 
+          aes(fill = median_d), 
+          alpha = 0.66, color = NA) +
+  geom_sf(data = lakes, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
+  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.5) + 
+  scale_fill_brewer(palette = "RdYlGn") +
+  theme_void() + 
+  theme(legend.position = c(.05, .95), 
+        legend.justification = c("left", "top"),
+        legend.direction = "vertical") +
+  guides(fill = guide_legend(title = "Swiss-SEP 3",
+                             override.aes = list(alpha = 1)))
+
+ggsave("carto/07_sep3-grid.png", 
+       width = 297, height = 210, units = "mm", dpi = 300,
+       bg = "white")
+```
+
+
+# Making a raster
+
+```{r}
+rm(sep3); gc()
+```
+
