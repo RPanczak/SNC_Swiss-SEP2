@@ -30,7 +30,8 @@ options(scipen=999)
 set.seed(12345)
 library(pacman) 
 p_load(tidyverse, 
-       sf, tmap)
+       sf, tmap,
+       ggpubr)
 
 # tmap_mode("plot")
 import::from("sjmisc", "frq")
@@ -53,7 +54,9 @@ lakes <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyym
 
 ```{r}
 sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>% 
-  select(gisid, ssep3, ssep3_d)
+  select(gisid, 
+         ssep2, ssep2_d,
+         ssep3, ssep3_d)
 ```
 
 # STATPOP offset
@@ -71,6 +74,7 @@ offset_bfs <- read_delim("data-raw/BfS/ag-b-00.03-vz2020statpop/STATPOP2020.zip"
            remove = FALSE)
 
 write_rds(offset_bfs, "data/grid/offset_bfs.Rds")
+offset_bfs <- read_rds("data/grid/offset_bfs.Rds")
 ```
 
 # Generate grid
@@ -201,16 +205,26 @@ sep3_grid_hex_500 <-
   st_drop_geometry() %>% 
   group_by(ID1) %>% 
   summarise(n = n(),
-            median_d = median(ssep3_d), 
-            median = median(ssep3)) %>% 
+            median2_d = median(ssep2_d), 
+            median2 = median(ssep2),
+            median3_d = median(ssep3_d), 
+            median3 = median(ssep3)
+  ) %>% 
   ungroup() %>% 
-  mutate(median_d = factor(round(median_d),
-                           levels = 1:10,
-                           labels = c("1st - lowest",
-                                      "2", "3", "4",
-                                      "5th decile",
-                                      "6", "7", "8", "9",
-                                      "10th - highest")))
+  mutate(median2_d = factor(round(median2_d),
+                            levels = 1:10,
+                            labels = c("1st - lowest",
+                                       "2", "3", "4",
+                                       "5th decile",
+                                       "6", "7", "8", "9",
+                                       "10th - highest")),
+         median3_d = factor(round(median3_d),
+                            levels = 1:10,
+                            labels = c("1st - lowest",
+                                       "2", "3", "4",
+                                       "5th decile",
+                                       "6", "7", "8", "9",
+                                       "10th - highest")))
 
 # frq(sep3_grid$median_d)
 
@@ -240,25 +254,72 @@ sep3_grid_hex_500_sf <- read_rds("data/grid/sep3_grid_hex_500_sf.Rds")
 #### Plot
 
 ```{r}
-ggplot() + 
+median2_d <- 
+  ggplot() + 
   geom_sf(
-    data = sep3_grid_hex_500_sf,
+    data = sep3_grid_hex_500_sf %>% sample_n(100),
     # data = sep3_grid_hex_500_clip_sf,
-    aes(fill = median_d),
-    alpha = 0.66, color = NA) +
-  geom_sf(data = lakes, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
-  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.5) + 
+    aes(fill = median2_d),
+    alpha = 0.66, color = NA,
+    show.legend = TRUE) +
   scale_fill_brewer(palette = "RdYlGn") +
+  geom_sf(data = lakes, 
+          color = NA, fill = rgb(156, 213, 248, max = 255),
+          show.legend = FALSE) + 
+  geom_sf(data = canton, 
+          fill = NA, color = gray(.5), size = 0.4,
+          show.legend = FALSE) + 
   theme_void() + 
-  theme(legend.position = c(.05, .95), 
+  theme(legend.position = c(.03, 1), 
         legend.justification = c("left", "top"),
         legend.direction = "vertical",
-        plot.margin = unit(c(-5, 0, -5, -5), "mm")) +
-  guides(fill = guide_legend(title = "Swiss-SEP 3 index",
-                             override.aes = list(alpha = 1)))
+        plot.margin = unit(c(-10, -10, -10, -5), "mm"),
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, vjust = -5)) +
+  guides(fill = guide_legend(override.aes = list(alpha = 1))) + 
+  ggtitle("Swiss-SEP 2 index")
 
-ggsave("carto/07_sep3-grid_hex_500.png", 
-       width = 297, height = 210, units = "mm", dpi = 300,
+
+median3_d <- 
+  ggplot() + 
+  geom_sf(
+    data = sep3_grid_hex_500_sf %>% sample_n(100),
+    # data = sep3_grid_hex_500_clip_sf,
+    aes(fill = median2_d),
+    alpha = 0.66, color = NA,
+    show.legend = FALSE) +
+  scale_fill_brewer(palette = "RdYlGn", guide = "none") +
+  geom_sf(data = lakes, 
+          color = NA, fill = rgb(156, 213, 248, max = 255),
+          aes(shape = factor(1, labels = "Lakes")),
+          show.legend = TRUE) + 
+  geom_sf(data = canton, 
+          aes(color = factor(1, labels = "Canton borders")),
+          fill = NA, size = 0.4,
+          show.legend = TRUE) +  
+  scale_color_manual(values = gray(.5)) +
+  theme_void() + 
+  theme(legend.position = c(.03, 1), 
+        legend.justification = c("left", "top"),
+        legend.direction = "vertical",
+        plot.margin = unit(c(-10, -10, -10, -5), "mm"),
+        legend.title = element_blank(),
+        plot.title = element_text(hjust = 0.5, vjust = -5)) +
+  guides(shape = guide_legend(override.aes = list(size = 1,
+                                                  color = NA)),
+         color = guide_legend(override.aes = list(fill = NA, 
+                                                  size = 1,
+                                                  color = gray(.5)))) + 
+  ggtitle("Swiss-SEP 3 index")
+
+ggarrange(
+  median2_d, median3_d, 
+  # labels = c("A", "B"),
+  ncol = 1
+)
+
+ggsave("carto/Figure1.png", 
+       width = 210, height = 297, units = "mm", dpi = 300,
        bg = "white")
 ```
 
