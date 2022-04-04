@@ -58,6 +58,21 @@ relief <- raster("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000
   as.data.frame() %>%
   rename(value = SMR1000_GRELI)
 gc()
+
+city_lines <- st_read("data/cities.shp") %>%
+  st_transform(crs = 2056)
+
+city_labels <- city_lines %>% 
+  st_cast("POINT") %>% 
+  group_by(name) %>%
+  slice(seq(2, n(), by = 2)) %>% 
+  ungroup()
+
+city_points <- city_lines %>% 
+  st_cast("POINT") %>% 
+  group_by(name) %>%
+  slice(seq(1, n(), by = 2)) %>% 
+  ungroup()
 ```
 
 # SEP
@@ -281,8 +296,7 @@ median2_d <-
               guide = "none") + 
   
   geom_sf(
-    data = sep3_grid_hex_500_sf, # %>% sample_n(100),
-    # data = sep3_grid_hex_500_clip_sf,
+    data = sep3_grid_hex_500_sf,
     aes(fill = median2_d),
     alpha = 0.66, color = NA,
     show.legend = TRUE) +
@@ -293,6 +307,22 @@ median2_d <-
   geom_sf(data = canton, 
           fill = NA, color = "black", size = 0.2,
           show.legend = FALSE) + 
+  
+  geom_sf(data = city_lines,
+          show.legend = FALSE,
+          inherit.aes = FALSE) +
+  
+  geom_sf(data = city_points,
+          size = 1,
+          show.legend = FALSE,
+          inherit.aes = FALSE) +
+  
+  geom_sf_label(data = city_labels,
+                label.size  = NA,
+                aes(label = name),
+                show.legend = FALSE,
+                inherit.aes = FALSE) +
+  
   theme_void() + 
   theme(legend.position = c(.03, 1), 
         legend.justification = c("left", "top"),
@@ -321,9 +351,8 @@ median3_d <-
               guide = "none") + 
   
   geom_sf(
-    data = sep3_grid_hex_500_sf, # %>% sample_n(100),
-    # data = sep3_grid_hex_500_clip_sf,
-    aes(fill = median2_d),
+    data = sep3_grid_hex_500_sf, 
+    aes(fill = median3_d),
     alpha = 0.66, color = NA,
     show.legend = FALSE) +
   scale_fill_brewer(palette = "RdYlGn", guide = "none") +
@@ -336,6 +365,22 @@ median3_d <-
           fill = NA, size = 0.2,
           show.legend = TRUE) +  
   scale_color_manual(values = "black") +
+  
+  geom_sf(data = city_lines,
+          show.legend = FALSE,
+          inherit.aes = FALSE) +
+  
+  geom_sf(data = city_points,
+          size = 1,
+          show.legend = FALSE,
+          inherit.aes = FALSE) +
+  
+  geom_sf_label(data = city_labels,
+                label.size  = NA,
+                aes(label = name),
+                show.legend = FALSE,
+                inherit.aes = FALSE) +
+  
   theme_void() + 
   theme(legend.position = c(.03, 1), 
         legend.justification = c("left", "top"),
@@ -355,7 +400,7 @@ ggarrange(
   ncol = 1
 )
 
-ggsave("carto/Figure1.png", 
+ggsave("analyses/Figure_1.png", 
        width = 210, height = 297, units = "mm", dpi = 300,
        bg = "white")
 ```
