@@ -11,6 +11,7 @@ ssep3_user_snc <- read_dta("FINAL/DTA/ssep3_user_snc.dta") %>%
 
 
 SE <- read_dta("data/SE.dta") %>% 
+  # filter(SE != 2014) %>% 
   zap_labels() %>% 
   left_join(ssep3_user_snc) %>% 
   filter(!is.na(ssep3_d)) %>% 
