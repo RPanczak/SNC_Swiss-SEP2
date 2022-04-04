@@ -29,7 +29,8 @@ knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(tidyverse, 
+p_load(tidyverse,
+       raster, 
        sf, tmap,
        ggpubr)
 
@@ -46,8 +47,17 @@ canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/sh
 
 lakes <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp") %>% 
   st_transform(crs = 2056)
+
 # rivers <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp") %>% 
 #   st_transform(crs = 2056)
+
+# rgdal::GDALinfo("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif")
+relief <- raster("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif") %>% 
+  mask(canton) %>% 
+  as("SpatialPixelsDataFrame") %>%
+  as.data.frame() %>%
+  rename(value = SMR1000_GRELI)
+gc()
 ```
 
 # SEP
@@ -256,8 +266,22 @@ sep3_grid_hex_500_sf <- read_rds("data/grid/sep3_grid_hex_500_sf.Rds")
 ```{r}
 median2_d <- 
   ggplot() + 
+  
+  geom_raster(
+    data = relief,
+    inherit.aes = FALSE,
+    aes(
+      x = x,
+      y = y,
+      alpha = value
+    )
+  ) +
+  scale_alpha(name = "",
+              range = c(0.4, 0),
+              guide = "none") + 
+  
   geom_sf(
-    data = sep3_grid_hex_500_sf %>% sample_n(100),
+    data = sep3_grid_hex_500_sf, # %>% sample_n(100),
     # data = sep3_grid_hex_500_clip_sf,
     aes(fill = median2_d),
     alpha = 0.66, color = NA,
@@ -267,7 +291,7 @@ median2_d <-
           color = NA, fill = rgb(156, 213, 248, max = 255),
           show.legend = FALSE) + 
   geom_sf(data = canton, 
-          fill = NA, color = gray(.5), size = 0.4,
+          fill = NA, color = "black", size = 0.2,
           show.legend = FALSE) + 
   theme_void() + 
   theme(legend.position = c(.03, 1), 
@@ -282,8 +306,22 @@ median2_d <-
 
 median3_d <- 
   ggplot() + 
+  
+  geom_raster(
+    data = relief,
+    inherit.aes = FALSE,
+    aes(
+      x = x,
+      y = y,
+      alpha = value
+    )
+  ) +
+  scale_alpha(name = "",
+              range = c(0.4, 0),
+              guide = "none") + 
+  
   geom_sf(
-    data = sep3_grid_hex_500_sf %>% sample_n(100),
+    data = sep3_grid_hex_500_sf, # %>% sample_n(100),
     # data = sep3_grid_hex_500_clip_sf,
     aes(fill = median2_d),
     alpha = 0.66, color = NA,
@@ -295,9 +333,9 @@ median3_d <-
           show.legend = TRUE) + 
   geom_sf(data = canton, 
           aes(color = factor(1, labels = "Canton borders")),
-          fill = NA, size = 0.4,
+          fill = NA, size = 0.2,
           show.legend = TRUE) +  
-  scale_color_manual(values = gray(.5)) +
+  scale_color_manual(values = "black") +
   theme_void() + 
   theme(legend.position = c(.03, 1), 
         legend.justification = c("left", "top"),
@@ -309,12 +347,11 @@ median3_d <-
                                                   color = NA)),
          color = guide_legend(override.aes = list(fill = NA, 
                                                   size = 1,
-                                                  color = gray(.5)))) + 
+                                                  color = "black"))) + 
   ggtitle("Swiss-SEP 3 index")
 
 ggarrange(
   median2_d, median3_d, 
-  # labels = c("A", "B"),
   ncol = 1
 )
 
