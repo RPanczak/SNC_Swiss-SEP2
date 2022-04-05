@@ -119,7 +119,7 @@ texdoc s , nolog // nodo
 * do "Stata/02_gwrgws-buclassfloor.do"
 u "data/buclassfloor/gwrgws_buclassfloor_prep" , clear 
 
-ta org_bu_class, m
+fre org_bu_class
 keep if !inrange(org_bu_class, 1110, 1122) & !mi(org_bu_class)
 
 sort egid, stable 
@@ -179,7 +179,7 @@ replace geoy = round(geoy)
 * *****
 * KEEP NEWEST RECORD IF ALL IS MATCHING
 duplicates t buildid geox geoy, gen(dupli)
-ta dupli, m
+fre dupli
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
@@ -193,7 +193,7 @@ drop dupli n N
 * *****
 * KEEP LATEST YEAR IF SAME ID BUT DIFFERENT COORDINATES
 duplicates t buildid, gen(dupli)
-ta dupli, m
+fre dupli
 * distinct buildid if dupli == 0
 * distinct buildid if dupli >  0
 
@@ -222,7 +222,7 @@ drop _merge org_bu_class
 * REMOVE DUPLICATED COORDS
 * 1.47% of buildings
 duplicates t geox geoy, gen(dupli)
-ta dupli, m
+fre dupli
 
 * 153 is a camping! 
 * 2602700 1123700 <> 46.264721251 7.473664256 <> https://goo.gl/maps/eC8fDZtEboP2
@@ -247,7 +247,7 @@ count if round_x & round_y
 * br if round_x & round_y
 gen hec = (round_x & round_y)
 drop round_?
-tab hec, m
+fre hec 
 
 * LOOKS LIKE AN ERROR
 * 2713700 1237100 <> 47.275003744 8.941361570 <> https://goo.gl/maps/i6kgcX8k7xH2
@@ -279,7 +279,7 @@ bysort gisid: keep if _n == 1
 drop buildid hec dupli
 
 xtile part = gisid, nq(6) // around 250k chunks of data
-* ta part, m
+* fre part
 
 * export delim using "$sp/ORIGINS.csv", delim(",")  replace
 
@@ -334,7 +334,7 @@ Distribution of years from which coordinates of a building are taken:
 texdoc s , cmdstrip
 
 u "data/ORIGINS", clear
-ta year, m
+fre year
 
 texdoc s c 
 
@@ -570,7 +570,7 @@ forv YR = 12/15 {
 	replace num_ocu2 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu1
 	replace num_ocu2 = 0 if mis_ocu_isco
 	
-	* UNSKILLED & MANUAL WORKERS >> NARROW DEFINITION >> NO FARMERS!
+	* UNSKILLED & MANUAL WORKERS >> VERY NARROW DEFINITION >> NO FARMERS!
 	replace num_ocu3 = 1 if inrange(occup_isco, 8000, 9999) & den_ocu1
 	replace num_ocu3 = 0 if mis_ocu_isco
 	
@@ -581,9 +581,6 @@ forv YR = 12/15 {
 	ta num_ocu1, m 
 	ta num_ocu2, m 
 	ta num_ocu3, m 
-	
-	univar num_ocu4
-	hist num_ocu4, w(5) start(0)
 
 	tab den_ocu1 mis_ocu_isco , m
 	tab den_ocu2 mis_ocu_isco , m
@@ -609,6 +606,10 @@ forv YR = 12/15 {
 	order num_ocu4 mis_ocu_isco, a(num_ocu3)
 	order mis_ocu_isco, b(den_ocu2)
 
+	/*
+	univar num_ocu4
+	hist num_ocu4, w(5) start(0)
+	*/
 
 	* *****
 	/* EDUCATION 
@@ -954,7 +955,7 @@ Distribution of SE individuals over years:
 texdoc s , cmdstrip
 
 u "data/SE", clear
-ta SE, m
+fre SE
 
 texdoc s c
 
@@ -1156,7 +1157,7 @@ texdoc s c
 
 texdoc s , nocmdlog // nodo 
 
-ta b_maxdest, m 
+fre b_maxdest
 
 texdoc s c 
 
@@ -1210,7 +1211,7 @@ ren destinationrank dest_rank_bb
 drop b_totdist b_maxdest part 
 
 * BRING SE DATA
-mmerge gisid_dest using "data/SE", ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu) umatch(gisid) 
+mmerge gisid_dest using "data/SE", ukeep(sncid ppr num_ocu? mis_ocu_isco den_ocu? num_edu hhpers) umatch(gisid) 
 assert _merge == 3
 drop _merge
 
@@ -1381,12 +1382,26 @@ texdoc s c
 
 
 /***
+Number of individuals:
+***/
+
+texdoc s , cmdstrip 
+
+by gisid_orig: egen tot_hhpers = total(hhpers)
+univar tot_hhpers if dest_rank_hh == 1
+drop tot_hhpers
+
+texdoc s c 
+
+
+/***
 Average distance [in meters] to the building where furthest SE household is located (within 20km):
 ***/
 
 texdoc s , cmdstrip 
 
-univar max_dist, dec(0) 
+* univar max_dist, dec(0) 
+univar mean_dist, dec(0) 
 * su max_dist, d f
 
 texdoc s c 
@@ -1398,7 +1413,7 @@ u "data/NEIGHB_RENT", clear
 sort gisid_orig destinationrank
 by gisid_orig: keep if _n == 1
 
-ta b_maxdest, m 
+fre b_maxdest
 
 texdoc s c 
 
@@ -1574,8 +1589,8 @@ u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 
 	wh13ts ///
 	using "data-raw\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
 
-ta filter13, m 
-ta stathh13, m 
+fre filter13
+fre stathh13
 count if !stathh13
 drop  if !stathh13
 drop stathh13 // filter13
@@ -1591,7 +1606,7 @@ univar i13eqon, d(0)
 fre h13i20ac
 recode h13i20ac (-2=-1)
 la de H13I20AC -1 "no answer / doesn't know", modify
-ta h13i20ac, m
+fre h13i20ac
 
 * REASON WHY NO SAVINGS MIN. 500 SFRS MONTHLY
 fre h13i20ac
@@ -1599,7 +1614,7 @@ ta  h13i20ac h13i20ac, m
 recode h13i20ac (-2=-1)
 la de H13I21AC -1 "no answer / doesn't know", modify
 ta h13i20ac if h13i20ac == 2, m
-ta h13i20ac, m
+fre h13i20ac
 
 
 * ********
@@ -1607,7 +1622,7 @@ ta h13i20ac, m
 fre h13i22
 recode h13i22 (-2=-1)
 la de H13I22N -1 "no answer / doesn't know", modify
-ta h13i22, m
+fre h13i22
 
 * REASON WHY NO SAVINGS INTO 3RD PILLAR
 fre h13i23
@@ -1615,7 +1630,7 @@ ta  h13i23 h13i22, m
 recode h13i23 (-2=-1)
 la de H13I23 -1 "no answer / doesn't know", modify
 ta h13i23 if h13i22 == 2, m
-ta h13i23, m
+fre h13i23
 
 
 * ********
@@ -1624,7 +1639,7 @@ fre h13i76a
 recode h13i76a (-3=-1)
 recode h13i76a (-2=-1)
 la de H13I76A -1 "inaplicable / no answer / doesn't know", modify
-ta h13i76a, m
+fre h13i76a
 
 
 * ********
@@ -1640,7 +1655,7 @@ ta h13i50, m
 * FINANCIAL SITUATION MANAGEABLE
 fre h13i51
 mvdecode h13i51, mv(-8/-1)
-ta h13i50, m
+fre h13i50
 univar h13i51
 
 
