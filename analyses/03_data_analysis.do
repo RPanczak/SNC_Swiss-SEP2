@@ -362,7 +362,7 @@ texdoc s c
 
 texdoc s    
 
-ta buildper2, m 
+fre buildper2
 
 texdoc s c 
 
@@ -454,6 +454,15 @@ fre ssep4_d
 ta ssep3_d ssep4_d, m
 */
 
+/*
+preserve
+
+bysort gisid: keep if _n == 1
+tab1  ssep1_d ssep2_d ssep3_d
+
+restore
+*/
+
 compress
 note: Last changes: $S_DATE $S_TIME
 sa "FINAL/DTA/ssep3_full.dta", replace
@@ -498,6 +507,8 @@ texdoc s , cmdstrip
 u "FINAL/DTA/ssep3_user", clear
 
 /*
+tab1  ssep1_d ssep2_d ssep3_d
+
 tabstat ssep3, s(min mean max ) by(ssep3_t) f(%9.6fc)
 tabstat ssep3, s(min mean max ) by(ssep3_q) f(%9.6fc)
 tabstat ssep3, s(min mean max ) by(ssep3_d) f(%9.6fc)
@@ -666,8 +677,8 @@ preserve
 		note("") legend(title("Index version")) ///
 		scheme(plotplainblind) graphregion(margin(zero))
 
-	gr export $td/Figure_1.pdf, replace
-	gr export $td/Figure_1.png, replace
+	gr export $td/Figure_2.pdf, replace
+	gr export $td/Figure_2.png, replace
 
 restore 
 
