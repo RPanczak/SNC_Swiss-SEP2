@@ -1,31 +1,3 @@
----
-title: "Swiss-SEP project"
-description: "Aggregating point data to grid"
-date: "`r Sys.Date()`"
-author:
-  - name: Radoslaw Panczak 
-    url: https://github.com/RPanczak
-    affiliation: ISPM
-    affiliation_url: https://www.ispm.unibe.ch/
-    orcid_id: 0000-0001-5141-683X
-output:
-  distill::distill_article:
-    highlight: pygments
-    toc: true
-    toc_depth: 1
-    number_sections: true
-editor_options: 
-  chunk_output_type: console
----
-
-<!-- ------------------------------------------------------------ --> 
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, 
-                      # fig.width=8, fig.height=6, 
-                      # out.width="800px", out.height="600px",
-                      dpi=300)
-knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
@@ -35,11 +7,9 @@ p_load(tidyverse,
 
 # tmap_mode("plot")
 import::from("sjmisc", "frq")
-```
 
 # Ancillary data
 
-```{r}
 canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1k20.shp") %>% 
   st_transform(crs = 2056) %>% 
   dplyr::select(KTNR, KTNAME)
@@ -49,17 +19,20 @@ lakes <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyym
 
 # rivers <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp") %>% 
 #   st_transform(crs = 2056)
-
-p_load(raster)
-gc()
-# rgdal::GDALinfo("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif")
-relief <- raster("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif") %>% 
-  mask(canton) %>% 
-  as("SpatialPixelsDataFrame") %>%
-  as.data.frame() %>%
-  rename(value = SMR1000_GRELI)
-p_unload(raster)
-gc()
+# 
+# p_load(raster)
+# gc()
+# # rgdal::GDALinfo("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif")
+# relief <- raster("../ISPM_geo/data-raw/swisstopo/SMR1000_2019/SMR1000_EE/SMR1000_GRELI.tif") %>% 
+#   mask(canton) %>% 
+#   as("SpatialPixelsDataFrame") %>%
+#   as.data.frame() %>%
+#   rename(value = SMR1000_GRELI)
+# p_unload(raster)
+# gc()
+# 
+# write_rds(relief, "data/relief.Rds")
+relief <- read_rds("data/relief.Rds")
 
 city_lines <- st_read("data/cities.shp") %>%
   st_transform(crs = 2056)
@@ -75,214 +48,197 @@ city_points <- city_lines %>%
   group_by(name) %>%
   slice(seq(1, n(), by = 2)) %>% 
   ungroup()
-```
+
 
 # SEP
 
-```{r}
 sep3 <- read_rds("FINAL/RDS/ssep3_user_geo.Rds") %>% 
   select(gisid, 
          ssep2, ssep2_d,
          ssep3, ssep3_d)
-```
+
 
 # STATPOP offset
+# Used to define `offset` for `st_make_grid`
 
-Used to define `offset` for `st_make_grid`
-
-```{r eval=FALSE}
-offset_bfs <- read_delim("data-raw/BfS/ag-b-00.03-vz2020statpop/STATPOP2020.zip", 
-                         delim = ";", escape_double = FALSE, trim_ws = TRUE)[] %>% 
-  mutate_all(as.integer) %>%  
-  summarise(min_x = min(X_KOORD),
-            min_y = min(Y_KOORD)) %>% 
-  st_as_sf(coords = c("min_x", "min_y"), 
-           crs = 21781,
-           remove = FALSE)
-
-write_rds(offset_bfs, "data/grid/offset_bfs.Rds")
+# offset_bfs <- read_delim("data-raw/BfS/ag-b-00.03-vz2020statpop/STATPOP2020.zip", 
+#                          delim = ";", escape_double = FALSE, trim_ws = TRUE)[] %>% 
+#   mutate_all(as.integer) %>%  
+#   summarise(min_x = min(X_KOORD),
+#             min_y = min(Y_KOORD)) %>% 
+#   st_as_sf(coords = c("min_x", "min_y"), 
+#            crs = 21781,
+#            remove = FALSE)
+# 
+# write_rds(offset_bfs, "data/grid/offset_bfs.Rds")
 offset_bfs <- read_rds("data/grid/offset_bfs.Rds")
-```
+
 
 # Generate grid
 
-With lower left corner defined using offset from above  
-Also, adding ID for each cell (based on row number).   
+# With lower left corner defined using offset from above  
+# Also, adding ID for each cell (based on row number).   
 
-## 100m grid  
+### 100m grid  
 
-```{r eval=FALSE}
-gc()
+# country_hex_100 <- canton %>% 
+#   st_make_grid(cellsize = 100, 
+#                offset = c(offset_bfs$min_x, offset_bfs$min_y),
+#                square = FALSE) %>% 
+#   st_sf() %>%
+#   st_cast("POLYGON") %>% 
+#   st_filter(canton, join = st_covers) %>%
+#   mutate(ID1 = row_number()) %>% 
+#   relocate(ID1)
+# 
+# write_rds(country_hex_100, "data/grid/country_hex_100.Rds")
 
-country_hex_100 <- canton %>% 
-  st_make_grid(cellsize = 100, 
-               offset = c(offset_bfs$min_x, offset_bfs$min_y),
-               square = FALSE) %>% 
-  st_sf() %>%
-  st_cast("POLYGON") %>% 
-  st_filter(canton, join = st_covers) %>%
-  mutate(ID1 = row_number()) %>% 
-  relocate(ID1)
-
-write_rds(country_hex_100, "data/grid/country_hex_100.Rds")
-
-rm(offset_bfs)
-```
 
 ### Summarize per cell
 
-```{r eval=FALSE}
-country_hex_100 <- read_rds("data/grid/country_hex_100.Rds")
-gc()
-
-sep3_grid_hex_100 <- 
-  st_join(sep3, country_hex_100, join = st_intersects) %>% 
-  st_drop_geometry() %>% 
-  group_by(ID1) %>% 
-  summarise(n = n(),
-            median_d = median(ssep3_d), 
-            median = median(ssep3)) %>% 
-  ungroup() %>% 
-  mutate(median_d = factor(round(median_d),
-                           levels = 1:10,
-                           labels = c("1st - lowest",
-                                      "2", "3", "4",
-                                      "5th decile",
-                                      "6", "7", "8", "9",
-                                      "10th - highest")))
-
-# frq(sep3_grid$median_d)
-
-sep3_grid_hex_100_sf <- country_hex_100 %>% 
-  inner_join(sep3_grid_hex_100)
-
-write_rds(sep3_grid_hex_100_sf, "data/grid/sep3_grid_hex_100_sf.Rds")
-
-# plot(sep3_grid_sf[, 3])
-
-sep3_grid_hex_100_clip_sf <- sep3_grid_hex_100_sf %>% 
-  st_intersection(st_union(canton)) %>% 
-  st_collection_extract("POLYGON") %>% 
-  st_difference(st_union(lakes)) %>% 
-  st_collection_extract("POLYGON")
-
-write_rds(sep3_grid_hex_100_clip_sf, "data/grid/sep3_grid_hex_100_clip_sf.Rds")
-
-rm(country_hex_100, sep3_grid_hex_100); gc()
-```
-
-```{r}
-sep3_grid_hex_100_sf <- read_rds("data/grid/sep3_grid_hex_100_sf.Rds")
+# country_hex_100 <- read_rds("data/grid/country_hex_100.Rds")
+# gc()
+# 
+# sep3_grid_hex_100 <- 
+#   st_join(sep3, country_hex_100, join = st_intersects) %>% 
+#   st_drop_geometry() %>% 
+#   group_by(ID1) %>% 
+#   summarise(n = n(),
+#             median_d = median(ssep3_d), 
+#             median = median(ssep3)) %>% 
+#   ungroup() %>% 
+#   mutate(median_d = factor(round(median_d),
+#                            levels = 1:10,
+#                            labels = c("1st - lowest",
+#                                       "2", "3", "4",
+#                                       "5th decile",
+#                                       "6", "7", "8", "9",
+#                                       "10th - highest")))
+# 
+# # frq(sep3_grid$median_d)
+# 
+# sep3_grid_hex_100_sf <- country_hex_100 %>% 
+#   inner_join(sep3_grid_hex_100)
+# 
+# write_rds(sep3_grid_hex_100_sf, "data/grid/sep3_grid_hex_100_sf.Rds")
+# 
+# # plot(sep3_grid_sf[, 3])
+# 
+# sep3_grid_hex_100_clip_sf <- sep3_grid_hex_100_sf %>% 
+#   st_intersection(st_union(canton)) %>% 
+#   st_collection_extract("POLYGON") %>% 
+#   st_difference(st_union(lakes)) %>% 
+#   st_collection_extract("POLYGON")
+# 
+# write_rds(sep3_grid_hex_100_clip_sf, "data/grid/sep3_grid_hex_100_clip_sf.Rds")
+# 
+# rm(country_hex_100, sep3_grid_hex_100); gc()
+# 
+# 
+# sep3_grid_hex_100_sf <- read_rds("data/grid/sep3_grid_hex_100_sf.Rds")
 # sep3_grid_hex_100_clip_sf <- read_rds("data/grid/sep3_grid_hex_100_clip_sf.Rds")
-```
-
+# 
 #### Plot
+# 
+# ggplot() + 
+#   geom_sf(
+#     data = sep3_grid_hex_100_sf,
+#     # data = sep3_grid_hex_100_clip_sf,
+#     aes(fill = median_d),
+#     alpha = 0.66, color = NA) +
+#   geom_sf(data = lakes, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
+#   geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.5) + 
+#   scale_fill_brewer(palette = "RdYlGn") +
+#   theme_void() + 
+#   theme(legend.position = c(.05, .95), 
+#         legend.justification = c("left", "top"),
+#         legend.direction = "vertical",
+#         plot.margin = unit(c(-5, 0, -5, -5), "mm")) +
+#   guides(fill = guide_legend(title = "Swiss-SEP 3 index",
+#                              override.aes = list(alpha = 1)))
+# 
+# ggsave("carto/07_sep3-grid_hex_100.png", 
+#        width = 297, height = 210, units = "mm", dpi = 300,
+#        bg = "white")
 
-```{r}
-ggplot() + 
-  geom_sf(
-    data = sep3_grid_hex_100_sf,
-    # data = sep3_grid_hex_100_clip_sf,
-    aes(fill = median_d),
-    alpha = 0.66, color = NA) +
-  geom_sf(data = lakes, color = NA,  fill = rgb(156, 213, 248, max = 255)) + 
-  geom_sf(data = canton, fill = NA, color = gray(.5), size = 0.5) + 
-  scale_fill_brewer(palette = "RdYlGn") +
-  theme_void() + 
-  theme(legend.position = c(.05, .95), 
-        legend.justification = c("left", "top"),
-        legend.direction = "vertical",
-        plot.margin = unit(c(-5, 0, -5, -5), "mm")) +
-  guides(fill = guide_legend(title = "Swiss-SEP 3 index",
-                             override.aes = list(alpha = 1)))
-
-ggsave("carto/07_sep3-grid_hex_100.png", 
-       width = 297, height = 210, units = "mm", dpi = 300,
-       bg = "white")
-```
 
 ## 500m grid  
 
-```{r eval=FALSE}
-gc()
+# gc()
+# country_hex_500 <- canton %>% 
+#   st_make_grid(cellsize = 500, 
+#                offset = c(offset_bfs$min_x, offset_bfs$min_y),
+#                square = FALSE) %>% 
+#   st_sf() %>%
+#   st_cast("POLYGON") %>% 
+#   st_filter(canton, join = st_covers) %>%
+#   mutate(ID1 = row_number()) %>% 
+#   relocate(ID1)
+# 
+# write_rds(country_hex_500, "data/grid/country_hex_500.Rds")
+# 
+# rm(offset_bfs)
 
-country_hex_500 <- canton %>% 
-  st_make_grid(cellsize = 500, 
-               offset = c(offset_bfs$min_x, offset_bfs$min_y),
-               square = FALSE) %>% 
-  st_sf() %>%
-  st_cast("POLYGON") %>% 
-  st_filter(canton, join = st_covers) %>%
-  mutate(ID1 = row_number()) %>% 
-  relocate(ID1)
-
-write_rds(country_hex_500, "data/grid/country_hex_500.Rds")
-
-rm(offset_bfs)
-```
-
-### Summarize per cell
-
-```{r eval=FALSE}
-country_hex_500 <- read_rds("data/grid/country_hex_500.Rds")
-gc()
-
-sep3_grid_hex_500 <- 
-  st_join(sep3, country_hex_500, join = st_intersects) %>% 
-  st_drop_geometry() %>% 
-  group_by(ID1) %>% 
-  summarise(n = n(),
-            median2_d = median(ssep2_d), 
-            median2 = median(ssep2),
-            median3_d = median(ssep3_d), 
-            median3 = median(ssep3),
-            median_diff = round(median3_d) - round(median2_d)
-  ) %>% 
-  ungroup() %>% 
-  mutate(median2_d = factor(round(median2_d),
-                            levels = 1:10,
-                            labels = c("1st - lowest",
-                                       "2", "3", "4",
-                                       "5th decile",
-                                       "6", "7", "8", "9",
-                                       "10th - highest")),
-         median3_d = factor(round(median3_d),
-                            levels = 1:10,
-                            labels = c("1st - lowest",
-                                       "2", "3", "4",
-                                       "5th decile",
-                                       "6", "7", "8", "9",
-                                       "10th - highest")))
-
-# frq(sep3_grid_hex_500$median_d)
+# # Summarize per cell
+# country_hex_500 <- read_rds("data/grid/country_hex_500.Rds")
+# gc()
+# 
+# sep3_grid_hex_500 <- 
+#   st_join(sep3, country_hex_500, join = st_intersects) %>% 
+#   st_drop_geometry() %>% 
+#   group_by(ID1) %>% 
+#   summarise(n = n(),
+#             median2_d = median(ssep2_d), 
+#             median2 = median(ssep2),
+#             median3_d = median(ssep3_d), 
+#             median3 = median(ssep3),
+#             median_diff = round(median3_d) - round(median2_d)
+#   ) %>% 
+#   ungroup() %>% 
+#   mutate(median2_d = factor(round(median2_d),
+#                             levels = 1:10,
+#                             labels = c("1st - lowest",
+#                                        "2", "3", "4",
+#                                        "5th decile",
+#                                        "6", "7", "8", "9",
+#                                        "10th - highest")),
+#          median3_d = factor(round(median3_d),
+#                             levels = 1:10,
+#                             labels = c("1st - lowest",
+#                                        "2", "3", "4",
+#                                        "5th decile",
+#                                        "6", "7", "8", "9",
+#                                        "10th - highest")))
+# 
+# frq(sep3_grid_hex_500$median2_d)
+# frq(sep3_grid_hex_500$median3_d)
 # frq(sep3_grid_hex_500$median_diff)
-
-sep3_grid_hex_500_sf <- country_hex_500 %>% 
-  inner_join(sep3_grid_hex_500)
-
-write_rds(sep3_grid_hex_500_sf, "data/grid/sep3_grid_hex_500_sf.Rds")
-
+# 
+# gc()
+# sep3_grid_hex_500_sf <- country_hex_500 %>% 
+#   inner_join(sep3_grid_hex_500)
+# 
+# write_rds(sep3_grid_hex_500_sf, "data/grid/sep3_grid_hex_500_sf.Rds")
+# 
 # plot(sep3_grid_sf[, 3])
+# 
+# sep3_grid_hex_500_clip_sf <- sep3_grid_hex_500_sf %>% 
+#   st_intersection(st_union(canton)) %>% 
+#   st_collection_extract("POLYGON") %>% 
+#   st_difference(st_union(lakes)) %>% 
+#   st_collection_extract("POLYGON")
+# 
+# write_rds(sep3_grid_hex_500_clip_sf, "data/grid/sep3_grid_hex_500_clip_sf.Rds")
+# 
+# rm(country_hex_500, sep3_grid_hex_500); gc()
 
-sep3_grid_hex_500_clip_sf <- sep3_grid_hex_500_sf %>% 
-  st_intersection(st_union(canton)) %>% 
-  st_collection_extract("POLYGON") %>% 
-  st_difference(st_union(lakes)) %>% 
-  st_collection_extract("POLYGON")
 
-write_rds(sep3_grid_hex_500_clip_sf, "data/grid/sep3_grid_hex_500_clip_sf.Rds")
-
-rm(country_hex_500, sep3_grid_hex_500); gc()
-```
-
-```{r}
 sep3_grid_hex_500_sf <- read_rds("data/grid/sep3_grid_hex_500_sf.Rds")
 # sep3_grid_hex_500_clip_sf <- read_rds("data/grid/sep3_grid_hex_500_clip_sf.Rds")
-```
+
 
 ### Plot deciles
 
-```{r}
 median2_d <- 
   ggplot() + 
   
@@ -407,11 +363,10 @@ ggarrange(
 ggsave("analyses/Figure_1.png", 
        width = 210, height = 297, units = "mm", dpi = 300,
        bg = "white")
-```
+
 
 ### Plot diff
 
-```{r}
 # we need more colours for differences on deciles
 p_load(RColorBrewer)
 
@@ -432,9 +387,8 @@ cols[10] <- "#E5E5E5"
 cols[11] <- "#E5E5E5"
 
 barplot(1:19, col = cols)
-```
 
-```{r}
+
 ggplot() + 
   
   # geom_raster(
@@ -491,12 +445,10 @@ ggplot() +
 ggsave("carto/08_sep-diff-grid_hex_500.png", 
        height = 210, width = 297, units = "mm", dpi = 300,
        bg = "white")
-```
-
 
 # Making a raster
 
-```{r}
+
 rm(sep3); gc()
-```
+
 
