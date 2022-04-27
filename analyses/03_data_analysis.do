@@ -95,13 +95,13 @@ u "data/NEIGHB", clear
 drop part total_length b_*
 
 * getting buildid back
-mmerge gisid_orig using "data/ORIGINS", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_orig using "data/ORIGINS", t(n:n) um(gisid) uk(buildid)
 drop if _merge == 2
 drop _merge
 ren buildid buildid_orig
 
 * getting age of the buildings
-mmerge buildid_orig using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_orig using "$co/data-raw/statpop/r18_bu_orig", t(n:1) um(r18_egid) uk(r18_buildper)
 * distinct buildid_orig if _merge == 1 
 drop if _merge == 2
 drop _merge
@@ -111,13 +111,13 @@ drop r18_buildper
 * ta buildper_orig, m
 
 * same procedure on dest side
-mmerge gisid_dest using "data/ORIGINS", t(n:n) umatch(gisid) ukeep(buildid)
+mmerge gisid_dest using "data/ORIGINS", t(n:n) um(gisid) uk(buildid)
 * distinct buildid_orig if _merge == 1 
 drop if _merge == 2
 drop _merge
 ren buildid buildid_dest
 
-mmerge buildid_dest using "$co/data-raw/statpop/r18_bu_orig", t(n:1) umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid_dest using "$co/data-raw/statpop/r18_bu_orig", t(n:1) um(r18_egid) uk(r18_buildper)
 drop if _merge == 2
 drop _merge
 
@@ -179,7 +179,7 @@ preserve
 
 	ren gisid_orig gisid
 
-	mmerge gisid using "data/ORIGINS", t(1:n) ukeep(buildid geox geoy)
+	mmerge gisid using "data/ORIGINS", t(1:n) uk(buildid geox geoy)
 	order gisid buildid geox geoy, first 
 	keep if _merge==3
 	drop _merge
@@ -275,7 +275,7 @@ texdoc s , nolog // nodo
 * ACHTUNG THAT WILL MAKE MORE BUILDINGS and gisid IS NOT LONGER UNIQUE 
 ren gisid_orig gisid
 
-mmerge gisid using "data/ORIGINS", t(1:n) ukeep(buildid geox geoy)
+mmerge gisid using "data/ORIGINS", t(1:n) uk(buildid geox geoy)
 order gisid buildid geox geoy, first 
 keep if _merge==3
 drop _merge
@@ -289,7 +289,7 @@ preserve
 restore
 
 * run 01_Swiss-SEP2.R now to transform to Rds & geo
-rscript using "R/01_Swiss-SEP2.R"
+* rscript using "R/01_Swiss-SEP2.R"
 
 texdoc s c 
 
@@ -305,7 +305,7 @@ buildings constructed on or after 2001. Buidlings with missing information about
 texdoc s , nolog // nodo   
 
 * getting age of the buildings
-mmerge buildid using "$co/data-raw/statpop/r18_bu_orig", umatch(r18_egid) ukeep(r18_buildper)
+mmerge buildid using "$co/data-raw/statpop/r18_bu_orig", um(r18_egid) uk(r18_buildper)
 
 /*
 * eda of unlinked
@@ -380,20 +380,16 @@ texdoc s , nolog // nodo
 
 * bring sep 1 >> sep 2 spatial join done in 02_sep-diff.Rmd
 * rscript using "R/02_sep-diff.R"
-mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) ukeep(ssep1 ssep1_t ssep1_q ssep1_d)
+mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) uk(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
 
 gen ssep3 = ssep1
 replace ssep3 = ssep2 if buildper2
 
-gen ssep3_t = ssep1_t
-gen ssep3_q = ssep1_q
-gen ssep3_d = ssep1_d
-
-replace ssep3_t = ssep2_t if buildper2
-replace ssep3_q = ssep2_q if buildper2
-replace ssep3_d = ssep2_d if buildper2
+xtile ssep3_t  = ssep3, nq(3)
+xtile ssep3_q  = ssep3, nq(5)
+xtile ssep3_d  = ssep3, nq(10)
 
 la val ssep1_d ssep1_d
 la val ssep2_d ssep1_d
@@ -435,7 +431,7 @@ note buildper2: "Buildings with missing period treated as old ones"
 /*
 * experimental index replacement depending on share of new buildings
 
-mmerge gisid using data/buildper_share, t(n:1) ukeep(buildper_cat)
+mmerge gisid using data/buildper_share, t(n:1) uk(buildper_cat)
 drop if _merge == 2
 drop _merge
 
@@ -443,24 +439,6 @@ forv buildper = 1(1)6 {
 	gen ssep3_d_`buildper' = ssep1_d
 	replace ssep3_d_`buildper' = ssep2_d if buildper_cat >= `buildper'
 }
-*/
-
-/*
-* experimental - fixing deciles
-
-xtile ssep4_d  = ssep3, nq(10)
-fre ssep3_d
-fre ssep4_d
-ta ssep3_d ssep4_d, m
-*/
-
-/*
-preserve
-
-bysort gisid: keep if _n == 1
-tab1  ssep1_d ssep2_d ssep3_d
-
-restore
 */
 
 compress
@@ -504,7 +482,7 @@ texdoc s c
 
 texdoc s , cmdstrip
 
-u "FINAL/DTA/ssep3_user", clear
+u "FINAL/DTA/ssep3_full.dta", clear
 
 /*
 tab1  ssep1_d ssep2_d ssep3_d
@@ -522,24 +500,31 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Quantiles}
 
-Note that the original quantiles of second version :
-***/
-
-texdoc s , cmdstrip
-
-ta ssep2_d, m
- 
-texdoc s c 
-
-/***
-... are tad 'broken' after replacements:
+Note that the deciles of third version in \texttt{full} dataset:
 ***/
 
 texdoc s , cmdstrip
 
 ta ssep3_d, m
+
+texdoc s c 
+
+/***
+... are tad 'broken' in \texttt{user} dataset :
+***/
+
+texdoc s , cmdstrip
+
+preserve 
+	u "FINAL/DTA/ssep3_user.dta", clear
+	ta ssep3_d, m
+restore
  
 texdoc s c 
+
+/***
+... This is expected behaviour since user dataset excludes buildings with different IDs but same coordinates.  
+***/
 
 /***
 \begin{landscape}
@@ -586,18 +571,79 @@ texdoc s c
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\section{Tables}
+***/
+
+* rscript using "R/21_table1.R"
+
+/***
+\newpage
+\subsection{Old index}
+\begin{landscape}
+\begin{footnotesize}
+\input(table_1_1)
+\end{footnotesize}
+\end{landscape}
+
+\newpage
+\subsection{New index}
+\begin{landscape}
+\begin{footnotesize}
+\input(table_1_2)
+\end{footnotesize}
+\end{landscape}
+
+\newpage
+\subsection{Hybrid index}
+\begin{landscape}
+\begin{footnotesize}
+\input(table_1_3)
+\end{footnotesize}
+\end{landscape}
+
+***/
+
+/***
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Maps}
 ***/
 
-* rscript using "R/04_sep-map.R"
+/***
+\subsection{Original map}
+***/
 
 /***
 \begin{center}
 \includegraphics[width=\textwidth]{gr/sep-old.png} 
-\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/01_sep-dots.png} 
 \end{center}
 ***/
 
+* rscript using "R/22_grid.R"
+
+/***
+\newpage 
+\subsection{SEP 2 & 3 index}
+
+Using hexagonal grid 500m size.  
+***/
+
+/***
+\begin{center}
+\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/analyses/Figure_1.png} 
+\end{center}
+***/
+
+/***
+\newpage
+\subsection{Differences}
+***/
+
+/***
+\begin{center}
+\includegraphics[width=\textwidth]{C:/projects/SNC_Swiss-SEP2/carto/08_sep-diff-grid_hex_500.png} 
+\end{center}
+***/
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -623,7 +669,7 @@ ta geocoded, m
 keep if geocoded
 drop geocoded
 
-mmerge gisid using "FINAL/DTA/ssep3_user", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d) 
+mmerge gisid using "FINAL/DTA/ssep3_user", t(n:1) uk(ssep1_d ssep2_d ssep3_d) 
 assert _merge != 1
 keep if _merge == 3
 drop _merge
@@ -868,7 +914,7 @@ texdoc s , nolog // nodo
 u "data/SNC_ALL", clear
 
 * bring sep 1, 2 & 3
-mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) ukeep(ssep1_d ssep2_d ssep3_d)
+mmerge buildid using "FINAL/DTA/ssep3_user_snc", t(n:1) uk(ssep1_d ssep2_d ssep3_d)
 keep if _merge == 3
 drop _merge
 
@@ -922,8 +968,8 @@ gr export $td/gr/sep3.png, replace
 * figure without tiles for journal sub
 gr combine U.gph A.gph, graphregion(margin(zero))
 
-gr export $td/Figure_2.pdf, replace
-gr export $td/Figure_2.png, replace
+gr export $td/Figure_3.pdf, replace
+gr export $td/Figure_3.png, replace
 
 cap rm A.gph
 cap rm U.gph
@@ -939,106 +985,7 @@ Note: 	Results from Cox models. Calculations from 'new' SNC data from the \textb
 		'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in original figure above);  
 		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.  
 		This is not the same adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
-
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\subsection{All cause mortality - three indices, stratified by age}
 ***/
-
-texdoc s , nolog // nodo   
-
-* STRATIFIED
-* age cat
-egen age_bin = cut(age), at(19, 65, 110) label
-order age_bin, a(age)
-
-/*
-fre age_bin
-table age_bin, contents(min age max age)
-*/
-
-est clear
-
-foreach SEP in ssep1_d ssep2_d ssep3_d {
-	forv AGE = 0/1 {
-		* AGE & SEX
-		stcox i.sex b10.`SEP' if age_bin == `AGE', $SET
-		est sto u_`SEP'_age_`AGE'
-		* FULLY
-		global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-		stcox $ADJ b10.`SEP' if age_bin == `AGE', $SET
-		est sto a_`SEP'_age_`AGE'
-	}
-}
-
-* est tab  u_*   a_*, eform
-
-global title 	"size(medsmall) color(black) margin(vsmall)"
-global lab 		"ylab(, labs(small)) xtitle("Hazard ratio", size(medsmall) margin(vsmall)) xscale(log range(0.98 1.92)) xlab(1.0(0.1)1.9)"
-global misc 	"xline( 1.00(0.1)1.90, lcolor(gs14) lwidth(thin)) base ysize(3) xsize(4) msize(medium) lw(medium) grid(none)"
-global groups 	"groups(*.ssep2_d = "Swiss-SEP index 2.0" *.ssep1_d = "Swiss-SEP index 1.0", angle(vertical))"
-
-coefplot (u_ssep1_d_age_0, label(Young)) (u_ssep1_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 1", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/strat_sep1.pdf, replace
-gr export $td/gr/strat_sep1.png, replace
-
-coefplot (u_ssep2_d_age_0, label(Young)) (u_ssep2_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 2", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/strat_sep2.pdf, replace
-gr export $td/gr/strat_sep2.png, replace
-
-coefplot (u_ssep3_d_age_0, label(Young)) (u_ssep3_d_age_1, label(Old)), title("HRs of all cause mortality SSEP 3", $title) eform $drop $lab $region $misc $legend $groups
-
-gr export $td/gr/strat_sep3.pdf, replace
-gr export $td/gr/strat_sep3.png, replace
-
-texdoc s c  
-
-/***
-\begin{center}
-\includegraphics[width=.6\textwidth]{gr/strat_sep1.pdf}
-\end{center}
-\begin{center}
-\includegraphics[width=.6\textwidth]{gr/strat_sep2.pdf}
-\end{center}
-\begin{center}
-\includegraphics[width=.6\textwidth]{gr/strat_sep3.pdf}
-\end{center}
-***/
-
-/***
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%\newpage
-%\subsection{All cause mortality - exploring  different building age structures of SEP 3}
-***/
-
-texdoc s , nolog  nodo   
-
-* alternative solutions of 3 using n'hood age structure
-mmerge buildid using FINAL/DTA/ssep3_user_snc, t(n:1) ukeep(ssep3_d_?)
-keep if _merge == 3
-drop _merge
-
-gen SEP = . 
-
-foreach SEP in ssep3_d ssep3_d_1 ssep3_d_2 ssep3_d_3 ssep3_d_4 ssep3_d_5 ssep3_d_6 {
-	* AGE & SEX
-	replace SEP = `SEP' // smae name for better tabs
-	stcox i.sex b10.SEP, $SET
-	est sto u_`SEP'
-	/* FULLY
-	global ADJ = "i.sex nat_bin b2.civil b2.urban b1.lang"
-	stcox $ADJ b10.`SEP', $SET
-	est sto a_`SEP'
-	*/
-}
-
-est tab u_*
-
-Results from version 4 onwards converge to simple solution.  
-
-texdoc s c
 
 
 /***
