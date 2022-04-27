@@ -41,9 +41,9 @@ tmap_mode("view") # makes map interactive
 
 ## Input 
 
-```{r load, include=FALSE}
-# important to work with planar coords!
+**Note:** *important to work with planar coordinatess!*  
 
+```{r load, include=FALSE}
 sep1 <- read_rds("data/Swiss-SEP1/ssep_user_geo.Rds") %>% 
   select(v0_buildid, ssep, ssep_t, ssep_q, ssep_d) %>% 
   rename(ssep1 = ssep,
@@ -88,7 +88,7 @@ sep2_sep1_join <- st_join(sep2, sep1, join = st_nearest_feature)
 nearest <- st_nearest_feature(sep2, sep1)
 distance <- st_distance(sep2, sep1[nearest, ], by_element = TRUE)
 sep2_sep1_join$distance <- distance
-rm(nearest, distance)
+rm(nearest, distance); gc()
 
 write_rds(sep2_sep1_join, "data/Swiss-SEP2/sep2_sep1_join.Rds")
 
