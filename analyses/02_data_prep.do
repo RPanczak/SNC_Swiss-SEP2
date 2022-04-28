@@ -1225,6 +1225,10 @@ by   gisid_orig (dest_rank_bb gisid_dest): gen dest_rank_hh = _n
 by   gisid_orig:  gen temp = gisid_dest if dest_rank_hh ==  50
 by   gisid_orig: egen h_50 = max(temp)
 
+* not needed really since we do not have complicated cases any longer
+* count if !missing(temp) & !missing(temp[_n+1])
+* no observations to drop in this case but still preserved from original index calculations where it was needed
+
 * gen exclu = 1 if dest_rank_hh > 50 & gisid_dest != h_50
 drop if dest_rank_hh > 50 & gisid_dest != h_50
 drop h_50 temp 
@@ -1265,18 +1269,21 @@ drop sncid
 sort gisid_orig dest_rank_bb gisid_dest, stable
 
 by gisid_orig: egen tot_ocu1 = total(den_ocu1)
-by gisid_orig: egen tot_ocu2 = total(den_ocu2)
-assert tot_ocu2 <= tot_ocu1
+*by gisid_orig: egen tot_ocu2 = total(den_ocu2)
+*assert tot_ocu2 <= tot_ocu1
 
 by gisid_orig: egen mis_ocu = total(mis_ocu_isco)
-assert tot_ocu1 == tot_ocu2 + mis_ocu
+*assert tot_ocu1 == tot_ocu2 + mis_ocu
 
 by gisid_orig: egen ocu1 = total(num_ocu1)
+
+/*
 by gisid_orig: egen ocu2 = total(num_ocu2)
 assert ocu2 <= ocu1
 by gisid_orig: egen ocu3 = total(num_ocu3)
 assert ocu3 <= ocu2
 by gisid_orig: egen ocu4p = mean(num_ocu4) // ! achtung >> not counts !!
+*/
 
 * edu0 = tot_hh
 by gisid_orig: egen edu1 = total(num_edu)
@@ -1287,16 +1294,15 @@ keep if dest_rank_hh == 1
 drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu? num_edu ppr dest_rank_hh mis_ocu_isco 
 
 gen ocu1p = ocu1/tot_ocu1
-gen ocu2p = ocu2/tot_ocu1
-gen ocu3p = ocu3/tot_ocu1
-
+*gen ocu2p = ocu2/tot_ocu1
+*gen ocu3p = ocu3/tot_ocu1
 gen mis_ocu_pr = mis_ocu / (tot_ocu1)
 
-gen ocu1p2 = ocu1/tot_ocu2
-gen ocu2p2 = ocu2/tot_ocu2
-gen ocu3p2 = ocu3/tot_ocu2
+*gen ocu1p2 = ocu1/tot_ocu2
+*gen ocu2p2 = ocu2/tot_ocu2
+*gen ocu3p2 = ocu3/tot_ocu2
 
-drop ocu1 ocu2 ocu3 
+drop ocu1 /*ocu2 ocu3 */
 
 /*
 corr ocu1p ocu1p2
@@ -1317,23 +1323,25 @@ gen edu1p = edu1/tot_hh
 * univar edu1p
 drop edu1
 
-order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
+*order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
+order gisid_orig tot_hh tot_bb max_dist ocu1p* tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
 
 la var tot_hh		"Total no of households in n'hood"
 
 la var ocu1p 		"Percent low occupation 1"
-la var ocu2p 		"Percent low occupation 2"
-la var ocu3p 		"Percent low occupation 3"
-la var ocu4p 		"Low occupation - mean ISEI"
 
-la var ocu1p2 		"Percent low occupation 1 (mis!)"
-la var ocu2p2 		"Percent low occupation 2 (mis!)"
-la var ocu3p2 		"Percent low occupation 3 (mis!)"
+*la var ocu2p 		"Percent low occupation 2"
+*la var ocu3p 		"Percent low occupation 3"
+*la var ocu4p 		"Low occupation - mean ISEI"
+
+*la var ocu1p2 		"Percent low occupation 1 (mis!)"
+*la var ocu2p2 		"Percent low occupation 2 (mis!)"
+*la var ocu3p2 		"Percent low occupation 3 (mis!)"
 
 la var mis_ocu		"Individuals with missing ISCO"
 la var mis_ocu_pr	"Share with missing ISCO"
 la var tot_ocu1		"Denominator for ISCO"
-la var tot_ocu2		"Denominator for ISCO (mis!)"
+*la var tot_ocu2		"Denominator for ISCO (mis!)"
 
 la var edu1p 		"Percent low education"
 
