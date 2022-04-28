@@ -109,10 +109,10 @@ write_xlsx(list(table_1_ssep1 = table_1_ssep1,
 knitr::kable(table_1_ssep3, 
              row.names = FALSE, align = c("l", "l", "r", "r", "r"))
 
-# knitr::kable(table_1_ssep1, "latex", booktabs = TRUE) %>% 
-#   cat(file = "analyses/table_1_1.tex")
-# knitr::kable(table_1_ssep2, "latex", booktabs = TRUE) %>% 
-#   cat(file = "analyses/table_1_2.tex")
-# knitr::kable(table_1_ssep3, "latex", booktabs = TRUE) %>% 
-#   cat(file = "analyses/table_1_3.tex")
+# knitr::kable(table_1_ssep1, "latex", booktabs = TRUE) %>%
+#   cat(file = "analyses/table-1.tex")
+# knitr::kable(table_1_ssep2, "latex", booktabs = TRUE) %>%
+#   cat(file = "analyses/table-2.tex")
+# knitr::kable(table_1_ssep3, "latex", booktabs = TRUE) %>%
+#   cat(file = "analyses/table-3.tex")
 
