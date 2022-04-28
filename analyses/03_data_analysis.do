@@ -178,8 +178,11 @@ texdoc s c
 \newpage
 \section{Building construction period}
 
-Construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging 
-buildings constructed on or after 2001. Buidlings with missing information about age are treated as 'old' ones. 
+Construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging buildings constructed on or after 2001. Buidlings with missing information about age are treated as 'old' ones. 
+
+In case of small onount of buildings with same gisid but different buildid 
+(spatial duplicates, n = 1886, 0.1\%) 
+when two different periods were recorded (old AND new) building is treated as new. 
 ***/
 
 texdoc s , nolog // nodo   
@@ -200,6 +203,7 @@ tabstat rent,  s(mean median) by(miss_age) f(%9.6fc)
 
 logistic miss_age ocu1p edu1p ppr1 rent
 coefplot, drop(_cons) eform
+drop miss_age
 */
 
 drop if _merge == 2
@@ -223,20 +227,52 @@ Periode von 2011 bis 2015		8022
 Periode nach 2015				8023
 */
 
-gen buildper2 = (buildper >= 8020)
-replace buildper2 = 0 if mi(buildper)
+gen buildper2 = (buildper >= 8020 & !mi(buildper))
 * ta buildper buildper2, m
+
+/*
+preserve
+	bysort gisid: keep if _N > 2
+	distinct gisid buildid
+	egen b_min = min(buildper2)
+	egen b_max = max(buildper2)
+	bysort gisid: keep if _n == 1
+	gen mismatch = (b_min != b_max)
+	fre mismatch
+restore
+*/
+
+/*
+* duplicate example 
+* with two diff building periods!
+list if gisid == 1526778
+*/
+
+ren buildper2 orig_buildper2
+sort gisid
+by gisid: egen buildper2 = max(orig_buildper2)
+gen temp = (buildper2 != orig_buildper2)
+* by gisid: egen buildper2_mod = sum(temp)
+drop temp buildper orig_buildper2
 
 la de buildper2 0 "Before 2000" 1 "After 2000", replace
 la val buildper2 buildper2
 la var buildper2 "Building period (binary)"
 
 /*
+* duplicate example 
+* with two diff building periods!
+br if gisid == 1526778
+
 fre buildper
 fre buildper2
 distinct buildid 
 distinct buildid if buildper2
 */
+
+* back to unique point dataset!
+by gisid: keep if _n == 1
+drop buildid
 
 texdoc s c 
 
@@ -256,13 +292,11 @@ This solution is mixing versions 1.0 \& 2.0. First the new buildings have value 
 Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings built before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
 ***/
 
-
-
 texdoc s , nolog // nodo   
 
 * bring sep 1 >> sep 2 spatial join done in 02_sep-diff.Rmd
 * rscript using "R/02_sep-diff.R"
-mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(n:1) uk(ssep1 ssep1_t ssep1_q ssep1_d)
+mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(1:1) uk(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
 
@@ -288,7 +322,6 @@ note drop _all
 la da "SSEP 3.0 - user dataset of index and coordinates with variables used for PCA"
 
 la var gisid 		"Spatial ID"
-la var buildid 		"SNC building ID"
 
 la var ssep1 		"Swiss-SEP 1.0 index"
 la var ssep1_t 		"Swiss-SEP 1.0 - tertiles"
@@ -307,25 +340,28 @@ la var ssep3_d 		"Swiss-SEP 3.0 - deciles"
 
 note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
 
-note buildid: "Unique GWR building ID. Use to link to SNC!"
 note buildper2: "Buildings with missing period treated as old ones"
 
 compress
 note: Last changes: $S_DATE $S_TIME
 sa "FINAL/DTA/ssep3_full.dta", replace
 
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent ocu?p2 tot_ocu? mis_ocu* buildper
+drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent tot_ocu? mis_ocu* buildper
 
 preserve 
+
+	mmerge gisid using "data/ORIGINS", t(1:n) um(gisid) uk(buildid)
 	drop gisid
+
+	la var buildid "SNC building ID"
+	note buildid: "Unique GWR building ID. Use to link to SNC!"
+
 	la da "SSEP 3.0 - SNC user dataset of index and XY coordinates"
 	sa "FINAL/DTA/ssep3_user_snc", replace
+	
 restore 
 
 * USER DATASET
-bysort gisid: keep if _n == 1
-drop buildid
-
 la da "SSEP 3.0 - user dataset of index and XY coordinates"
 
 sa "FINAL/DTA/ssep3_user.dta", replace
@@ -369,7 +405,7 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Quantiles}
 
-Note that the deciles of third version in \texttt{full} dataset:
+Note that the deciles of third version in \texttt{user} dataset:
 ***/
 
 texdoc s , cmdstrip
@@ -379,20 +415,21 @@ ta ssep3_d, m
 texdoc s c 
 
 /***
-... are tad 'broken' in \texttt{user} dataset :
+... are tad 'broken' in \texttt{snc} dataset :
 ***/
 
 texdoc s , cmdstrip
 
 preserve 
-	u "FINAL/DTA/ssep3_user.dta", clear
+	u "FINAL/DTA/ssep3_user_snc.dta", clear
 	ta ssep3_d, m
 restore
  
 texdoc s c 
 
 /***
-... This is expected behaviour since user dataset excludes buildings with different IDs but same coordinates.  
+... This is expected behaviour since SNC dataset includes buildings with different BfS IDs but same coordinates. 
+Same applies for missing data - there are few buildings where SEP could not have been calculated due to road network constraints.  
 ***/
 
 /***
@@ -402,6 +439,8 @@ Some transitions happened:
 
 texdoc s , cmdstrip
 
+*ta ssep2_t ssep3_t, m
+*ta ssep2_q ssep3_q, m
 ta ssep2_d ssep3_d, m
  
 texdoc s c 
