@@ -489,7 +489,7 @@ texdoc s c
 \subsection{Old index}
 \begin{landscape}
 \begin{footnotesize}
-\input(table_1_1)
+\input(table-1)
 \end{footnotesize}
 \end{landscape}
 
@@ -497,7 +497,7 @@ texdoc s c
 \subsection{New index}
 \begin{landscape}
 \begin{footnotesize}
-\input(table_1_2)
+\input(table-2)
 \end{footnotesize}
 \end{landscape}
 
@@ -505,7 +505,7 @@ texdoc s c
 \subsection{Hybrid index}
 \begin{landscape}
 \begin{footnotesize}
-\input(table_1_3)
+\input(table-3)
 \end{footnotesize}
 \end{landscape}
 
