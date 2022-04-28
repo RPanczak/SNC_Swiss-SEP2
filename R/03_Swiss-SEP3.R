@@ -34,4 +34,5 @@ ssep3_user_geo <- ssep3_user %>%
 
 write_rds(ssep3_user_geo, "FINAL/RDS/ssep3_user_geo.Rds") 
 
-st_write(ssep3_user_geo, "FINAL/SHP/ssep3_user_geo.shp", delete_dsn = TRUE)
+# st_write(ssep3_user_geo, "FINAL/GEO/ssep3_user_geo.shp", delete_dsn = TRUE)
+st_write(ssep3_user_geo, "FINAL/GEO/ssep3_user_geo.gpkg", delete_dsn = TRUE)
