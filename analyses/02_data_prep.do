@@ -1463,6 +1463,8 @@ by   gisid_orig (dest_rank_bb gisid_dest): gen dest_rank_hh_rnt = _n
 by   gisid_orig:  gen temp = gisid_dest if dest_rank_hh_rnt ==  50
 by   gisid_orig: egen h_50 = max(temp)
 
+* count if !missing(temp) & !missing(temp[_n+1])
+
 * gen exclu = 1 if dest_rank_hh_rnt > 50 & gisid_dest != h_50
 drop if dest_rank_hh_rnt > 50 & gisid_dest != h_50
 drop h_50 temp 
