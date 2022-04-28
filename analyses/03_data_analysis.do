@@ -531,7 +531,7 @@ texdoc s c
 
 /***
 \newpage 
-\subsection{SEP 2 & 3 index}
+\subsection{SEP 2 \& 3 index}
 
 Using hexagonal grid 500m size.  
 ***/
