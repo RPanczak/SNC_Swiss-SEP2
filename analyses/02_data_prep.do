@@ -920,7 +920,7 @@ ta age_cat mis_ocu_isco if den_ocu & !sex, m row
 \quad Age \textless 19				           & `age_12'                 & `age_13'                 & `age_14'                 & `age_15'                 \\
 \quad Permit      					           & `res_12'                 & `res_13'                 & `res_14'                 & `res_15'                 \\
 \quad No household link				           & `hhl_12'                 & `hhl_13'                 & `hhl_14'                 & `hhl_15'                 \\
-\quad No building ID 					       & `mhi_12'                 & `mhi_13'                 & `mhi_14'                 & `mhi_15'                 \\
+\quad No building ID 					       & `mhi_12'                 & `mhi_13'                 & `mhi_14'                 & 0                 \\
 \quad Excluded building 				       & `fbd_12'                 & `fbd_13'                 & `fbd_14'                 & `fbd_15'                 \\
 \hline
 \multicolumn{1}{l}{\textbf{End}}               & `end_12'                 & `end_13'                 & `end_14'                 & `end_15'                 \\
@@ -1396,7 +1396,7 @@ Number of individuals:
 texdoc s , cmdstrip 
 
 by gisid_orig: egen tot_hhpers = total(hhpers)
-univar tot_hhpers if dest_rank_hh == 1
+univar tot_hhpers 
 drop tot_hhpers
 
 texdoc s c 
