@@ -21,6 +21,10 @@ if "`c(os)'" == "Windows" {
 	
 	* CORE files
 	global co  = "C:/projects/SNC_core"
+	
+	global od  = "$pp/data-raw"
+	global dd  = "$pp/data"
+
 
 	cd "$pp"
 }
