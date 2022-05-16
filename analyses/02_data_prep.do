@@ -23,6 +23,7 @@ Version 07:~Change to SNC 4.0
 Version 08:~New GWR data for better building class &  		
 				construction period		
 Version 09:~Excluding SNC-SE experimentals	
+Version 10:~Switch to 2014 SHP & better income	
 */
 
 * ***************************************************
@@ -91,7 +92,7 @@ clear
 \pdfminorversion=6
 
 \title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Report 1.09 - data preparation}}
+Report 1.10 - data preparation}}
 
 \author{Radoslaw Panczak \textit{et al.}}
 
@@ -1579,10 +1580,9 @@ Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were use
 	\item SHP households were included if: 
 
 	\begin{enumerate}	
-		\item they provided questionarie in 2013 
+		\item they provided questionarie in 2014 
 		\item had complete information regarding the address
-		\item address was sucessflly geocoded\footnote{Geocoding 
-			was primarlily done using Google Maps; unsecessful attempts were checked against HERE maps and map.geo.admin.ch.}
+		\item address was sucessflly geocoded\footnote{Geocoding was done using map.geo.admin.ch service.}
 	\end{enumerate}	
 		
 	\item Same variables that were used in Table 2 of original publication are extracted
@@ -1594,144 +1594,160 @@ Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were use
 
 texdoc s , nolog // nodo
 
-* 2013 ONLY 
-u idhous13 filter13 nbpers13 stathh13 i13eqon h13i20ac h13i20ac h13i21ac h13i22 	h13i23 h13i76 h13i50 h13i50 h13i51 ///
-	wh13ts ///
-	using "data-raw\SHP\SHP-Data-W1-W17-STATA\W15_2013\shp13_h_user.dta", clear
+* ********
+* fixed income data 
+u "$od/SHP/imputed_income_hh_long_shp.dta", clear
+keep if year == 2014
+drop year filter20
+rename idhous idhous14
 
-fre filter13
-fre stathh13
-count if !stathh13
-drop  if !stathh13
-drop stathh13 // filter13
+gen eq_ihtyni = ihtyni / eqoecd
+replace eq_ihtyni = round(eq_ihtyni)
+order eq_ihtyni, a(ihtyni)
+la var eq_ihtyni "Equivalised yearly household income, net"
+
+gen eq_idispyi = idispyi / eqoecd
+replace eq_idispyi = round(eq_idispyi)
+order eq_idispyi, a(idispyi)
+la var eq_idispyi "Equivalised disposable household income"
+
+drop eqoecd ihtyni idispyi ihtaxi
+* order ihtaxi, last
+
+compress
+sa "$dd/SHP_imputed_income_14.dta", replace
 
 * ********
-* YEARLY HOUSEHOLD INCOME EQUIVALISED, OECD, NET
-mvdecode i13eqon, mv(-8/-1)
-univar i13eqon, d(0)
+* 2014 ONLY 
+u idhous14 filter14 nbpers14 stathh14 ///
+	h14i20ac h14i21ac h14i22 h14i23 h14i76 h14i50 h14i50 h14i51 ///
+	wh14css ///
+	using "$od/SHP/SHP-Data-W1-W17-STATA/W16_2014/shp14_h_user.dta", clear
 
+fre filter14
+fre stathh14
+* count if !stathh14
+drop  if !stathh14
+drop stathh14 
 
-* ********
-* SAVINGS MIN. 500 SFRS MONTHLY
-fre h13i20ac
-recode h13i20ac (-2=-1)
-la de H13I20AC -1 "no answer / doesn't know", modify
-fre h13i20ac
-
-* REASON WHY NO SAVINGS MIN. 500 SFRS MONTHLY
-fre h13i20ac
-ta  h13i20ac h13i20ac, m
-recode h13i20ac (-2=-1)
-la de H13I21AC -1 "no answer / doesn't know", modify
-ta h13i20ac if h13i20ac == 2, m
-fre h13i20ac
-
-
-* ********
-* SAVINGS INTO 3RD PILLAR
-fre h13i22
-recode h13i22 (-2=-1)
-la de H13I22N -1 "no answer / doesn't know", modify
-fre h13i22
-
-* REASON WHY NO SAVINGS INTO 3RD PILLAR
-fre h13i23
-ta  h13i23 h13i22, m
-recode h13i23 (-2=-1)
-la de H13I23 -1 "no answer / doesn't know", modify
-ta h13i23 if h13i22 == 2, m
-fre h13i23
-
-
-* ********
-* FINANCIAL HELP: HEALTH INSURANCE
-fre h13i76a
-recode h13i76a (-3=-1)
-recode h13i76a (-2=-1)
-la de H13I76A -1 "inaplicable / no answer / doesn't know", modify
-fre h13i76a
-
-
-* ********
-* ASSESSMENT OF INCOME AND EXPENSES
-fre h13i50
-recode h13i50 (-3=-1)
-recode h13i50 (-2=-1)
-la de H13I50 -1 "inaplicable / no answer / doesn't know", modify
-ta h13i50, m
-
-
-* ********
-* FINANCIAL SITUATION MANAGEABLE
-fre h13i51
-mvdecode h13i51, mv(-8/-1)
-fre h13i50
-univar h13i51
-
+mmerge idhous14 using "$dd/SHP_imputed_income_14.dta", t(1:1) 
+drop if _merge == 2
+drop _merge
 
 * ********
 * GEOCODES 
-mmerge idhous13 using data/SHP_adresses_13_FINAL, t(1:1) ukeep(latitude longitude)
+* prepared in geocoder_SHP_14.xlsx & 98_geocodes.R script and 
+mmerge idhous14 using "data/SHP_adresses_14_final", t(1:1) ukeep(gisid)
 drop if _merge == 2
 recode _merge (1=0) (3=1)
 ren _merge geocoded 
 la de geocoded 0 "no" 1 "yes"
 la val geocoded geocoded
 la var geocoded "Geocoding status" 
+fre geocoded
 
 
 * ********
-* NEAR of ORIGINS >> FOR SEP LINKAGE 
-preserve
-	import delim using "data-raw/SHP/SHP_near_ORIGINS_linked.csv", varn(1) clear
-	keep idhous13 gisid
-	compress
-	sa "data/SHP_near_ORIGINS", replace
-restore
+* YEARLY HOUSEHOLD INCOME EQUIVALISED, OECD, NET
 
-mmerge idhous13 using data/SHP_near_ORIGINS, t(1:1) 
-assert _merge != 2
-ta _merge geocoded, m 
-drop _merge
+* all samples
+univar eq_ihtyni if geocoded, d(0)
+* excluding imputed
+univar eq_ihtyni if geocoded & !imphtyn, d(0)
+
+* YEARLY DISPOSABLE HOUSEHOLD INCOME EQUIVALISED, OECD
+
+* all samples
+univar eq_idispyi if geocoded, d(0)
+* excluding imputed
+univar eq_idispyi if geocoded & !imphtyn, d(0)
+
+* ********
+* SAVINGS MIN. 500 SFRS MONTHLY
+* fre h14i20ac
+recode h14i20ac (-2=-1)
+la de H13I20AC -1 "no answer / doesn't know", modify
+fre h14i20ac if geocoded
+
+* REASON WHY NO SAVINGS MIN. 500 SFRS MONTHLY
+* fre h14i20ac
+ta  h14i20ac h14i20ac, m
+recode h14i20ac (-2=-1)
+la de H13I21AC -1 "no answer / doesn't know", modify
+ta h14i20ac if h14i20ac == 2, m
+fre h14i20ac if geocoded
+
+
+* ********
+* SAVINGS INTO 3RD PILLAR
+* fre h14i22
+recode h14i22 (-2=-1)
+la de H13I22N -1 "no answer / doesn't know", modify
+fre h14i22 if geocoded
+
+* REASON WHY NO SAVINGS INTO 3RD PILLAR
+* fre h14i23
+ta  h14i23 h14i22, m
+recode h14i23 (-2=-1)
+la de H13I23 -1 "no answer / doesn't know", modify
+ta h14i23 if h14i22 == 2, m
+fre h14i23 if geocoded
+
+
+* ********
+* FINANCIAL HELP: HEALTH INSURANCE
+* fre h14i76a
+recode h14i76a (-3=-1)
+recode h14i76a (-2=-1)
+la de H13I76A -1 "inaplicable / no answer / doesn't know", modify
+fre h14i76a if geocoded
+
+
+* ********
+* ASSESSMENT OF INCOME AND EXPENSES
+* fre h14i50
+recode h14i50 (-3=-1)
+recode h14i50 (-2=-1)
+la de H13I50 -1 "inaplicable / no answer / doesn't know", modify
+fre h14i50  if geocoded
+
+
+* ********
+* FINANCIAL SITUATION MANAGEABLE
+* fre h14i51
+mvdecode h14i51, mv(-8/-1)
+fre h14i50
+univar h14i51 if geocoded
+
 
 * ********
 note drop _all
-la da "SSEP 2.0 - SHP '13 data for validation"
+la da "SSEP 2.0 - SHP '14 data for validation"
 note: Last changes: $S_DATE $S_TIME
 compress
 sa "data/SHP", replace
 
-/*
-keep if geocoded
-keep idhous13 latitude longitude
-export delim using "$sp/SHP_EXTRACT.csv", delim(",")  replace
-*/
-
 texdoc s c 
-
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Variables}
 ***/
-
 texdoc s , cmdstrip  
-
 u "data/SHP", clear
-drop latitude longitude geocoded gisid
+drop geocoded gisid
 d
-
 texdoc s c 
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Surveys \& geocoding status}
+\subsection{Gocoding status across surveys}
 ***/
 
 texdoc s , cmdstrip  
 
 u "data/SHP", clear
-ta filter13 geocoded, m row col nokey 
+ta filter14 geocoded, m row col nokey 
 
 texdoc s c 
 
