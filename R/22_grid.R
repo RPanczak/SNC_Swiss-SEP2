@@ -1,9 +1,7 @@
 options(scipen=999)
 set.seed(12345)
 library(pacman) 
-p_load(tidyverse,
-       sf, tmap,
-       ggpubr)
+p_load(tidyverse, sf, tmap, ggpubr)
 
 # tmap_mode("plot")
 import::from("sjmisc", "frq")
@@ -291,7 +289,7 @@ median2_d <-
         legend.title = element_blank(),
         plot.title = element_text(hjust = 0.5, vjust = -5)) +
   guides(fill = guide_legend(override.aes = list(alpha = 1))) + 
-  ggtitle("Swiss-SEP 2 index")
+  ggtitle("Swiss-SEP 'new' index")
 
 
 median3_d <- 
@@ -353,7 +351,7 @@ median3_d <-
          color = guide_legend(override.aes = list(fill = NA, 
                                                   size = 1,
                                                   color = "black"))) + 
-  ggtitle("Swiss-SEP 3 index")
+  ggtitle("Swiss-SEP 'hybrid' index")
 
 ggarrange(
   median2_d, median3_d, 
