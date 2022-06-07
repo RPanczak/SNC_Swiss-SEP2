@@ -589,6 +589,7 @@ svyset _n [pweight = wh14css]
 * medians for paper
 * tabstat eq_ihtyni, s(p50) by(ssep3_d)
 table ssep3_d [pweight = wh14css] , c(med eq_ihtyni) row f(%9.0fc)
+table ssep3_d [pweight = wh14css] if imphtyn == 0, c(med eq_ihtyni) row f(%9.0fc)
 
 * share figures with tiles
 preserve 
@@ -611,6 +612,32 @@ preserve
 
 	gr export $td/gr/shp_income.pdf, replace
 	gr export $td/gr/shp_income.png, replace
+
+restore 
+
+* excluding imputed
+preserve 
+
+	keep idhous14 imphtyn eq_ihtyni wh14css ssep?_d 
+	
+	keep if imphtyn == 0
+
+	drop if mi(eq_ihtyni)
+
+	reshape long ssep, i(idhous14 eq_ihtyni) j(sep_version) string
+
+	graph box eq_ihtyni ///
+	[pweight = wh14css], ///
+		over(sep_version, relabel(1 "Old" 2 "New" 3 "Hybrid") label(nolabel)) ///
+		over(ssep) asyvars nooutsides ///
+		ytitle(Household income [CHF]) ylabel(0(50000)200000, format(%9,0gc)) ymtick(##2, grid) ///
+		title(Equivalised yearly household income - no imputed, ring(0)) ///
+		subtitle(Across deciles of three versions of the indes, size(small) ring(0) margin(medlarge)) ///
+		note("") legend(title(Index version)) ///
+		scheme(plotplainblind) graphregion(margin(zero))
+
+	gr export $td/gr/shp_income_imp.pdf, replace
+	gr export $td/gr/shp_income_imp.png, replace
 
 restore 
 
@@ -643,6 +670,11 @@ texdoc s c
 \includegraphics[width=.75\textwidth]{gr/shp_income.pdf} 
 \end{center}
 
+\newpage
+\begin{center}
+\includegraphics[width=.75\textwidth]{gr/shp_income_imp.pdf} 
+\end{center}
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsection{Financial variables table - original}
@@ -660,6 +692,8 @@ texdoc s , cmdstrip
 
 * tabstat eq_ihtyni if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
 table ssep1_d if inlist(ssep1_d, 1, 5, 10) [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
+
+table ssep1_d if inlist(ssep1_d, 1, 5, 10) & imphtyn == 0 [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
 
 * tabstat h14i51 if inlist(ssep1_d, 1, 5, 10), s( mean sd ) by(ssep1_d) f(%4.1f) not 
 table ssep1_d if inlist(ssep1_d, 1, 5, 10) [pweight = wh14css], c(m h14i51) row f(%9.0fc)
@@ -711,6 +745,8 @@ texdoc s , cmdstrip
 * tabstat eq_ihtyni if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
 table ssep2_d if inlist(ssep2_d, 1, 5, 10) [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
 
+table ssep2_d if inlist(ssep2_d, 1, 5, 10) & imphtyn == 0 [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
+
 * tabstat h14i51 if inlist(ssep2_d, 1, 5, 10), s( mean sd ) by(ssep2_d) f(%4.1f) not 
 table ssep2_d if inlist(ssep2_d, 1, 5, 10) [pweight = wh14css], c(m h14i51) row f(%9.0fc)
 
@@ -760,6 +796,8 @@ texdoc s , cmdstrip
 
 * tabstat eq_ihtyni if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
 table ssep3_d if inlist(ssep3_d, 1, 5, 10) [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
+
+table ssep3_d if inlist(ssep3_d, 1, 5, 10) & imphtyn == 0 [pweight = wh14css], c(m eq_ihtyni) row f(%9.0fc)
 
 * tabstat h14i51 if inlist(ssep3_d, 1, 5, 10), s( mean sd ) by(ssep3_d) f(%4.1f) not 
 table ssep3_d if inlist(ssep3_d, 1, 5, 10) [pweight = wh14css], c(m h14i51) row f(%9.0fc)
