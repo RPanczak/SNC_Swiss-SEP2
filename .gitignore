@@ -35,6 +35,7 @@ bfg*
 *.zip
 *.qgz
 *.pgw
+/paper
 *.docx
 /carto/*.gpkg
 /carto/tamedia
