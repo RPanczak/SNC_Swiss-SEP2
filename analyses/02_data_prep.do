@@ -459,7 +459,7 @@ For remaining individuals and their households, the following data are prepared:
 	\item Individuals are flagged if they have \textbf{no formal or have only compulsory education} 
 		AND are not currently pursuing any further education.
 	\item Households have their \textbf{crowding} (number of persons per room) calculated.
-	\item Households are flaged if they have \textbf{three to five rooms and are rented}.
+	\item Households are flagged if they have \textbf{three to five rooms and are rented}.
 	
 \end{enumerate}
 
@@ -996,17 +996,17 @@ texdoc s c
 	\item Major limitation is that, compared to SEP 1.0, there is no way to define \textbf{head of the household} - 
 		all respondents (see exclusions) of the SE are then used, irrespectively of their position in household.
 		
-	\item 2014 SE dataset is \textbf{missing infomration on \textit{'Sozioprofessionelle Kategorie'}} (variable \texttt{sopc}).  
+	\item 2014 SE dataset is \textbf{missing information on \textit{'Sozioprofessionelle Kategorie'}} (variable \texttt{sopc}).  
 		It has been also signalled by BfS that this variable was of poor quality in 2010-2013 years. 
-		Therefore, it is not possible to identify individuals in manual and uskilled occupations in the same way as during 
+		Therefore, it is not possible to identify individuals in manual and unskilled occupations in the same way as during 
 		construction of original index. That was mitigated by using the 
 		\href{http://www.ilo.org/public/english/bureau/stat/isco/isco08/index.htm}{\textbf{ISCO-08 codes}} of occupations 
-		to define manual and uskilled workers and farmers.
+		to define manual and unskilled workers and farmers.
 		Individuals whose occupations belong to one of the major groups 7, 8 \& 9 (for manual and unskilled) and 6 (farmers) were selected.\footnote{Additionally, 
 		sensitivity analyses were done with more strict selection of ISCO codes (major groups 8 \& 9 only) as well as 	
 		by converting ISCO-08 codes to \href{http://www.harryganzeboom.nl/isco08/qa-isei-08.htm}{\textbf{ISEI-08 codes}} 
 		to obtain continuous measure of 'International Socio-Economic Index of occupational status'and calculating summary of these vlaues in n'hood} 				
-		Note that occupation codes are available only for people in \textbf{paid employment} so the denomintor 
+		Note that occupation codes are available only for people in \textbf{paid employment} so the denominator 
 		for calculating 'employment' domain was adapted and all individuals that were not in paid employment were excluded.	
 		Also - small proportion of people eligible for calculations based on ISCO codes had them missing. Again, they were included in the study
 		but had their profession information replaced to missing and again the denominator was adjusted to reflect that.
@@ -1044,14 +1044,14 @@ texdoc s c
 
 \end{enumerate}
 
-Schematic representation of n'hood 'search' comparing the use of all buildings to use of sample buildings could be visualized as follow:'
+Schematic representation of n'hood 'search' comparing the use of all buildings to use of sample buildings could be visualized as follows: 
 
 \begin{center}
 \includegraphics[width=.45\textwidth]{gr-ext/all.png}
 \includegraphics[width=.45\textwidth]{gr-ext/sample.png} 
 \end{center}
 
-Small \textit{ad hoc} corrections of the \textbf{swissTLM3D} dataset were necessary in cases where unconnected segments of the road network were found. This features were then removed: 
+Small \textit{ad hoc} corrections of the \textbf{swissTLM3D} dataset were necessary in cases where unconnected segments of the road network were found. These features were then removed: 
 
 \begin{center}
 \includegraphics[width=.5\textwidth]{gr-ext/nw_edits_4.png}
@@ -1573,22 +1573,22 @@ texdoc s c
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Setup}
 
-Combined waves I, II and III of the Swiss Household Panel (SHP) dataset were used to validate the index
+Combined samples I, II and III of the Swiss Household Panel (SHP) dataset were used to validate the index
 
 \begin{enumerate}
 
 	\item SHP households were included if: 
 
 	\begin{enumerate}	
-		\item they provided questionarie in 2014 
+		\item they provided questionnaire in 2014 
 		\item had complete information regarding the address
-		\item address was sucessflly geocoded\footnote{Geocoding was done using map.geo.admin.ch service.}
+		\item address was successfully geocoded\footnote{Geocoding was done using map.geo.admin.ch service.}
 	\end{enumerate}	
 		
 	\item Same variables that were used in Table 2 of original publication are extracted
 		\footnote{Note that 'Savings min. 500 SFrs monthly' has changed - it used to refer to '100 CHF'}	
 		
-	\item Each geocoded household was spatially linked to the colsest building from the ORIGINS dataset 
+	\item Each geocoded household was spatially linked to the closest building from the ORIGINS dataset 
 \end{enumerate}
 ***/
 
@@ -1741,7 +1741,7 @@ texdoc s c
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Gocoding status across surveys}
+\subsection{Geocoding status across surveys}
 ***/
 
 texdoc s , cmdstrip  
