@@ -23,12 +23,15 @@
 /data/grid
 /data-raw/BfS/ag-b-00.03-vz2020statpop
 /data-raw/unisante
+/data/unisante
 /data-raw/microgis
+/data/microgis
 /geoadmin
 /secrets
 /gis
 /carto
 /misc
+/R/old
 /Stata/old
 /Stata/98_geocode.do
 analyses/old
