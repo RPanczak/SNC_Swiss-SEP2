@@ -20,6 +20,10 @@
 /data/*.rds
 /data-raw/gwr_extract_210225
 /data/gwr_extract_210225
+/data/grid
+/data-raw/BfS/ag-b-00.03-vz2020statpop
+/data-raw/unisante
+/data-raw/microgis
 /geoadmin
 /secrets
 /gis
@@ -42,5 +46,3 @@ bfg*
 /carto/tamedia
 /admin
 /VS
-/data/grid
-/data-raw/BfS/ag-b-00.03-vz2020statpop
