@@ -26,12 +26,14 @@
 /data/unisante
 /data-raw/microgis
 /data/microgis
+/data/PLZ
 /geoadmin
 /secrets
 /gis
 /carto
 /misc
 /R/old
+/R/99*
 /Stata/old
 /Stata/98_geocode.do
 analyses/old
