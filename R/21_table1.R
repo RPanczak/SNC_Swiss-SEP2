@@ -71,6 +71,7 @@ explanatory = c("Gender", "Age",
 SE %<>%
   mutate(civil = ff_label(civil, "Civil status"),
          sopc_agg = ff_label(sopc_agg, "Professional status"), 
+         Language = ff_label(Language, "First main language"), 
          urban = ff_label(urban, "Level of urbanisation"))
 
 SE %>%
