@@ -1,5 +1,5 @@
 library(pacman)
-p_load(tidyverse, haven, ggridges, hrbrthemes, ggbeeswarm)
+p_load(tidyverse, haven, ggridges, hrbrthemes, ggbeeswarm, gghalves)
 
 SHP_income <- read_dta("data/SHP_income.dta") %>%
   zap_label() %>% zap_labels() %>% 
@@ -35,6 +35,7 @@ ggplot(SHP_income, aes(x = eq_ihtyni / 10000, weight = wh14css)) +
   xlab("Swiss-SEP3") +
   theme_minimal() 
 
+
 # ggridges 
 ggplot(SHP_income,
        aes(x = eq_ihtyni / 10000, 
@@ -46,6 +47,7 @@ ggplot(SHP_income,
   theme_ipsum_rc() +
   ylab("Swiss-SEP index decile") + xlab("Equivalence income")
 
+
 # beeswarm
 ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   ggbeeswarm::geom_quasirandom(alpha = 0.2) +
@@ -54,11 +56,25 @@ ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   theme_ipsum_rc() +
   xlab("Swiss-SEP index decile") + ylab("Equivalence income")
 
-# beeswarm
+# excluding outliers
 ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   ggbeeswarm::geom_quasirandom(alpha = 0.2) +
   stat_summary(fun = median, fun.min = median, fun.max = median, geom = "crossbar", 
                width = 0.2, size = 1.5, fatten = 1, color = "red") +
   coord_cartesian(ylim = c(NA, 57)) +
+  theme_ipsum_rc() +
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
+
+
+# gghalves
+ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
+  geom_half_boxplot(aes(color = ssep3_d), 
+                    side = "r", errorbar.draw = TRUE, outlier.color = NA) +
+  geom_half_point(aes(fill = ssep3_d, color = ssep3_d), 
+                  side = "l", size = 0.5, alpha = 0.5)  + 
+  scale_color_brewer(palette = "RdYlGn") +
+  scale_fill_brewer(palette = "RdYlGn") +
+  # more restrictive here!
+  coord_cartesian(ylim = c(NA, 30)) +
   theme_ipsum_rc() +
   xlab("Swiss-SEP index decile") + ylab("Equivalence income")
