@@ -1,5 +1,5 @@
 library(pacman)
-p_load(tidyverse, haven, ggridges, hrbrthemes)
+p_load(tidyverse, haven, ggridges, hrbrthemes, ggbeeswarm)
 
 SHP_income <- read_dta("data/SHP_income.dta") %>%
   zap_label() %>% zap_labels() %>% 
@@ -45,3 +45,20 @@ ggplot(SHP_income,
   scale_fill_brewer(palette = "RdYlGn", name = "Index decile") +
   theme_ipsum_rc() +
   ylab("Swiss-SEP index decile") + xlab("Equivalence income")
+
+# beeswarm
+ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
+  ggbeeswarm::geom_quasirandom(alpha = 0.2) +
+  stat_summary(fun = median, fun.min = median, fun.max = median, geom = "crossbar", 
+               width = 0.2, size = 1.5, fatten = 1, color = "red") +
+  theme_ipsum_rc() +
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
+
+# beeswarm
+ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
+  ggbeeswarm::geom_quasirandom(alpha = 0.2) +
+  stat_summary(fun = median, fun.min = median, fun.max = median, geom = "crossbar", 
+               width = 0.2, size = 1.5, fatten = 1, color = "red") +
+  coord_cartesian(ylim = c(NA, 57)) +
+  theme_ipsum_rc() +
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
