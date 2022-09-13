@@ -24,6 +24,7 @@ Version 08:~New GWR data for better building class &
 				construction period		
 Version 09:~Excluding SNC-SE experimentals	
 Version 10:~Switch to 2014 SHP & better income	
+Version 11:~
 */
 
 * ***************************************************
@@ -149,11 +150,13 @@ forv year = 10/14 {
 
 	ren (r`year'_buildid r`year'_geox r`year'_geoy) (buildid geox geoy)
 	
-	drop if mi(geox)  
-	drop if mi(geoy)  
+	drop if mi(geox) | mi(geoy)  
 
-	drop if mi(buildid) // ??? 
-
+	* exclude unidentifiable ones; vast majority has no coordinates
+	* mdesc geox if mi(buildid) 
+	drop if mi(buildid) 
+	
+	* keep only unique set 
 	duplicates drop
 
 	isid buildid
@@ -272,6 +275,9 @@ note: Last changes: $S_DATE $S_TIME
 compress
 sa "data/ORIGINS", replace
 
+/* 
+* data for GIS
+
 distinct buildid gisid
 mdesc buildid gisid
 
@@ -279,9 +285,10 @@ bysort gisid: keep if _n == 1
 drop buildid hec dupli
 
 xtile part = gisid, nq(6) // around 250k chunks of data
-* fre part
+fre part
 
-* export delim using "$sp/ORIGINS.csv", delim(",")  replace
+export delim using "$sp/ORIGINS.csv", delim(",")  replace
+*/ 
 
 texdoc s c 
 
@@ -350,7 +357,7 @@ texdoc s c
 
 
 * *****
-* SOME CHECKS 
+* EXTRA CHECKS ON BUILDING DATSETS
 
 texdoc s , nolog  nodo
 
@@ -365,7 +372,6 @@ br 				if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 ta link 		if mi(r10_buildid) & !mi(r10_geox) & !mi(r10_geoy)
 br *buildid *geox *geoy // if inlist(v0_buildid, 2, 3, 4, 7)
 br *buildid *geox *geoy if inlist(sncid, "SNC12640943", "SNC14636688")
-
 
 * BUILDINGS HAVING DIFFERENT COORDINATES IN ONE OF THE YEARS?
 distinct sncid 			if r10_buildid == r11_buildid & r10_geox != r11_geox & !mi(r10_buildid)
@@ -479,6 +485,10 @@ forv YR = 12/15 {
 	if `YR' == 15 { 
 		u sncid age sex hhyid educ_agg educ_curr occup_isco workstatus resiperm canton civil migratstat nat_bin sopc_agg langmain1 migratstat using "$co/data-raw/SE/SE`YR'_pers_full", clear 
 	}
+	
+	* starting point
+	count 
+	texdoc local start_`YR' = `r(N)'	
 		
 	order hhyid, a(sncid)
 	isid sncid
@@ -668,7 +678,6 @@ forv YR = 12/15 {
 	* DATA PREP HOUSEHOLDS
 	
 	* AREA AND RENT
-	* flatarea NOT AVAILABLE IN 10 & 11 !!! :/
 	
 	u sncid hhyid hhtype hhpos hhpers flatrooms typeowner rentnet flatarea using "$co/data-raw/SE/SE`YR'_hh_full.dta", clear
 
@@ -705,9 +714,6 @@ forv YR = 12/15 {
 	* START FROM PERSONAL
 	u "data/SE`YR'_pers_full", clear
 	
-	count 
-	texdoc local start_`YR' = `r(N)'	
-	
 	* ADD HH
 	mmerge sncid using "data/SE`YR'_hh_full"
 	
@@ -730,7 +736,7 @@ forv YR = 12/15 {
 	
 	if `YR' <= 14 { 
 	
-		mmerge sncid using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid) // r`YR'_hhid) 
+		mmerge sncid using "$co/data-raw/SNC/snc2_std_pers_90_00_14_all_207_full", t(1:1) ukeep(r`YR'_buildid)  
 
 		assert _merge != 1 // no snc data ???
 		drop if _merge == 2 // no SE data available
@@ -937,7 +943,7 @@ In cases when one person participated in more than one SE only newer records wer
 
 texdoc s , cmdstrip // nodo
 
-qui u "data/SE_dupli", replace
+qui u "data/SE_dupli", clear
 duplicates report sncid
 qui rm "data/SE_dupli.dta"
 
@@ -1168,9 +1174,6 @@ list if gisid_orig == 1182865
 
 * legitimate no neighb <> Next to Thunersee,  <> 46.659942070 7.792093576 
 list if gisid_orig == 644959
-
-* 89 SE households in one building
-list if gisid_orig == 94802
 */
 
 /***
@@ -1214,6 +1217,7 @@ assert _merge == 3
 drop _merge
 
 * TWO EXCLUSIONS >> SEE ABOVE
+* br if inlist(gisid_orig, 644959, 1182865)
 drop if inlist(gisid_orig, 644959, 1182865)
 
 * 50 HOUSEHOLDS + !ALL HOUSEHOLDS FROM LAST BUILDING!
@@ -1232,6 +1236,9 @@ drop if dest_rank_hh > 50 & gisid_dest != h_50
 drop h_50 temp 
 
 * br if inlist(gisid_orig, 32, 23181)
+
+* TOTAL PERSONS
+by gisid_orig: egen tot_pp = total(hhpers)
 
 * TOTAL HOUSEHOLDS
 by gisid_orig: egen tot_hh = max(dest_rank_hh)
@@ -1259,12 +1266,8 @@ note: Last changes: $S_DATE $S_TIME
 compress
 sa "data/NEIGHB_PREP", replace
 
-* u "data/NEIGHB_PREP", clear
-
 * AGGREGATING
 drop sncid
-
-sort gisid_orig dest_rank_bb gisid_dest, stable
 
 by gisid_orig: egen tot_ocu1 = total(den_ocu1)
 *by gisid_orig: egen tot_ocu2 = total(den_ocu2)
@@ -1289,7 +1292,7 @@ by gisid_orig: egen ppr1 = mean(ppr) // ! achtung >> not counts !!
 
 keep if dest_rank_hh == 1 
 
-drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu? num_edu ppr dest_rank_hh mis_ocu_isco 
+drop gisid_dest dest_rank_bb ind_dist num_ocu? den_ocu? num_edu ppr dest_rank_hh mis_ocu_isco hhpers
 
 gen ocu1p = ocu1/tot_ocu1
 *gen ocu2p = ocu2/tot_ocu1
@@ -1322,9 +1325,10 @@ gen edu1p = edu1/tot_hh
 drop edu1
 
 *order gisid_orig tot_hh tot_bb max_dist ocu1p* ocu2p* ocu3p* ocu4p tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
-order gisid_orig tot_hh tot_bb max_dist ocu1p* tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
+order gisid_orig tot_pp tot_hh tot_bb max_dist ocu1p* tot_ocu? mis_ocu mis_ocu_pr edu1p ppr1 
 
-la var tot_hh		"Total no of households in n'hood"
+la var tot_pp		"Total no of SE individuals in n'hood"
+la var tot_hh		"Total no of SE households in n'hood"
 
 la var ocu1p 		"Percent low occupation 1"
 
@@ -1451,9 +1455,6 @@ drop if inlist(gisid_orig, 644959, 1182865)
 drop if !rent35
 drop rent35
 
-* ERROR >> SE DATA PREP ABOVE !!!
-drop if mi(rentnet)
-
 * 50 HOUSEHOLDS + ALL HOUSEHOLDS FROM LAST BUILDING
 sort gisid_orig dest_rank_bb gisid_dest, stable
 by   gisid_orig (dest_rank_bb gisid_dest): gen dest_rank_hh_rnt = _n
@@ -1493,8 +1494,6 @@ compress
 sa "data\NEIGHB_RENT_PREP", replace
 
 * AGGREGATING
-sort gisid_orig // dest_rank_hh_rnt, stable
-
 by gisid_orig: egen rent = mean(rentnet) 
 
 by gisid_orig: keep if _n == 1 
@@ -1643,7 +1642,6 @@ la val geocoded geocoded
 la var geocoded "Geocoding status" 
 fre geocoded
 
-
 * ********
 * YEARLY HOUSEHOLD INCOME EQUIVALISED, OECD, NET
 
@@ -1747,7 +1745,6 @@ u "data/SHP", clear
 ta filter14 geocoded, m row col nokey 
 
 texdoc s c 
-
 
 /***
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2309,7 +2306,7 @@ restore
 texdoc s c 
 
 /***
-... This is expected behaviour since SNC dataset includes buildings with different BfS IDs but same coordinates. 
+... This is expected behaviour since SNC dataset includes few more buildings (with different BfS IDs but same coordinates). 
 Same applies for missing data - there are few buildings where SEP could not have been calculated due to road network constraints.  
 ***/
 

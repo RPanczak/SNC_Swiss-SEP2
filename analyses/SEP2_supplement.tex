@@ -196,7 +196,7 @@ For remaining individuals and their households, the following data are prepared:
 \multicolumn{1}{l}{\multirow{2}{*}{Exclusion}} & \multicolumn{4}{c}{Year}                                                                                  \\
 \multicolumn{1}{l}{}                           & \multicolumn{1}{c}{2012} & \multicolumn{1}{c}{2013} & \multicolumn{1}{c}{2014} & \multicolumn{1}{c}{2015} \\
 \hline
-\multicolumn{1}{l}{\textbf{Start}}             & 270654               & 266803               & 272966               & 255969               \\
+\multicolumn{1}{l}{\textbf{Start}}             & 286015               & 281990               & 287842               & 269509               \\
 \quad Age \textless 19				           & 14791                 & 14463                 & 14184                 & 12929                 \\
 \quad Permit      					           & 570                 & 724                 & 692                 & 611                 \\
 \quad No household link				           & 41319                 & 40275                 & 42175                 & 35900                 \\
@@ -254,7 +254,7 @@ Note the distinction between individuals, households, buildings and \texttt{gisi
 \subsection{Road network}
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Setup}
+\subsubsection{Setup}
 
 \begin{enumerate}
 
@@ -400,7 +400,7 @@ Association of Swiss-SEP with mortality will be assessed using two models based 
 \subsubsection{Variables}
 \begin{stlog}\input{log/ol_29.log.tex}\end{stlog}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Last census seen}
+\subsection{Last census seen}
 \begin{stlog}\input{log/ol_30.log.tex}\end{stlog}
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
@@ -434,7 +434,7 @@ Note that the deciles of third version in \texttt{user} dataset:
 \begin{stlog}\input{log/ol_38.log.tex}\end{stlog}
 ... are tad 'broken' in \texttt{snc} dataset :
 \begin{stlog}\input{log/ol_39.log.tex}\end{stlog}
-... This is expected behaviour since SNC dataset includes buildings with different BfS IDs but same coordinates. 
+... This is expected behaviour since SNC dataset includes few more buildings (with different BfS IDs but same coordinates). 
 Same applies for missing data - there are few buildings where SEP could not have been calculated due to road network constraints.  
 \begin{landscape}
 Some transitions happened:  
