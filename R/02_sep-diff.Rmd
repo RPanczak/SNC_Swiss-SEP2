@@ -84,8 +84,7 @@ Calculations done with `sf` package function `st_join` (with `st_nearest_feature
 # results with coordinates of 'sep2' features
 sep2_sep1_join <- st_join(sep2, sep1, join = st_nearest_feature)
 
-# adding distance
-# solution from @Spacedman
+# adding distance - solution from @Spacedman
 # https://gis.stackexchange.com/questions/349955/getting-a-new-column-with-distance-to-the-nearest-feature-in-r
 nearest <- st_nearest_feature(sep2, sep1)
 distance <- st_distance(sep2, sep1[nearest, ], by_element = TRUE)

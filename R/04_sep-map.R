@@ -11,8 +11,8 @@ canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/sh
 
 # lake <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/shp/g1s20.shp")
 
-lake  <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp")
-river <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp")
+lake  <- st_read("../ISPM_geo/data/KM04-00-c-suis-2022-q/2022_GEOM_TK/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp")
+river <- st_read("../ISPM_geo/data/KM04-00-c-suis-2022-q/2022_GEOM_TK/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp")
 
 ssep3_user_geo <- readRDS("FINAL/RDS/ssep3_user_geo.Rds") %>% 
   mutate(ssep1_d = factor(ssep1_d,

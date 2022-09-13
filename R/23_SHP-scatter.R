@@ -7,6 +7,7 @@ SHP_income <- read_dta("data/SHP_income.dta") %>%
          ssep2_d = factor(ssep2_d),
          ssep3_d = factor(ssep3_d))
 
+
 # full dataset
 ggplot(SHP_income, aes(x = ssep3, y = eq_ihtyni / 10000)) +
   geom_point(shape = 16, alpha = 0.1) +
@@ -27,12 +28,22 @@ ggplot(SHP_income, aes(x = ssep3, y = eq_ihtyni / 10000)) +
   theme_minimal() +
   theme(aspect.ratio = 1)
 
+
 # distributions
 ggplot(SHP_income, aes(x = eq_ihtyni / 10000, weight = wh14css)) +
   geom_density(aes(color = ssep3_d)) +
   scale_colour_brewer(palette = "RdYlGn") +
   ylab("Equivalised income [in 10k CHF]") +
   xlab("Swiss-SEP3") +
+  theme_minimal() 
+
+# excluding outliers
+ggplot(SHP_income, aes(x = eq_ihtyni / 10000, weight = wh14css)) +
+  geom_density(aes(color = ssep3_d)) +
+  scale_colour_brewer(palette = "RdYlGn") +
+  ylab("Equivalised income [in 10k CHF]") +
+  xlab("Swiss-SEP3") +
+  coord_cartesian(xlim = c(NA, 30)) +
   theme_minimal() 
 
 
@@ -54,7 +65,7 @@ ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   stat_summary(fun = median, fun.min = median, fun.max = median, geom = "crossbar", 
                width = 0.2, size = 1.5, fatten = 1, color = "red") +
   theme_ipsum_rc() +
-  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income [in 10k CHF]")
 
 # excluding outliers
 ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
@@ -63,10 +74,11 @@ ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
                width = 0.2, size = 1.5, fatten = 1, color = "red") +
   coord_cartesian(ylim = c(NA, 57)) +
   theme_ipsum_rc() +
-  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income [in 10k CHF]")
 
 
 # gghalves
+# excluding outliers
 ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   geom_half_boxplot(aes(color = ssep3_d), 
                     side = "r", errorbar.draw = TRUE, outlier.color = NA) +
@@ -77,4 +89,5 @@ ggplot(SHP_income, aes(x = ssep3_d, y = eq_ihtyni / 10000)) +
   # more restrictive here!
   coord_cartesian(ylim = c(NA, 30)) +
   theme_ipsum_rc() +
-  xlab("Swiss-SEP index decile") + ylab("Equivalence income")
+  theme(legend.position = "none") +
+  xlab("Swiss-SEP index decile") + ylab("Equivalence income [in 10k CHF]") 

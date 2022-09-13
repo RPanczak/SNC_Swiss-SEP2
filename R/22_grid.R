@@ -12,7 +12,7 @@ canton <- st_read("../ISPM_geo/data-raw/BfS/ag-b-00.03-875-gg20/ggg_2020-LV95/sh
   st_transform(crs = 2056) %>% 
   dplyr::select(KTNR, KTNAME)
 
-lakes <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp") %>% 
+lakes <- st_read("../ISPM_geo/data/KM04-00-c-suis-2022-q/2022_GEOM_TK/00_TOPO/K4_seenyyyymmdd/k4seenyyyymmdd_ch2007Poly.shp") %>% 
   st_transform(crs = 2056)
 
 # rivers <- st_read("../ISPM_geo/data-raw/BfS/2019_THK_PRO/PRO/00_TOPO/K4_flusyyyymmdd/k4flusyyyymmdd_ch2007.shp") %>% 
