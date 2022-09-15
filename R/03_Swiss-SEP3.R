@@ -22,9 +22,8 @@ ssep3_user <- read_csv("FINAL/CSV/ssep3_user_geo.csv",
 
 write_rds(ssep3_user, "FINAL/RDS/ssep3_user.Rds") 
 
-# shp file without spatial duplicates
+# geo dataset 
 ssep3_user_geo <- ssep3_user %>% 
-  # distinct(.keep_all = TRUE) %>% 
   st_as_sf(coords = c("geox", "geoy"), 
            crs = 2056,
            remove = FALSE)

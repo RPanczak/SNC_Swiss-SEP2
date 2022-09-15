@@ -92,8 +92,14 @@ clear
 % https://tex.stackexchange.com/questions/52317/pdftex-warning-version-allowed
 \pdfminorversion=6
 
-\title{\textbf{Swiss-SEP 2.0 index \endgraf 
-Supplementary materials}}
+% for subtitle hack 
+\usepackage{relsize}
+
+% for subtitle hack 
+% https://tex.stackexchange.com/questions/5948/subtitle-doesnt-work-in-article-document-class
+\usepackage{relsize}
+
+\title{The Swiss Neighbourhood Index of Socioeconomic Position: Update and Re-validation\\[0.2em]\smaller{}Supplementary materials}
 
 \author{Radoslaw Panczak, Claudia Berlin, Marieke Voorpostel, Marcel Zwahlen, Matthias Egger}
 
@@ -2009,7 +2015,10 @@ estat kmo
 estat residual, fit f(%7.3f)
 estat smc
 estat anti, nocov f(%7.3f)
-* screeplot, mean ci
+screeplot
+screeplot, mean ci
+loadingplot
+scoreplot
 */
 
 * 0-100 score
@@ -2194,10 +2203,8 @@ la var ssep2_d ""
 la var ssep3_d ""
 
 order ssep1* ssep2* ssep3*, last
-
-note drop _all
-
-la da "SSEP 3.0 - user dataset of index and coordinates with variables used for PCA"
+order mean_dist, b(max_dist)
+la var mean_dist	"Average distance between buildings in n'hood"
 
 la var gisid 		"Spatial ID"
 
@@ -2216,15 +2223,19 @@ la var ssep3_t 		"Swiss-SEP 3.0 - tertiles"
 la var ssep3_q 		"Swiss-SEP 3.0 - quintiles"
 la var ssep3_d 		"Swiss-SEP 3.0 - deciles"
 
+note drop _all
+
 note gisid: "Unique ID groupping small amount of GWR buildings with the same coordinates. Use for geographical analyses and geovisualization!"
 
 note buildper2: "Buildings with missing period treated as old ones"
+
+la da "SSEP 3.0 - user dataset of index and coordinates with variables used for PCA"
 
 compress
 note: Last changes: $S_DATE $S_TIME
 sa "FINAL/DTA/ssep3_full.dta", replace
 
-drop tot_hh ocu?p edu1p ppr1 tot_bb max_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent tot_ocu? mis_ocu* buildper
+drop tot_pp tot_hh ocu?p edu1p ppr1 tot_bb max_dist mean_dist tot_hh_rnt tot_bb_rnt max_dist_rnt rent tot_ocu? mis_ocu* buildper
 
 preserve 
 
