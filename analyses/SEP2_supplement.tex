@@ -97,8 +97,8 @@ and processed as follows:
 	
 	\item \textbf{Non-residential} buildings (see above) are excluded
 	
-	\item Buildings having different ID but \textbf{same cordinates} are groupped together using synthetic 'GIS ID'
-		(for instance 153 (sic!) different buidling IDs pointing to the same coordinates \href{https://goo.gl/maps/eC8fDZtEboP2}{on a caravan site?})
+	\item Buildings having different ID but \textbf{same coordinates} are grouped together using synthetic 'GIS ID'
+		(for instance 153 (sic!) different IDs pointing to the same coordinates \href{https://goo.gl/maps/eC8fDZtEboP2}{on a caravan site?})
 		
 \end{enumerate}
 
@@ -262,7 +262,7 @@ Note the distinction between individuals, households, buildings and \texttt{gisi
 \begin{enumerate}
 
 	\item Network analyses were done using updated version of \textbf{swissTLM3D} data 
-		(1.5 version as compared to 1.0 vesrsion in the previous edition).
+		(1.5 version as compared to 1.0 in the previous edition).
 	
 	\item Network analyses were done using ArcGIS 10.5 (previously - ArcGIS 10.2).
 	
@@ -384,9 +384,9 @@ Association of Swiss-SEP with mortality will be assessed using two models based 
 
 	\item Individuals who are recorded in (at least one of the) 2012 - 2018 Censuses are included
 	\item Individuals below age 30 on the 1.1.2012 are excluded
-	\item Date of entry is either 1.1.2012 or earliest census if individual was not recorderd in 2012
+	\item Date of entry is either 1.1.2012 or earliest census if individual was not recorded in 2012
 	\item Individuals who died on or before 12.31.2011 are excluded (unless the death was cancelled in the dataset)
-	\item For individuals having information on one of the covariates recorded inseveral censuses the latest one is used
+	\item For individuals having information on one of the covariates recorded in several censuses the latest one is used
 	\item Individuals with missing civil status were excluded
 	\item Rhaeto-Romansch language region was merged to German
 	\item Individuals with no link to the index were excluded
@@ -414,9 +414,9 @@ Association of Swiss-SEP with mortality will be assessed using two models based 
 \newpage
 \subsection{Building construction period}
 
-Construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging buildings constructed on or after 2001. Buidlings with missing information about age are treated as 'old' ones. 
+Construction period of the building is retrived from \texttt{STATPOP 2018} dataset. Detailed typology is recoded to binary indicator flagging buildings constructed on or after 2001. Buidlings with missing information about age are treated as 'old' ones. 
 
-In case of small onount of buildings with same gisid but different buildid 
+In case of small amount of buildings with same gisid but different buildid 
 (spatial duplicates, n = 1886, 0.1\%) 
 when two different periods were recorded (old AND new) building is treated as new. 
 \begin{stlog}\input{log/ol_35.log.tex}\end{stlog}
@@ -424,9 +424,9 @@ when two different periods were recorded (old AND new) building is treated as ne
 \newpage
 \subsection{Hybrid version of SEP}
 
-This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear dstance) neighbour. 
+This solution is mixing versions 1.0 \& 2.0. First the new buildings have value of index 1.0 assigned using the closest (linear distance) neighbour. 
 
-Then, construction period of the building is retrived sfrom \texttt{STATPOP 2018} dataset and then buildings built before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
+Then, construction period of the building is retrived from \texttt{STATPOP 2018} dataset and then buildings built before year 2000 have the values of 1.0 index assigned and buildings constructed after 2000 have new values assigned. Buildings without the defined period of construction keep values 1.0 also. 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Index deciles}
 \begin{stlog}\input{log/ol_37.log.tex}\end{stlog}
@@ -579,7 +579,7 @@ Note: 	Calculations from 'old' SNC data from the \textbf{2001 - 2008 period}, as
 Note: 	Results from Cox models. Calculations from 'new' SNC data from the \textbf{2012 - 2018 period}!  
 		'Age \& sex' - adjusted for age (via \texttt{stset}) and sex (as in original figure above);  
 		'Adjusted' - additionally adjusted for civil status, nationality, level of urbanization and language region.  
-		This is not the same adjustment as in adsjudsted models in original papers since we are missing some crucial variables. 
+		This is not the same adjustment as in adjusted models in original papers since we are missing some crucial variables. 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \subsubsection{Cause specific mortality - original}
