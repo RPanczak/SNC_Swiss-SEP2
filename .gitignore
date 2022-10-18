@@ -34,7 +34,8 @@
 /carto
 /misc
 /R/old
-/R/99*
+/R/ext
+/docs/ext
 /Stata/old
 /Stata/98_geocode.do
 analyses/old

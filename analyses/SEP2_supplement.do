@@ -2182,7 +2182,7 @@ Then, construction period of the building is retrived from \texttt{STATPOP 2018}
 texdoc s , nolog // nodo   
 
 * bring sep 1 >> sep 2 spatial join done in 02_sep-diff.Rmd
-* rscript using "R/02_sep-diff.R"
+* Rscript -e 'library(rmarkdown); rmarkdown::render("R/02_sep-diff.Rmd", "02_sep-diff")'
 mmerge gisid using "data/Swiss-SEP2/sep2_sep1_join.dta", t(1:1) uk(ssep1 ssep1_t ssep1_q ssep1_d)
 assert _merge == 3
 drop _merge
@@ -2371,7 +2371,7 @@ texdoc s c
 \subsection{Tables}
 ***/
 
-* rscript using "R/21_table1.R"
+* rscript using "R/04_table1.R"
 
 /***
 \newpage
@@ -2416,7 +2416,7 @@ texdoc s c
 \end{center}
 ***/
 
-* rscript using "R/22_grid.R"
+* rscript using "R/05_grid.R"
 
 /***
 \newpage 
