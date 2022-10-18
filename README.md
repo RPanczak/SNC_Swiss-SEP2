@@ -19,6 +19,9 @@ Main files needed to reproduce the results:
 - `Stata/01_texdoc.do` file also needs path updates and can be used to process `analyses/SEP2_supplement.do` Stata (version 15) script using the [`texdoc`](http://repec.sowi.unibe.ch/stata/texdoc/) command; running this script will generate all main outputs of the paper (figures and tables generated ar in the same folder) as well pdf report with all supplementary information   
 - the script runs (or points to) a set of five helper R scripts in `R` folder that are used for various data conversions, data management, spatial operations as well as generation of table 1 and the main map  
 - folder `Python` stores six scripts used to calculate and export datasets of neighbourhood connectivity - ArGIS software (version 10.5) with Network Analyst extension is needed to run these scripts  
+- folders `data-raw` and `data` contain ancillary datasets that can be shared openly; these mostly include various geographic boundaries.  
+
+Main datasets used in the analyses can be obtained from Swiss Federal Statistical Office.  
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
 
