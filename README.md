@@ -13,15 +13,17 @@ Based on:
 
 Updated using 2012-2015 [Structural Survey](https://www.bfs.admin.ch/bfs/en/home/statistics/population/surveys/se.html) data linked to [Federal Register of Buildings and Dwellings](https://www.bfs.admin.ch/bfs/en/home/registers/federal-register-buildings-dwellings.html) and updated definitions of n'hoods. 
 
-Main files needed to reproduce the results:  
+**Datasets** needed to reproduce the results:  
+
+- folder `Python` stores six scripts used to calculate and export datasets of neighbourhood connectivity needed for further analyses - ArGIS software (version 10.5) with Network Analyst extension is needed to run these scripts
+- folders `data-raw` and `data` contain ancillary datasets that can be shared openly; these mostly include various geographic boundaries  
+- main datasets used in the analyses can be obtained from Swiss Federal Statistical Office  
+
+**Code** needed to reproduce the results:  
 
 - `Stata/00_run_first.do` file need to be updated specifying correct paths    
 - `Stata/01_texdoc.do` file also needs path updates and can be used to process `analyses/SEP2_supplement.do` Stata (version 15) script using the [`texdoc`](http://repec.sowi.unibe.ch/stata/texdoc/) command; running this script will generate all main outputs of the paper (figures and tables generated ar in the same folder) as well pdf report with all supplementary information   
 - the script runs (or points to) a set of five helper R scripts in `R` folder that are used for various data conversions, data management, spatial operations as well as generation of table 1 and the main map  
-- folder `Python` stores six scripts used to calculate and export datasets of neighbourhood connectivity - ArGIS software (version 10.5) with Network Analyst extension is needed to run these scripts  
-- folders `data-raw` and `data` contain ancillary datasets that can be shared openly; these mostly include various geographic boundaries.  
-
-Main datasets used in the analyses can be obtained from Swiss Federal Statistical Office.  
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
 
