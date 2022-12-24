@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<metadata xml:lang="de"><Esri><CreaDate>20171219</CreaDate><CreaTime>14330900</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files\arcgis\server\ArcToolbox\Toolboxes\Data Management Tools.tbx\RepairGeometry" Date="20171219" Time="143309">RepairGeometry \\v0t0010a.adr.admin.ch\gdwh\etl\PLZOrtschaften\Releases\PLZO_Release-2018-Jan\PLZO_SHP_LV95\PLZO_PLZ.shp DELETE_NULL</Process></lineage></DataProperties></Esri></metadata>
